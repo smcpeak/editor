@@ -6,6 +6,7 @@
 #include "fail-reason-opt.h"                     // FailReasonOpt
 #include "host-file-line.h"                      // HostFileLine
 #include "lsp-client.h"                          // LSPClientDocumentState
+#include "reply-ptr-opt.h"                       // ReplyPtrOptOrError, ReplyPtrOpt
 #include "rfa-async-multi-client.h"              // RFA_AbstractAsyncMultiClient
 #include "rfa-sync-multi-client.h"               // readFileSynchronously
 #include "td-core.h"                             // TextDocumentCore
@@ -103,7 +104,7 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
     // TODO: This queries one file at a time.  I want to batch all of
     // the requests into a single message.
     TRACE2("lspGetCodeLines: querying: " << toGDValue(harn));
-    auto replyOrError(
+    ReplyPtrOptOrError replyOrError(
       readFileSynchronously(&rfaAMClient, waiter, harn));
 
     if (FailReasonOpt errorMsg =
@@ -115,8 +116,8 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
         DocOrError(*errorMsg));
     }
     else {
-      std::unique_ptr<RFA_Msg_ReadFileReply> &rfr = replyOrError.left();
-      if (rfr) {
+      ReplyPtrOpt<RFA_Msg_ReadFileReply> &rfr = replyOrError.left();
+      if (rfr.hasValue()) {
         // Error would be handled above.
         xassert(rfr->m_success);
 

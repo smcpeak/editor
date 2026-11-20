@@ -50,7 +50,7 @@ RFA_SyncMultiClient::~RFA_SyncMultiClient()
 bool RFA_SyncMultiClient::issueRequestSynchronously(
   HostName const &hostName,
   std::unique_ptr<RFA_Message> request,
-  std::unique_ptr<RFA_Message> /*OUT*/ &reply,
+  ReplyPtrOpt<RFA_Message> /*OUT*/ &reply,
   string /*OUT*/ &connLostMessage)
 {
   xassert(!m_requestID);
@@ -161,7 +161,7 @@ void RFA_SyncMultiClient::on_rfaFailed(
 }
 
 
-smbase::Either<std::unique_ptr<RFA_Msg_ReadFileReply>, std::string>
+ReplyPtrOptOrError<RFA_Msg_ReadFileReply>
 readFileSynchronously(
   RFA_AbstractAsyncMultiClient *rfaAMClient,
   SynchronousWaiter &waiter,
@@ -178,7 +178,7 @@ readFileSynchronously(
 }
 
 
-smbase::Either<std::unique_ptr<RFA_Msg_FileStatusReply>, std::string>
+ReplyPtrOptOrError<RFA_Msg_FileStatusReply>
 getFileStatusSynchronously(
   RFA_AbstractAsyncMultiClient *rfaAMClient,
   SynchronousWaiter &waiter,

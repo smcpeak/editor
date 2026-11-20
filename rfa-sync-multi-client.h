@@ -11,20 +11,19 @@
 #include "host-and-resource-name.h"    // HostAndResourceName
 #include "host-name.h"                 // HostName
 #include "ihfexists.h"                 // IHFExists
+#include "reply-ptr-opt.h"             // ReplyPtrOpt, ReplyPtrOptOrError
 #include "rfa-async-multi-client.h"    // RFA_AbstractAsyncMultiClient
+#include "rfa-msg.h"                   // RFA_Message
 
 // smqtutil
 #include "smqtutil/sync-wait-fwd.h"    // SynchronousWaiter [f]
-
-// smbase
-#include "smbase/either.h"             // smbase::Either
 
 // Qt
 #include <QObject>
 
 // libc++
-#include <optional>                    // std::optional
-#include <string>                      // std::string
+#include <type_traits>                 // std::is_base_of_v
+#include <utility>                     // std::move
 
 
 // Like RFA_AsyncMultiClient, but with a synchronous interface and an
@@ -53,7 +52,7 @@ private:     // data
   HostName m_hostName;
 
   // Reply, if one has arrived.
-  std::unique_ptr<RFA_Message> m_reply;
+  ReplyPtrOpt<RFA_Message> m_reply;
 
   // Connection lost message, or empty string.
   string m_connLostMessage;
@@ -73,7 +72,7 @@ public:      // instance methods
   bool issueRequestSynchronously(
     HostName const &hostName,
     std::unique_ptr<RFA_Message> request,
-    std::unique_ptr<RFA_Message> /*OUT*/ &reply,
+    ReplyPtrOpt<RFA_Message> /*OUT*/ &reply,
     string /*OUT*/ &connLostMessage);
 
   // Issue 'request' synchronously, expecting to get 'REPLY_TYPE' in the
@@ -86,7 +85,7 @@ public:      // instance methods
   // pointer.
   //
   template <class REPLY_TYPE>
-  smbase::Either<std::unique_ptr<REPLY_TYPE>, std::string>
+  ReplyPtrOptOrError<REPLY_TYPE>
   issueTypedRequestSynchronously(
     HostName const &hostName,
     std::unique_ptr<RFA_Message> request);
@@ -105,24 +104,24 @@ protected Q_SLOTS:
 
 
 template <class REPLY_TYPE>
-smbase::Either<std::unique_ptr<REPLY_TYPE>, std::string>
+ReplyPtrOptOrError<REPLY_TYPE>
 RFA_SyncMultiClient::issueTypedRequestSynchronously(
   HostName const &hostName,
   std::unique_ptr<RFA_Message> request)
 {
-  // Initially empty pointer, used for error returns.
-  std::unique_ptr<REPLY_TYPE> typedReply;
+  // Initially empty pointer.
+  ReplyPtrOpt<REPLY_TYPE> typedReply;
 
   if (!m_rfaAMClient->isValid(hostName)) {
     return stringb("Host " << hostName << " is invalid.");
   }
 
   // Issue the request.
-  std::unique_ptr<RFA_Message> genericReply;
+  ReplyPtrOpt<RFA_Message> genericReply;
   string connLostMessage;
   if (!issueRequestSynchronously(
          hostName, std::move(request), genericReply, connLostMessage)) {
-    // Request was canceled.
+    // Request was canceled; `typedReply` is still empty.
     return typedReply;
   }
 
@@ -158,8 +157,7 @@ RFA_SyncMultiClient::issueTypedRequestSynchronously(
 */
 template <class REPLY_TYPE>
 FailReasonOpt getROEErrorMessage(
-  smbase::Either<std::unique_ptr<REPLY_TYPE>, std::string>
-    const &replyOrError)
+  ReplyPtrOptOrError<REPLY_TYPE> const &replyOrError)
 {
   if (replyOrError.isRight()) {
     return replyOrError.right();
@@ -177,26 +175,9 @@ FailReasonOpt getROEErrorMessage(
 }
 
 
-/* Read the contents of `fname`, waiting for the reply and blocking user
-   input during the wait (depending on what `waiter` does).
-
-   There are four return value cases:
-
-     1. Success reply in left alternative: read the file.
-
-     2. Error reply in left alternative: error during read attempt on
-        the server, for example the file does not exist or there was a
-        file system permission issue.
-
-     3. Null pointer in left alternative: user canceled the wait.
-
-     4. Error message in right alternative: RFA communication error, for
-        example the connection was terminated.
-
-   The `getROEErrorMessage` function above can be used to combine the
-   handling of the error cases (2 and 4).
-*/
-smbase::Either<std::unique_ptr<RFA_Msg_ReadFileReply>, std::string>
+// Read the contents of `fname`, waiting for the reply and blocking user
+// input during the wait (depending on what `waiter` does).
+ReplyPtrOptOrError<RFA_Msg_ReadFileReply>
 readFileSynchronously(
   RFA_AbstractAsyncMultiClient *rfaAMClient,
   SynchronousWaiter &waiter,
@@ -204,9 +185,7 @@ readFileSynchronously(
 
 
 // Get timestamp, etc., for 'fname'.
-//
-// This has the same return cases as `readFileSynchronously`.
-smbase::Either<std::unique_ptr<RFA_Msg_FileStatusReply>, std::string>
+ReplyPtrOptOrError<RFA_Msg_FileStatusReply>
 getFileStatusSynchronously(
   RFA_AbstractAsyncMultiClient *rfaAMClient,
   SynchronousWaiter &waiter,

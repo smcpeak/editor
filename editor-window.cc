@@ -23,7 +23,7 @@
 #include "macro-creator-dialog.h"                // MacroCreatorDialog
 #include "macro-run-dialog.h"                    // MacroRunDialog
 #include "pixmaps.h"                             // g_editorPixmaps
-#include "rfa-sync-multi-client.h"               // RFA_SyncMultiClient, readFileSynchronously
+#include "rfa-sync-multi-client.h"               // RFA_SyncMultiClient, readFileSynchronously, ReplyPtrOpt
 #include "sar-panel.h"                           // SearchAndReplacePanel
 #include "status-bar.h"                          // StatusBarDisplay
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
@@ -857,7 +857,7 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
   // `EditorGlobal::reloadDocumentFile`.  Factor that, ideally putting
   // the shared logic in a module that can be unit tested.
   GUISynchronousWaiter waiter(this);
-  auto replyOrError(
+  ReplyPtrOptOrError<RFA_Msg_ReadFileReply> replyOrError(
     readFileSynchronously(rfaAMClient(), waiter, harn));
 
   if (replyOrError.isRight()) {
@@ -865,9 +865,8 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
     return;
   }
 
-  std::unique_ptr<RFA_Msg_ReadFileReply> &rfr = replyOrError.left();
-  if (!rfr) {
-    // The request was canceled.
+  ReplyPtrOpt<RFA_Msg_ReadFileReply> &rfr = replyOrError.left();
+  if (rfr.wasCanceled()) {
     return;
   }
 
@@ -911,12 +910,12 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
 
 
 template <class REPLY_TYPE>
-std::unique_ptr<REPLY_TYPE> EditorWindow::rfaQuerySynchronously(
+ReplyPtrOpt<REPLY_TYPE> EditorWindow::rfaQuerySynchronously(
   HostName const &hostName, std::unique_ptr<RFA_Message> request)
 {
   GUISynchronousWaiter waiter(this);
   RFA_SyncMultiClient rfaSMClient(rfaAMClient(), waiter);
-  auto replyOrError(
+  ReplyPtrOptOrError<REPLY_TYPE> replyOrError(
     rfaSMClient.issueTypedRequestSynchronously<REPLY_TYPE>(
       hostName, std::move(request)));
 
@@ -934,14 +933,14 @@ bool EditorWindow::checkFileExistenceSynchronously(
   HostAndResourceName const &harn)
 {
   GUISynchronousWaiter waiter(this);
-  auto replyOrError(
+  ReplyPtrOptOrError<RFA_Msg_FileStatusReply> replyOrError(
     getFileStatusSynchronously(rfaAMClient(), waiter, harn));
 
   if (replyOrError.isRight()) {
     return false;
   }
   else {
-    std::unique_ptr<RFA_Msg_FileStatusReply> &reply = replyOrError.left();
+    ReplyPtrOpt<RFA_Msg_FileStatusReply> &reply = replyOrError.left();
     return reply &&
            reply->m_success &&
            reply->m_fileKind == SMFileUtil::FK_REGULAR;
@@ -1158,7 +1157,7 @@ bool EditorWindow::reloadCurrentDocumentIfChanged()
   if (doc->hasFilename() && !doc->unsavedChanges()) {
     // Query the file modification time.
     GUISynchronousWaiter waiter(this);
-    auto replyOrError(
+    ReplyPtrOptOrError<RFA_Msg_FileStatusReply> replyOrError(
       getFileStatusSynchronously(rfaAMClient(), waiter, doc->harn()));
 
     if (replyOrError.isRight()) {
@@ -1166,7 +1165,7 @@ bool EditorWindow::reloadCurrentDocumentIfChanged()
       return false;
     }
 
-    std::unique_ptr<RFA_Msg_FileStatusReply> &reply = replyOrError.left();
+    ReplyPtrOpt<RFA_Msg_FileStatusReply> &reply = replyOrError.left();
     if (!reply) {
       return false;    // Canceled.
     }

@@ -28,7 +28,7 @@
 #include "open-files-dialog.h"                   // OpenFilesDialog
 #include "process-watcher.h"                     // ProcessWatcher
 #include "recent-items-list.h"                   // RecentItemsList
-#include "rfa-sync-multi-client.h"               // readFileSynchronously
+#include "rfa-sync-multi-client.h"               // readFileSynchronously, ReplyPtrOptOrError
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics (implicit)
 #include "textinput.h"                           // TextInputDialog
 #include "uri-util.h"                            // getFileURIPath
@@ -668,7 +668,7 @@ bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
 {
   if (doc->hasFilename()) {
     GUISynchronousWaiter waiter(parentWidget);
-    auto replyOrError(
+    ReplyPtrOptOrError<RFA_Msg_ReadFileReply> replyOrError(
       readFileSynchronously(&m_rfaAMClient, waiter, doc->harn()));
 
     if (FailReasonOpt errorMsg =
@@ -677,9 +677,8 @@ bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
       return false;
     }
 
-    std::unique_ptr<RFA_Msg_ReadFileReply> &rfr = replyOrError.left();
-    if (!rfr) {
-      // User canceled.
+    ReplyPtrOpt<RFA_Msg_ReadFileReply> &rfr = replyOrError.left();
+    if (rfr.wasCanceled()) {
       return false;
     }
 

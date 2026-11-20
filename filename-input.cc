@@ -5,6 +5,7 @@
 
 // editor
 #include "fail-reason-opt.h"           // FailReasonOpt
+#include "reply-ptr-opt.h"             // ReplyPtrOptOrError
 #include "rfa-sync-multi-client.h"     // RFA_SyncMultiClient
 
 // smqtutil
@@ -705,7 +706,7 @@ void FilenameInputDialog::on_makeDirectory() NOEXCEPT
   req->m_path = filename;
 
   // Synchronous request.
-  auto replyOrError =
+  ReplyPtrOptOrError<RFA_Msg_MakeDirectoryReply> replyOrError =
     rfaSMClient.issueTypedRequestSynchronously<RFA_Msg_MakeDirectoryReply>(
       m_currentHostName, std::move(req));
 

@@ -18,6 +18,7 @@
 #include "lsp-status-widget-fwd.h"               // LSPStatusWidget
 #include "named-td-list.h"                       // NamedTextDocumentListObserver
 #include "named-td.h"                            // NamedTextDocument
+#include "reply-ptr-opt-fwd.h"                   // ReplyPtrOpt
 #include "rfa-async-multi-client-fwd.h"          // RFA_AsyncMultiClient
 #include "rfa-msg-fwd.h"                         // RFA_Message
 #include "status-bar-fwd.h"                      // StatusBarDisplay
@@ -110,7 +111,7 @@ private:     // funcs
   // If there is an error, pop up an error box and return an empty
   // pointer.
   template <class REPLY_TYPE>
-  std::unique_ptr<REPLY_TYPE> rfaQuerySynchronously(
+  ReplyPtrOpt<REPLY_TYPE> rfaQuerySynchronously(
     HostName const &hostName, std::unique_ptr<RFA_Message> request);
 
   // Return true if 'harn' exists, blocking during the check.
