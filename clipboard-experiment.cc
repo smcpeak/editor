@@ -9,6 +9,36 @@
 // `-mwindows`) so that stdout is attached to the invoking terminal
 // while the program also shows a GUI window.
 
+/*
+  Specification:
+
+  This program opens a window that has these buttons, arranged
+  vertically:
+
+  * "OpenClipboard": Calls OpenClipboard with the window handle.
+
+  * "EmptyClipboard": Calls EmptyClipboard.
+
+  * "SetClipboardData" Calls SetClipboardData with CF_TEXT and the
+    string "Clipboard experiment text data".
+
+  * "CloseClipboard": Calls CloseClipboard.
+
+  * "GetClipboardData": Calls GetClipboardData with CF_TEXT, and if that
+    is successful, writes the retrieved string to stdout.  (Don't open
+    the clipboard first; the user can press the OpenClipboard button
+    if/when desired.)
+
+  * "Quit": Quit the program.
+
+  For all of these, it writes a line to stdout saying what function is
+  being called and with what arguments.  Afterward, it writes a line
+  with the return value.
+
+  If any function fails, it calls GetLastError() and writes a line with
+  the error code in hex and the human-readable error message to stdout.
+*/
+
 #include <windows.h>                   // Win32 API
 
 #include <stdarg.h>                    // va_list, va_start, va_end
