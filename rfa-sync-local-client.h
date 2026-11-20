@@ -1,12 +1,14 @@
-// vfs-local.h
-// VFS_LocalImpl class.
+// rfa-sync-local-client.h
+// RFA_SyncLocalClient class.
+
+// See license.txt for copyright and terms of use.
 
 // This module does not have any dependencies on Qt because it is meant
 // to be the core of a file system server program that can be easily
 // built for any target system.
 
-#ifndef EDITOR_VFS_LOCAL_H
-#define EDITOR_VFS_LOCAL_H
+#ifndef EDITOR_RFA_SYNC_LOCAL_CLIENT_H
+#define EDITOR_RFA_SYNC_LOCAL_CLIENT_H
 
 #include "rfa-msg.h"                   // request and reply messages
 
@@ -14,7 +16,10 @@
 // Local implementation of virtual file system.
 //
 // This class synchronously turns requests into replies.
-class VFS_LocalImpl {
+//
+// TODO: Have this implement RFA_AbstractSyncMultiClient once that
+// exists.
+class RFA_SyncLocalClient {
 public:      // methods
   RFA_Msg_FileStatusReply    queryPath    (RFA_Msg_FileStatusRequest    const &req);
   RFA_Msg_ReadFileReply      readFile     (RFA_Msg_ReadFileRequest      const &req);
@@ -25,4 +30,4 @@ public:      // methods
 };
 
 
-#endif // EDITOR_VFS_LOCAL_H
+#endif // EDITOR_RFA_SYNC_LOCAL_CLIENT_H

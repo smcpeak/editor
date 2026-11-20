@@ -17,7 +17,7 @@
         "x": 465,
         "y": 340
       },
-      "name": "vfs-local",
+      "name": "rfa-sync-local-client",
       "size": {
         "h": 20,
         "w": 100

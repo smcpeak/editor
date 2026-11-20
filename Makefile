@@ -382,7 +382,7 @@ EDITOR_FS_SERVER_OBJS += editor-fs-server.o
 EDITOR_FS_SERVER_OBJS += editor-version.o
 EDITOR_FS_SERVER_OBJS += git-version.gen.o
 EDITOR_FS_SERVER_OBJS += rfa-msg.o
-EDITOR_FS_SERVER_OBJS += vfs-local.o
+EDITOR_FS_SERVER_OBJS += rfa-sync-local-client.o
 
 editor-fs-server.exe: $(EDITOR_FS_SERVER_OBJS) $(CONSOLE_LIBRARIES)
 	@# Link this with -static because it gets invoked over an SSH

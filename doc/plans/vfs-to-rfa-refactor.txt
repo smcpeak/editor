@@ -274,7 +274,7 @@ In general:
     VFS_LocalImpl -> RFA_SyncLocalClient
 
       Class body is unchanged.  We already changed the message class
-      names in step 1.1.
+      names in step 1.2.
 
 1.4. Rename vfs-query:
 

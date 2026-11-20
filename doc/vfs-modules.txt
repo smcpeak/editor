@@ -13,9 +13,9 @@ VFS-related modules with no Qt dependence:
     serializable message structures for the protocol.  Also defines
     VFS_MT_*, the associated numeric message type codes.
 
-  vfs-local
+  rfa-sync-local-client
 
-    VFS_LocalImpl, which performs the VFS file system access locally
+    RFA_SyncLocalClient, which performs the VFS file system access locally
     as part of the VFS server process.
 
   nearby-file
@@ -64,7 +64,7 @@ Editor non-GUI modules that use VFS:
 
   editor-fs-server
 
-    VFS server process, uses vfs-local.
+    VFS server process, uses rfa-sync-local-client.
 
 Editor GUI modules that use VFS:
 

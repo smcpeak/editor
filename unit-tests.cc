@@ -125,7 +125,7 @@ static void entry(int argc, char **argv)
   RUN_TEST(ocaml_hilite);              // deps: bufferlinesource, textcategory
   RUN_TEST(python_hilite);             // deps: bufferlinesource, textcategory
 
-  RUN_TEST(editor_fs_server);          // deps: editor-version, vfs-local
+  RUN_TEST(editor_fs_server);          // deps: editor-version, rfa-sync-local-client
 
   // SCC: lsp-conv, lsp-data, lsp-client, named-td, td-diagnostics, td-obs-recorder
   RUN_TEST(lsp_conv);                  // deps: lsp-data, lsp-client, named-td, range-text-repl, td-change, td-change-seq, td-core, td-diagnostics, td-obs-recorder, textmcoord, uri-util

@@ -1,9 +1,9 @@
 // editor-fs-server.cc
 // Program to serve virtual file system requests.
 
-#include "vfs-local.h"                           // VFS_LocalImpl
-
+// editor
 #include "editor-version.h"                      // getEditorVersionString
+#include "rfa-sync-local-client.h"               // RFA_SyncLocalClient
 
 // smbase
 #include "smbase/bflatten.h"                     // StreamFlatten
@@ -185,7 +185,7 @@ void sendReply(RFA_Message const &msg)
 
 int innerMain()
 {
-  VFS_LocalImpl localImpl;
+  RFA_SyncLocalClient localImpl;
 
   // Allow an artificial delay to be inserted into message processing
   // for testing purposes.

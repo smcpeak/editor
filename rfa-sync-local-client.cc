@@ -1,7 +1,7 @@
-// vfs-local.cc
-// Code for vfs-local.h.
+// rfa-sync-local-client.cc
+// Code for rfa-sync-local-client.h.
 
-#include "vfs-local.h"                           // this module
+#include "rfa-sync-local-client.h"               // this module
 
 // smbase
 #include "smbase/exc.h"                          // smbase::XBase
@@ -13,7 +13,7 @@
 using namespace smbase;
 
 
-// Catch block for VFS_LocalImpl methods that service a PathRequest.
+// Catch block for RFA_SyncLocalClient methods that service a PathRequest.
 // It sets the failure code and reason of 'reply'.
 #define PATH_REQUEST_CATCH_BLOCK                                     \
   catch (XSysError &x) {                                             \
@@ -24,7 +24,7 @@ using namespace smbase;
   }
 
 
-RFA_Msg_FileStatusReply VFS_LocalImpl::queryPath(RFA_Msg_FileStatusRequest const &req)
+RFA_Msg_FileStatusReply RFA_SyncLocalClient::queryPath(RFA_Msg_FileStatusRequest const &req)
 {
   SMFileUtil sfu;
 
@@ -51,7 +51,7 @@ RFA_Msg_FileStatusReply VFS_LocalImpl::queryPath(RFA_Msg_FileStatusRequest const
 }
 
 
-RFA_Msg_ReadFileReply VFS_LocalImpl::readFile(
+RFA_Msg_ReadFileReply RFA_SyncLocalClient::readFile(
   RFA_Msg_ReadFileRequest const &req)
 {
   SMFileUtil sfu;
@@ -73,7 +73,7 @@ RFA_Msg_ReadFileReply VFS_LocalImpl::readFile(
 }
 
 
-RFA_Msg_WriteFileReply VFS_LocalImpl::writeFile(
+RFA_Msg_WriteFileReply RFA_SyncLocalClient::writeFile(
   RFA_Msg_WriteFileRequest const &req)
 {
   SMFileUtil sfu;
@@ -92,7 +92,7 @@ RFA_Msg_WriteFileReply VFS_LocalImpl::writeFile(
 }
 
 
-RFA_Msg_DeleteFileReply VFS_LocalImpl::deleteFile(
+RFA_Msg_DeleteFileReply RFA_SyncLocalClient::deleteFile(
   RFA_Msg_DeleteFileRequest const &req)
 {
   SMFileUtil sfu;
@@ -108,7 +108,7 @@ RFA_Msg_DeleteFileReply VFS_LocalImpl::deleteFile(
 }
 
 
-RFA_Msg_GetDirEntriesReply VFS_LocalImpl::getDirEntries(
+RFA_Msg_GetDirEntriesReply RFA_SyncLocalClient::getDirEntries(
   RFA_Msg_GetDirEntriesRequest const &req)
 {
   SMFileUtil sfu;
@@ -130,7 +130,7 @@ RFA_Msg_GetDirEntriesReply VFS_LocalImpl::getDirEntries(
 }
 
 
-RFA_Msg_MakeDirectoryReply VFS_LocalImpl::makeDirectory(
+RFA_Msg_MakeDirectoryReply RFA_SyncLocalClient::makeDirectory(
   RFA_Msg_MakeDirectoryRequest const &req)
 {
   SMFileUtil sfu;

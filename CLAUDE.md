@@ -134,7 +134,7 @@ Subsystems:
 
 - **VFS (remote files).** `rfa-msg` defines the request and reply
   messages. `editor-fs-server.exe` (`editor-fs-server.cc` +
-  `vfs-local`) is a statically linked server that serves them over
+  `rfa-sync-local-client`) is a statically linked server that serves them over
   stdin/stdout, run either locally or through `ssh host
   editor-fs-server.exe`. `VFS_FileSystemQuery` (`vfs-query`) is one
   connection, and `VFS_Connections` manages one per host with an async
