@@ -78,7 +78,7 @@ public:      // types
 
   // State of the connection to a single host.
   //
-  // See doc/vfs-connections-lifecycle.ded.png for a transition
+  // See doc/rfa-connections-lifecycle.ded.png for a transition
   // diagram.
   //
   // Note: These states have some similarities with

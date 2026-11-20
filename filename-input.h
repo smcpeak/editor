@@ -89,7 +89,7 @@ private:     // data
   QPushButton *m_makeDirectoryButton;
   QPushButton *m_refreshButton;
 
-  // ---- vfs access state ----
+  // ---- rfa access state ----
   // Interface to issue RFA queries.
   //
   // Assumption: The set of valid hosts does not change while this

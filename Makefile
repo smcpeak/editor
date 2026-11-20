@@ -423,7 +423,7 @@ out/editor-fs-server-on-path.ok: editor-fs-server.exe
 test-prog-outs: out/rfa-async-multi-client-test-localhost.ok
 out/rfa-async-multi-client-test-localhost.ok: unit-tests.exe editor-fs-server.exe out/editor-fs-server-on-path.ok
 	$(CREATE_OUTPUT_DIRECTORY)
-	$(RUN_WITH_TIMEOUT) ./unit-tests.exe vfs_connections localhost \
+	$(RUN_WITH_TIMEOUT) ./unit-tests.exe rfa_async_multi_client localhost \
 	  </dev/null >out/rfa-async-multi-client-test-localhost.out 2>&1
 	touch $@
 

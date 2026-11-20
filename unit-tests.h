@@ -53,6 +53,7 @@ void test_positive_line_count(CmdlineArgsSpan args);
 void test_python_hilite(CmdlineArgsSpan args);
 void test_range_text_repl(CmdlineArgsSpan args);
 void test_recent_items_list(CmdlineArgsSpan args);
+void test_rfa_async_multi_client(CmdlineArgsSpan args);
 void test_rle_inf_sequence(CmdlineArgsSpan args);
 void test_td(CmdlineArgsSpan args);
 void test_td_change(CmdlineArgsSpan args);
@@ -68,7 +69,6 @@ void test_textcategory(CmdlineArgsSpan args);
 void test_textmcoord(CmdlineArgsSpan args);
 void test_textmcoord_map(CmdlineArgsSpan args);
 void test_uri_util(CmdlineArgsSpan args);
-void test_vfs_connections(CmdlineArgsSpan args);
 void test_wrapped_integer(CmdlineArgsSpan args);
 
 

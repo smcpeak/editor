@@ -110,7 +110,7 @@ private:     // funcs
   // If there is an error, pop up an error box and return an empty
   // pointer.
   template <class REPLY_TYPE>
-  std::unique_ptr<REPLY_TYPE> vfsQuerySynchronously(
+  std::unique_ptr<REPLY_TYPE> rfaQuerySynchronously(
     HostName const &hostName, std::unique_ptr<RFA_Message> request);
 
   // Return true if 'harn' exists, blocking during the check.

@@ -139,7 +139,7 @@ Subsystems:
   editor-fs-server.exe`. `RFA_AsyncSingleClient` (`rfa-async-single-client`) is one
   connection, and `RFA_AsyncMultiClient` manages one per host with an async
   request/reply API. `rfa-sync-multi-client` gives a synchronous wrapper. See the
-  lifecycle diagrams in `doc/vfs-*.ded.png`.
+  lifecycle diagrams in `doc/rfa-*.ded.png`.
 - **LSP.** `command-runner` (wraps `QProcess`), then `json-rpc-client`,
   then `lsp-client`, which speaks the LSP protocol and keeps the state
   machine in `lsp-protocol-state` (see `doc/lsp-state-diagram.ded.png`).

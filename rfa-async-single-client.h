@@ -39,7 +39,7 @@ class RFA_AsyncSingleClient : public QObject {
 public:      // types
   // States that the query object can be in.
   //
-  // See doc/vfs-query-lifecycle.ded.png for the life cycle.
+  // See doc/rfa-query-lifecycle.ded.png for the life cycle.
   enum State {
     S_CREATED,     // Just created.
     S_CONNECTING,  // Establishing connection.

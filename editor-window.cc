@@ -911,7 +911,7 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
 
 
 template <class REPLY_TYPE>
-std::unique_ptr<REPLY_TYPE> EditorWindow::vfsQuerySynchronously(
+std::unique_ptr<REPLY_TYPE> EditorWindow::rfaQuerySynchronously(
   HostName const &hostName, std::unique_ptr<RFA_Message> request)
 {
   SynchronousWaiter waiter(this);
@@ -1008,7 +1008,7 @@ void EditorWindow::writeTheFile()
   req->m_path = file->filename();
   req->m_contents = file->getWholeFile();
   std::unique_ptr<RFA_Msg_WriteFileReply> reply(
-    vfsQuerySynchronously<RFA_Msg_WriteFileReply>(file->hostName(),
+    rfaQuerySynchronously<RFA_Msg_WriteFileReply>(file->hostName(),
                                               std::move(req)));
 
   if (reply) {

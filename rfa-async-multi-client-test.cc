@@ -292,7 +292,7 @@ void RFA_AsyncMultiClientTest::on_rfaFailed(
 
 
 // Called from unit-tests.cc.
-void test_vfs_connections(CmdlineArgsSpan args)
+void test_rfa_async_multi_client(CmdlineArgsSpan args)
 {
   RFA_AsyncMultiClientTest connsTest(args);
   connsTest.runTests();
