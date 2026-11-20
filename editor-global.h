@@ -47,9 +47,6 @@
 #include "smbase/std-optional-fwd.h"             // std::optional [n]
 #include "smbase/std-string-fwd.h"               // std::string [n]
 
-// smqtutil
-#include "smqtutil/sync-wait-fwd.h"              // SynchronousWaiter [n]
-
 // Qt
 #include <QApplication>
 

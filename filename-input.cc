@@ -12,7 +12,7 @@
 #include "smqtutil/qtguiutil.h"        // messageBox
 #include "smqtutil/qtutil.h"           // toString(QString)
 #include "smqtutil/sm-line-edit.h"     // SMLineEdit
-#include "smqtutil/sync-wait.h"        // SynchronousWaiter
+#include "smqtutil/sync-wait.h"        // GUISynchronousWaiter
 
 // smbase
 #include "smbase/gdvalue.h"            // gdv::GDValue
@@ -698,7 +698,7 @@ void FilenameInputDialog::on_makeDirectory() NOEXCEPT
 
   TRACE("FilenameInputDialog",
     "Making directory: " << doubleQuote(filename));
-  SynchronousWaiter waiter(this);
+  GUISynchronousWaiter waiter(this);
   RFA_SyncMultiClient rfaSMClient(m_rfaAMClient, waiter);
 
   auto req = std::make_unique<RFA_Msg_MakeDirectoryRequest>();

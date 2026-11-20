@@ -9,7 +9,7 @@
 // smqtutil
 #include "smqtutil/qstringb.h"         // qstringb
 #include "smqtutil/qtguiutil.h"        // messageBox
-#include "smqtutil/sync-wait.h"        // synchronouslyWaitUntil
+#include "smqtutil/sync-wait.h"        // SynchronousWaiter
 
 // smbase
 #include "smbase/htt.h"                // HTT_TASK

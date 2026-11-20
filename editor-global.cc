@@ -38,7 +38,7 @@
 #include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtguiutil.h"                  // showRaiseAndActivateWindow, messageBox
 #include "smqtutil/qtutil.h"                     // toQString, installSMQtUtilMessageHandler
-#include "smqtutil/sync-wait.h"                  // SynchronousWaiter
+#include "smqtutil/sync-wait.h"                  // GUISynchronousWaiter
 #include "smqtutil/timer-event-loop.h"           // sleepWhilePumpingEvents
 
 // smbase
@@ -667,7 +667,7 @@ bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
                                       NamedTextDocument *doc)
 {
   if (doc->hasFilename()) {
-    SynchronousWaiter waiter(parentWidget);
+    GUISynchronousWaiter waiter(parentWidget);
     auto replyOrError(
       readFileSynchronously(&m_rfaAMClient, waiter, doc->harn()));
 

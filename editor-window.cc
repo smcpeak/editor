@@ -37,7 +37,7 @@
 #include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtguiutil.h"                  // CursorSetRestore, setTrueFrameGeometry
 #include "smqtutil/qtutil.h"                     // toQString
-#include "smqtutil/sync-wait.h"                  // SynchronousWaiter
+#include "smqtutil/sync-wait.h"                  // GUISynchronousWaiter
 
 // smbase
 #include "smbase/chained-cond.h"                 // cc::z_le_lt
@@ -856,7 +856,7 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
   // TODO: This duplicates logic that is in
   // `EditorGlobal::reloadDocumentFile`.  Factor that, ideally putting
   // the shared logic in a module that can be unit tested.
-  SynchronousWaiter waiter(this);
+  GUISynchronousWaiter waiter(this);
   auto replyOrError(
     readFileSynchronously(rfaAMClient(), waiter, harn));
 
@@ -914,7 +914,7 @@ template <class REPLY_TYPE>
 std::unique_ptr<REPLY_TYPE> EditorWindow::rfaQuerySynchronously(
   HostName const &hostName, std::unique_ptr<RFA_Message> request)
 {
-  SynchronousWaiter waiter(this);
+  GUISynchronousWaiter waiter(this);
   RFA_SyncMultiClient rfaSMClient(rfaAMClient(), waiter);
   auto replyOrError(
     rfaSMClient.issueTypedRequestSynchronously<REPLY_TYPE>(
@@ -933,7 +933,7 @@ std::unique_ptr<REPLY_TYPE> EditorWindow::rfaQuerySynchronously(
 bool EditorWindow::checkFileExistenceSynchronously(
   HostAndResourceName const &harn)
 {
-  SynchronousWaiter waiter(this);
+  GUISynchronousWaiter waiter(this);
   auto replyOrError(
     getFileStatusSynchronously(rfaAMClient(), waiter, harn));
 
@@ -1157,7 +1157,7 @@ bool EditorWindow::reloadCurrentDocumentIfChanged()
 
   if (doc->hasFilename() && !doc->unsavedChanges()) {
     // Query the file modification time.
-    SynchronousWaiter waiter(this);
+    GUISynchronousWaiter waiter(this);
     auto replyOrError(
       getFileStatusSynchronously(rfaAMClient(), waiter, doc->harn()));
 

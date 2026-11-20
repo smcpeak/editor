@@ -43,22 +43,12 @@ RFA-related modules that use Qt core (QObject) but no GUI depedence:
 
   rfa-sync-multi-client
 
-    RFA_SyncMultiClient, which offers a synchronous but cancelable interface
-    on top of RFA_AbstractAsyncMultiClient.  Waiting and cancelation are
-    provided by SynchronousWaiter (hence there is a small GUI
-    dependency).  This has Qt slots to interface with
+    RFA_SyncMultiClient, which offers a synchronous but cancelable
+    interface on top of RFA_AbstractAsyncMultiClient.  Waiting and
+    cancelation are provided by a SynchronousWaiter
+    (smqtutil/sync-wait.h).  This has Qt slots to interface with
     RFA_AbstractAsyncMultiClient, but does not use Qt in its public
     interface.
-
-RFA-related that depends on Qt GUI:
-
-  smqtutil/sync-wait
-
-    SynchronousWaiter, an interface that allows a client to wait until
-    a condition is true, but the wait can be canceled.  Depends on Qt
-    QWidget but probably shouldn't.  Also provides a production
-    implementation that pops up a GUI with a Cancel button, and a test
-    implementation that does not.
 
 Editor non-GUI modules that use RFA:
 

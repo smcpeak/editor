@@ -14,7 +14,7 @@
 #include "rfa-async-multi-client.h"    // RFA_AbstractAsyncMultiClient
 
 // smqtutil
-#include "smqtutil/sync-wait.h"        // SynchronousWaiter
+#include "smqtutil/sync-wait-fwd.h"    // SynchronousWaiter [f]
 
 // smbase
 #include "smbase/either.h"             // smbase::Either

@@ -51,7 +51,7 @@
 #include "smqtutil/qtbdffont.h"                  // QtBDFFont, drawHexQuad
 #include "smqtutil/qtguiutil.h"                  // keysString(QKeyEvent), QPainterSaveRestore, showRaiseAndActivateWindow, setClipboardWithRetry
 #include "smqtutil/qtutil.h"                     // toString(QString), SET_QOBJECT_NAME, toQString
-#include "smqtutil/sync-wait.h"                  // synchronouslyWaitUntil, SynchronousWaiter
+#include "smqtutil/sync-wait.h"                  // synchronouslyWaitUntil, GUISynchronousWaiter
 
 // smbase
 #include "smbase/array.h"                        // Array
@@ -634,7 +634,7 @@ void EditorWidget::openDiagnosticOrFileAtCursor(
   // used files considered first.
   editorGlobal()->getUniqueDocumentDirectories(prefixes);
 
-  SynchronousWaiter waiter(this);
+  GUISynchronousWaiter waiter(this);
   RFA_SyncMultiClient rfaSMClient(rfaAMClient(), waiter);
 
   // Convert to model coordinates in order to get a byte index into
@@ -3241,7 +3241,7 @@ void EditorWidget::lspHandleLocationReply(
       }
 
       // Query them all.  This does a synchronous wait.
-      SynchronousWaiter waiter(this);
+      GUISynchronousWaiter waiter(this);
       if (std::optional<std::vector<std::string>> codeLines =
             lspClientManager()->getCodeLines(
               getDocument(), waiter, locations)) {
