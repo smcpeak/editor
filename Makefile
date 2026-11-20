@@ -264,6 +264,8 @@ EDITOR_OBJS += os-wait-timer.o
 EDITOR_OBJS += positive-line-count.o
 EDITOR_OBJS += python_hilite.yy.o
 EDITOR_OBJS += range-text-repl.o
+EDITOR_OBJS += rfa-async-multi-client.moc.o
+EDITOR_OBJS += rfa-async-multi-client.o
 EDITOR_OBJS += rfa-async-single-client.moc.o
 EDITOR_OBJS += rfa-async-single-client.o
 EDITOR_OBJS += rfa-msg.o
@@ -283,8 +285,6 @@ EDITOR_OBJS += textlcoord.o
 EDITOR_OBJS += textmcoord-map.o
 EDITOR_OBJS += textmcoord.o
 EDITOR_OBJS += uri-util.o
-EDITOR_OBJS += vfs-connections.moc.o
-EDITOR_OBJS += vfs-connections.o
 EDITOR_OBJS += vfs-query-sync.moc.o
 EDITOR_OBJS += vfs-query-sync.o
 EDITOR_OBJS += vfs-test-connections.moc.o
@@ -337,6 +337,8 @@ UNIT_TESTS_OBJS += positive-line-count-test.o
 UNIT_TESTS_OBJS += python-hilite-test.o
 UNIT_TESTS_OBJS += range-text-repl-test.o
 UNIT_TESTS_OBJS += recent-items-list-test.o
+UNIT_TESTS_OBJS += rfa-async-multi-client-test.moc.o
+UNIT_TESTS_OBJS += rfa-async-multi-client-test.o
 UNIT_TESTS_OBJS += rle-inf-sequence-test.o
 UNIT_TESTS_OBJS += td-change-test.o
 UNIT_TESTS_OBJS += td-core-test.o
@@ -353,8 +355,6 @@ UNIT_TESTS_OBJS += textmcoord-map-test.o
 UNIT_TESTS_OBJS += textmcoord-test.o
 UNIT_TESTS_OBJS += unit-tests.o
 UNIT_TESTS_OBJS += uri-util-test.o
-UNIT_TESTS_OBJS += vfs-connections-test.moc.o
-UNIT_TESTS_OBJS += vfs-connections-test.o
 UNIT_TESTS_OBJS += wrapped-integer-test.o
 
 unit-tests.exe: $(UNIT_TESTS_OBJS) $(GUI_LIBRARIES)
@@ -365,7 +365,7 @@ unit-tests.exe: $(UNIT_TESTS_OBJS) $(GUI_LIBRARIES)
 
 $(eval $(call RUN_TEST_PROG,unit-tests))
 
-# Some of the unit tests (e.g., vfs-connections-test) require the server
+# Some of the unit tests (e.g., rfa-async-multi-client-test) require the server
 # executable.
 out/unit-tests.ok: editor-fs-server.exe
 
@@ -420,11 +420,11 @@ out/editor-fs-server-on-path.ok: editor-fs-server.exe
 	fi
 	touch $@
 
-test-prog-outs: out/vfs-connections-test-localhost.ok
-out/vfs-connections-test-localhost.ok: unit-tests.exe editor-fs-server.exe out/editor-fs-server-on-path.ok
+test-prog-outs: out/rfa-async-multi-client-test-localhost.ok
+out/rfa-async-multi-client-test-localhost.ok: unit-tests.exe editor-fs-server.exe out/editor-fs-server-on-path.ok
 	$(CREATE_OUTPUT_DIRECTORY)
 	$(RUN_WITH_TIMEOUT) ./unit-tests.exe vfs_connections localhost \
-	  </dev/null >out/vfs-connections-test-localhost.out 2>&1
+	  </dev/null >out/rfa-async-multi-client-test-localhost.out 2>&1
 	touch $@
 
 test-prog-outs: out/editor-fs-server-test-localhost.ok

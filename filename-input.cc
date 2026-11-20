@@ -51,7 +51,7 @@ FilenameInputDialog::History::~History()
 
 FilenameInputDialog::FilenameInputDialog(
   History *history,
-  VFS_Connections *vfsConnections,
+  RFA_AsyncMultiClient *rfaAMClient,
   QWidget *parent,
   Qt::WindowFlags f)
 :
@@ -64,7 +64,7 @@ FilenameInputDialog::FilenameInputDialog(
   m_helpButton(nullptr),
   m_makeDirectoryButton(nullptr),
   m_refreshButton(nullptr),
-  m_vfsConnections(vfsConnections),
+  m_rfaAMClient(rfaAMClient),
   m_hostNameList(),
   m_currentHostName(HostName::asLocal()),
   m_currentRequestID(0),
@@ -90,7 +90,7 @@ FilenameInputDialog::FilenameInputDialog(
     m_connectionDropDown = new QComboBox(this);
     m_connectionDropDown->setSizePolicy(QSizePolicy::Expanding, // horiz
                                         QSizePolicy::Fixed);    // vert
-    m_hostNameList = m_vfsConnections->getHostNames();
+    m_hostNameList = m_rfaAMClient->getHostNames();
     for (HostName const &hostName : m_hostNameList) {
       m_connectionDropDown->addItem(toQString(hostName.toString()));
     }
@@ -157,7 +157,7 @@ FilenameInputDialog::FilenameInputDialog(
   this->resize(m_history->m_dialogSize);
 
   QObject::connect(
-    m_vfsConnections, &VFS_Connections::signal_rfaReplyAvailable,
+    m_rfaAMClient, &RFA_AsyncMultiClient::signal_rfaReplyAvailable,
     this, &FilenameInputDialog::on_rfaReplyAvailable);
 }
 
@@ -168,7 +168,7 @@ FilenameInputDialog::~FilenameInputDialog()
   QObject::disconnect(m_connectionDropDown, nullptr, this, nullptr);
   QObject::disconnect(m_filenameEdit, nullptr, this, nullptr);
   QObject::disconnect(m_helpButton, nullptr, this, nullptr);
-  QObject::disconnect(m_vfsConnections, nullptr, this, nullptr);
+  QObject::disconnect(m_rfaAMClient, nullptr, this, nullptr);
 }
 
 
@@ -199,7 +199,7 @@ bool FilenameInputDialog::runDialog(
 
   // We should have now established the invariant that the current host
   // name is valid.
-  xassert(m_vfsConnections->isValid(m_currentHostName));
+  xassert(m_rfaAMClient->isValid(m_currentHostName));
 
   // Set the focus on the text edit so I can start typing immediately.
   m_filenameEdit->setFocus(Qt::OtherFocusReason);
@@ -280,7 +280,7 @@ void FilenameInputDialog::queryDirectoryIfNeeded()
   req->m_path = dir;
 
   m_currentRequestDir = dir;
-  m_vfsConnections->issueRequest(m_currentRequestID /*OUT*/,
+  m_rfaAMClient->issueRequest(m_currentRequestID /*OUT*/,
                                  m_currentHostName,
                                  std::move(req));
 }
@@ -292,7 +292,7 @@ void FilenameInputDialog::cancelCurrentRequestIfAny()
     TRACE("FilenameInputDialog",
       "canceling outstanding request for: " << m_currentRequestDir);
 
-    m_vfsConnections->cancelRequest(m_currentRequestID);
+    m_rfaAMClient->cancelRequest(m_currentRequestID);
     m_currentRequestID = 0;
     m_currentRequestDir = "";
   }
@@ -300,7 +300,7 @@ void FilenameInputDialog::cancelCurrentRequestIfAny()
 
 
 void FilenameInputDialog::on_rfaReplyAvailable(
-  VFS_Connections::RequestID requestID) NOEXCEPT
+  RFA_AsyncMultiClient::RequestID requestID) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -309,7 +309,7 @@ void FilenameInputDialog::on_rfaReplyAvailable(
       "on_rfaReplyAvailable: reply arrived for: " << m_currentRequestDir);
 
     std::unique_ptr<RFA_Message> reply(
-      m_vfsConnections->takeReply(requestID));
+      m_rfaAMClient->takeReply(requestID));
     RFA_Msg_GetDirEntriesReply const *gde = reply->asGetDirEntriesReplyC();
 
     m_cachedDirectory = m_currentRequestDir;
@@ -632,8 +632,8 @@ void FilenameInputDialog::on_connectionIndexChanged(int index) NOEXCEPT
   m_currentHostName = m_hostNameList.at(index);
 
   // Change directory to host's starting directory.
-  if (m_vfsConnections->isOrWasConnected(m_currentHostName)) {
-    string dir = m_vfsConnections->getStartingDirectory(m_currentHostName);
+  if (m_rfaAMClient->isOrWasConnected(m_currentHostName)) {
+    string dir = m_rfaAMClient->getStartingDirectory(m_currentHostName);
     m_filenameEdit->setText(toQString(dir));
   }
   else {
@@ -699,7 +699,7 @@ void FilenameInputDialog::on_makeDirectory() NOEXCEPT
   TRACE("FilenameInputDialog",
     "Making directory: " << doubleQuote(filename));
   SynchronousWaiter waiter(this);
-  VFS_QuerySync querySync(m_vfsConnections, waiter);
+  VFS_QuerySync querySync(m_rfaAMClient, waiter);
 
   auto req = std::make_unique<RFA_Msg_MakeDirectoryRequest>();
   req->m_path = filename;

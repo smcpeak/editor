@@ -26,9 +26,10 @@
 #include "lsp-client-manager-fwd.h"              // LSPClientManager [n]
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "lsp-version-number-fwd.h"              // LSP_VersionNumber [n]
-#include "named-td-list.h"                       // NamedTextDocumentListObserver
 #include "named-td-editor.h"                     // NamedTextDocumentEditor
+#include "named-td-list.h"                       // NamedTextDocumentListObserver
 #include "named-td.h"                            // NamedTextDocument
+#include "rfa-async-multi-client.h"              // RFA_AsyncMultiClient
 #include "sar-panel-fwd.h"                       // SearchAndReplacePanel [n]
 #include "styledb.h"                             // TextCategoryAndStyle, EditorFontSet
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics::DocEntry
@@ -36,7 +37,6 @@
 #include "text-search.h"                         // TextSearch
 #include "textcategory.h"                        // TextCategory, LineCategoryAOAs
 #include "uri-util.h"                            // URIPathSemantics
-#include "vfs-connections.h"                     // VFS_Connections
 
 // smqtutil
 #include "smqtutil/qtbdffont-fwd.h"              // QtBDFFont [n]
@@ -146,7 +146,7 @@ private:     // data
   // ------ file modification query ------
   // If not zero, the ID of the outstanding request for the file status
   // of the document being edited.
-  VFS_Connections::RequestID m_fileStatusRequestID;
+  RFA_AsyncMultiClient::RequestID m_fileStatusRequestID;
 
   // The editor whose status was requested, if any.
   //
@@ -607,7 +607,7 @@ public:      // funcs
 
   // -------------------- interaction with files ------------------
   // Get the connections interface object.
-  VFS_Connections *vfsConnections() const;
+  RFA_AsyncMultiClient *rfaAMClient() const;
 
   // nonfocus listening
   void startListening();
@@ -645,7 +645,7 @@ public:      // funcs
   NamedTextDocument *getDocument() const;
 
   // True if the document has a file name, and the host name is still
-  // valid in 'vfsConnections()'.
+  // valid in 'rfaAMClient()'.
   bool hasValidFileAndHostName() const;
 
   // Get what the user thinks of as the "current directory" for this
@@ -858,9 +858,9 @@ public Q_SLOTS:
   void scrollToLine(int line);
   void scrollToCol(int col);
 
-  // Handlers for VFS_Connections.
-  void on_rfaReplyAvailable(VFS_Connections::RequestID requestID) NOEXCEPT;
-  void on_vfsConnectionFailed(HostName hostName, string reason) NOEXCEPT;
+  // Handlers for RFA_AsyncMultiClient.
+  void on_rfaReplyAvailable(RFA_AsyncMultiClient::RequestID requestID) NOEXCEPT;
+  void on_rfaConnectionFailed(HostName hostName, string reason) NOEXCEPT;
 
   // Handler for `DiagnosticDetailsDialog`.
   void on_jumpToDiagnosticLocation(DiagnosticElement const &element) NOEXCEPT;

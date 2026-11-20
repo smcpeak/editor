@@ -15,8 +15,8 @@
 #include "lsp-get-code-lines.h"                  // lspGetCodeLinesFunction
 #include "named-td-list.h"                       // NamedTextDocumentList
 #include "named-td.h"                            // NamedTextDocument
+#include "rfa-async-multi-client.h"              // RFA_AbstractAsyncMultiClient
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
-#include "vfs-connections.h"                     // VFS_AbstractConnections
 
 #include "smbase/chained-cond.h"                 // smbase::cc::z_le_lt
 #include "smbase/exc.h"                          // smbase::xmessage, GENERIC_CATCH_{BEGIN,END}
@@ -108,7 +108,7 @@ LSPClientManager::~LSPClientManager()
 
 LSPClientManager::LSPClientManager(
   NNRCSerf<NamedTextDocumentList> documentList,
-  NNRCSerf<VFS_AbstractConnections> vfsConnections,
+  NNRCSerf<RFA_AbstractAsyncMultiClient> rfaAMClient,
   bool useRealServer,
   std::string logFileDirectory,
   std::ostream * NULLABLE protocolDiagnosticLog)
@@ -116,7 +116,7 @@ LSPClientManager::LSPClientManager(
   QObject(),
   SerfRefCount(),
   IMEMBFP(documentList),
-  IMEMBFP(vfsConnections),
+  IMEMBFP(rfaAMClient),
   IMEMBFP(useRealServer),
   IMEMBFP(logFileDirectory),
   IMEMBFP(protocolDiagnosticLog),
@@ -634,7 +634,7 @@ std::optional<std::vector<std::string>> LSPClientManager::getCodeLines(
       waiter,
       locations,
       *client,
-      *m_vfsConnections);
+      *m_rfaAMClient);
   }
   else {
     return {};

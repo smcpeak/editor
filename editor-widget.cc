@@ -227,10 +227,10 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
   // editor widget.
   installEventFilter(this);
 
-  QObject::connect(vfsConnections(), &VFS_Connections::signal_rfaReplyAvailable,
+  QObject::connect(rfaAMClient(), &RFA_AsyncMultiClient::signal_rfaReplyAvailable,
                    this, &EditorWidget::on_rfaReplyAvailable);
-  QObject::connect(vfsConnections(), &VFS_Connections::signal_vfsFailed,
-                   this, &EditorWidget::on_vfsConnectionFailed);
+  QObject::connect(rfaAMClient(), &RFA_AsyncMultiClient::signal_rfaFailed,
+                   this, &EditorWidget::on_rfaConnectionFailed);
 
   selfCheck();
 
@@ -249,7 +249,7 @@ EditorWidget::~EditorWidget()
 
   m_textSearch.reset();
 
-  QObject::disconnect(vfsConnections(), nullptr, this, nullptr);
+  QObject::disconnect(rfaAMClient(), nullptr, this, nullptr);
   cancelFileStatusRequestIfAny();
 
   // Do this explicitly just for clarity, but the automatic destruction
@@ -499,7 +499,7 @@ void EditorWidget::requestFileStatus()
 
   std::unique_ptr<RFA_Msg_FileStatusRequest> req(new RFA_Msg_FileStatusRequest);
   req->m_path = getDocument()->filename();
-  vfsConnections()->issueRequest(m_fileStatusRequestID,
+  rfaAMClient()->issueRequest(m_fileStatusRequestID,
     getDocument()->hostName(), std::move(req));
   m_fileStatusRequestEditor = m_editor;
 
@@ -511,7 +511,7 @@ void EditorWidget::cancelFileStatusRequestIfAny()
 {
   if (m_fileStatusRequestID) {
     TRACE1("cancelFileStatusRequestIfAny: RFA id=" << m_fileStatusRequestID);
-    vfsConnections()->cancelRequest(m_fileStatusRequestID);
+    rfaAMClient()->cancelRequest(m_fileStatusRequestID);
     m_fileStatusRequestID = 0;
     m_fileStatusRequestEditor = nullptr;
   }
@@ -519,7 +519,7 @@ void EditorWidget::cancelFileStatusRequestIfAny()
 
 
 void EditorWidget::on_rfaReplyAvailable(
-  VFS_Connections::RequestID requestID) NOEXCEPT
+  RFA_AsyncMultiClient::RequestID requestID) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -532,7 +532,7 @@ void EditorWidget::on_rfaReplyAvailable(
     m_fileStatusRequestEditor = nullptr;
 
     std::unique_ptr<RFA_Message> genericReply(
-      vfsConnections()->takeReply(requestID));
+      rfaAMClient()->takeReply(requestID));
     RFA_Msg_FileStatusReply const *reply =
       genericReply->asFileStatusReplyC();
     if (reply->m_success &&
@@ -560,12 +560,12 @@ void EditorWidget::on_rfaReplyAvailable(
 }
 
 
-void EditorWidget::on_vfsConnectionFailed(
+void EditorWidget::on_rfaConnectionFailed(
   HostName hostName, string reason) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  TRACE1("on_vfsConnectionFailed: host=" << hostName <<
+  TRACE1("on_rfaConnectionFailed: host=" << hostName <<
          " reason=" << reason);
 
   // TODO: I should only cancel a request if it is being made to the
@@ -588,7 +588,7 @@ bool EditorWidget::hasValidFileAndHostName() const
 {
   NamedTextDocument const *doc = getDocument();
   return doc->hasFilename() &&
-         vfsConnections()->isValid(doc->hostName());
+         rfaAMClient()->isValid(doc->hostName());
 }
 
 
@@ -635,7 +635,7 @@ void EditorWidget::openDiagnosticOrFileAtCursor(
   editorGlobal()->getUniqueDocumentDirectories(prefixes);
 
   SynchronousWaiter waiter(this);
-  VFS_QuerySync querySync(vfsConnections(), waiter);
+  VFS_QuerySync querySync(rfaAMClient(), waiter);
 
   // Convert to model coordinates in order to get a byte index into
   // `lineText`.
@@ -3527,9 +3527,9 @@ void EditorWidget::lspSendArbitraryNotification(
 }
 
 
-VFS_Connections *EditorWidget::vfsConnections() const
+RFA_AsyncMultiClient *EditorWidget::rfaAMClient() const
 {
-  return m_editorWindow->vfsConnections();
+  return m_editorWindow->rfaAMClient();
 }
 
 

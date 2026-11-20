@@ -97,21 +97,21 @@ public:      // data
 
   TestLSPClient lspClient;
 
-  VFS_TestConnections vfsConnections;
+  VFS_TestConnections rfaAMClient;
 
 public:      // methods
   Tester()
   {
     // Start willing to serve from the local machine.
-    mapInsertUnique(vfsConnections.m_hosts,
-      HostName::asLocal(), VFS_AbstractConnections::CS_READY);
+    mapInsertUnique(rfaAMClient.m_hosts,
+      HostName::asLocal(), RFA_AbstractAsyncMultiClient::CS_READY);
   }
 
   ~Tester()
   {
     if (std::uncaught_exceptions() == 0) {
       lspClient.selfCheck();
-      vfsConnections.selfCheck();
+      rfaAMClient.selfCheck();
     }
     else {
       // The test is already failing for another reason.
@@ -126,7 +126,7 @@ public:      // methods
       waiter,
       locations,
       lspClient,
-      vfsConnections);
+      rfaAMClient);
   }
 
   // The tests are written using line numbers, but the internal
@@ -170,7 +170,7 @@ public:      // methods
   void addFileToVFS(int fileIndex)
   {
     xassert(cc::z_le_lt(fileIndex, TABLESIZE(fname)));
-    mapInsertUnique(vfsConnections.m_files,
+    mapInsertUnique(rfaAMClient.m_files,
       fname[fileIndex],
       FileReplyData(std::string(fnameData[fileIndex])));
   }
@@ -179,7 +179,7 @@ public:      // methods
   void addErrFileToVFS(int errFileIndex)
   {
     xassert(cc::z_le_lt(errFileIndex, TABLESIZE(errFname)));
-    mapInsertUnique(vfsConnections.m_files,
+    mapInsertUnique(rfaAMClient.m_files,
       errFname[errFileIndex],
       FileReplyData(errCode[errFileIndex]));
   }

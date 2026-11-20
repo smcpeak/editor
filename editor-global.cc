@@ -118,7 +118,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_lspClientManager(),    // Set to non-null below.
     m_windowCounter(1),
     m_editorBuiltinFont(BF_EDITOR14),
-    m_vfsConnections(),
+    m_rfaAMClient(),
     m_processes(),
     m_openFilesDialog(),
     m_applyCommandDialogs(),
@@ -180,7 +180,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     // exceptions, which we allow to propagate, after first shutting
     // down the connections in order to avoid spurious additional
     // complaints.
-    m_vfsConnections.shutdownAll();
+    m_rfaAMClient.shutdownAll();
     throw;
   }
 
@@ -189,16 +189,16 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
 
   // Establish the initial VFS connection before creating the first
   // EditorWindow, since the EW can issue VFS requests.
-  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_vfsFailed,
-                   this, &EditorGlobal::on_vfsConnectionFailed);
-  m_vfsConnections.connectLocal();
+  QObject::connect(&m_rfaAMClient, &RFA_AsyncMultiClient::signal_rfaFailed,
+                   this, &EditorGlobal::on_rfaConnectionFailed);
+  m_rfaAMClient.connectLocal();
 
   // Create the LSP client manager after processing the command line so
   // the effect of setting `m_lspIsFakeServer` in response to "-ev" and
   // "-record" will be effective.
   m_lspClientManager.reset(new LSPClientManager(
     &m_documentList,
-    &m_vfsConnections,
+    &m_rfaAMClient,
     !m_lspIsFakeServer,
     getLogFileDirectory(),
     (m_editorLogFile?
@@ -308,12 +308,12 @@ EditorGlobal::~EditorGlobal()
 
   m_documentList.removeObserver(this);
 
-  m_vfsConnections.shutdownAll();
+  m_rfaAMClient.shutdownAll();
 
   // Disconnect all of the connections made in the constructor.
   // See doc/signals-and-dtors.txt.
   QObject::disconnect(this, 0, this, 0);
-  QObject::disconnect(&m_vfsConnections, 0, this, 0);
+  QObject::disconnect(&m_rfaAMClient, 0, this, 0);
 
   m_lspClientManager.reset();
 }
@@ -350,7 +350,7 @@ void EditorGlobal::selfCheck() const
     m_recentEditorWidgets.selfCheck();
   }
 
-  m_vfsConnections.selfCheck();
+  m_rfaAMClient.selfCheck();
 }
 
 
@@ -521,7 +521,7 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
       else if (beginsWith(arg, "-conn=")) {
         // Open a connection to a specified host.
         std::string hostName = arg.substr(6, arg.length()-6);
-        m_vfsConnections.connect(HostName::asSSH(hostName));
+        m_rfaAMClient.connect(HostName::asSSH(hostName));
       }
 
       else if (arg == "-version") {
@@ -564,7 +564,7 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
 }
 
 
-void EditorGlobal::on_vfsConnectionFailed(
+void EditorGlobal::on_rfaConnectionFailed(
   HostName hostName, std::string reason) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
@@ -669,7 +669,7 @@ bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
   if (doc->hasFilename()) {
     SynchronousWaiter waiter(parentWidget);
     auto replyOrError(
-      readFileSynchronously(&m_vfsConnections, waiter, doc->harn()));
+      readFileSynchronously(&m_rfaAMClient, waiter, doc->harn()));
 
     if (FailReasonOpt errorMsg =
           getROEErrorMessage(replyOrError)) {
@@ -1301,7 +1301,7 @@ NamedTextDocument *EditorGlobal::runOpenFilesDialog(QWidget *callerWindow)
 void EditorGlobal::showConnectionsDialog()
 {
   if (!m_connectionsDialog) {
-    m_connectionsDialog.reset(new ConnectionsDialog(&m_vfsConnections));
+    m_connectionsDialog.reset(new ConnectionsDialog(&m_rfaAMClient));
   }
 
   showRaiseAndActivateWindow(m_connectionsDialog.get());

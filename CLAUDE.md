@@ -137,7 +137,7 @@ Subsystems:
   `rfa-sync-local-client`) is a statically linked server that serves them over
   stdin/stdout, run either locally or through `ssh host
   editor-fs-server.exe`. `RFA_AsyncSingleClient` (`rfa-async-single-client`) is one
-  connection, and `VFS_Connections` manages one per host with an async
+  connection, and `RFA_AsyncMultiClient` manages one per host with an async
   request/reply API. `vfs-query-sync` gives a synchronous wrapper. See the
   lifecycle diagrams in `doc/vfs-*.ded.png`.
 - **LSP.** `command-runner` (wraps `QProcess`), then `json-rpc-client`,

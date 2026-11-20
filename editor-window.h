@@ -16,11 +16,11 @@
 #include "lsp-client-fwd.h"                      // LSPClient
 #include "lsp-client-manager-fwd.h"              // LSPClientManager
 #include "lsp-status-widget-fwd.h"               // LSPStatusWidget
-#include "named-td.h"                            // NamedTextDocument
 #include "named-td-list.h"                       // NamedTextDocumentListObserver
-#include "status-bar-fwd.h"                      // StatusBarDisplay
-#include "vfs-connections-fwd.h"                 // VFS_Connections
+#include "named-td.h"                            // NamedTextDocument
+#include "rfa-async-multi-client-fwd.h"          // RFA_AsyncMultiClient
 #include "rfa-msg-fwd.h"                         // RFA_Message
+#include "status-bar-fwd.h"                      // StatusBarDisplay
 
 // smqtutil
 #include "smqtutil/qtguiutil.h"                  // unhandledExceptionMsgbox
@@ -180,7 +180,7 @@ public:      // funcs
   LSPStatusWidget *lspStatusWidget() const;
 
   // Get VFS query object.
-  VFS_Connections *vfsConnections() const;
+  RFA_AsyncMultiClient *rfaAMClient() const;
 
   // Open and begin editing a particular file, or just switch to it if
   // it is already open.

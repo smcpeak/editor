@@ -4,19 +4,19 @@
 #ifndef EDITOR_CONNECTIONS_DIALOG_H
 #define EDITOR_CONNECTIONS_DIALOG_H
 
-#include "connections-dialog-fwd.h"    // fwds for this module
+#include "connections-dialog-fwd.h"              // fwds for this module
 
-#include "host-name.h"                 // HostName
-#include "vfs-connections-fwd.h"       // VFS_Connections
+#include "host-name.h"                           // HostName
+#include "rfa-async-multi-client-fwd.h"          // RFA_AsyncMultiClient
 
-#include "smqtutil/sm-table-widget.h"  // SMTableWidget
+#include "smqtutil/sm-table-widget.h"            // SMTableWidget
 
-#include "smbase/refct-serf.h"         // RCSerf
+#include "smbase/refct-serf.h"                   // RCSerf
 
 #include <QDialog>
 
-#include <set>                         // std::set
-#include <vector>                      // std::vector
+#include <set>                                   // std::set
+#include <vector>                                // std::vector
 
 class QPushButton;
 
@@ -27,7 +27,7 @@ class ConnectionsDialog : public QDialog {
 
 private:     // instance data
   // Connections being managed.
-  RCSerf<VFS_Connections> m_vfsConnections;
+  RCSerf<RFA_AsyncMultiClient> m_rfaAMClient;
 
   // Widget showing the list.
   SMTableWidget *m_tableWidget;
@@ -51,7 +51,7 @@ protected:   // methods
   virtual void keyPressEvent(QKeyEvent *k) noexcept override;
 
 public:      // methods
-  ConnectionsDialog(VFS_Connections *vfsConnections);
+  ConnectionsDialog(RFA_AsyncMultiClient *rfaAMClient);
   ~ConnectionsDialog() noexcept;
 
   // Show an error dialog box.
@@ -64,7 +64,7 @@ public:      // methods
 private Q_SLOTS:
   // Handlers for connection state changes.
   void on_rfaConnected(HostName hostName) noexcept;
-  void on_vfsFailed(HostName hostName, string reason) noexcept;
+  void on_rfaFailed(HostName hostName, string reason) noexcept;
 
   // Handlers for button presses.
   void on_refreshPressed() noexcept;

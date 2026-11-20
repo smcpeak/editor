@@ -6,31 +6,36 @@
 #ifndef EDITOR_LSP_CLIENT_MANAGER_H
 #define EDITOR_LSP_CLIENT_MANAGER_H
 
-#include "lsp-client-manager-fwd.h"    // fwds for this module
+#include "lsp-client-manager-fwd.h"              // fwds for this module
 
-#include "doc-name-fwd.h"              // DocumentName [n]
-#include "fail-reason-opt.h"           // FailReasonOpt
-#include "host-file-line-fwd.h"        // HostFileLine [n]
-#include "lsp-client-scope.h"          // LSPClientScope
-#include "lsp-client.h"                // LSPClient
-#include "named-td-fwd.h"              // NamedTextDocument [n]
-#include "named-td-list-fwd.h"         // NamedTextDocumentList [n]
-#include "vfs-connections-fwd.h"       // VFS_AbstractConnections [n]
+// editor
+#include "doc-name-fwd.h"                        // DocumentName [n]
+#include "fail-reason-opt.h"                     // FailReasonOpt
+#include "host-file-line-fwd.h"                  // HostFileLine [n]
+#include "lsp-client-scope.h"                    // LSPClientScope
+#include "lsp-client.h"                          // LSPClient
+#include "named-td-fwd.h"                        // NamedTextDocument [n]
+#include "named-td-list-fwd.h"                   // NamedTextDocumentList [n]
+#include "rfa-async-multi-client-fwd.h"          // RFA_AbstractAsyncMultiClient [n]
 
-#include "smqtutil/sync-wait-fwd.h"    // SynchronousWaiter [n]
+// smqtutil
+#include "smqtutil/sync-wait-fwd.h"              // SynchronousWaiter [n]
 
-#include "smbase/refct-serf.h"         // SerfRefCount, RCSerfOpt, NNRCSerf
-#include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
-#include "smbase/std-memory-fwd.h"     // std::unique_ptr [n]
-#include "smbase/std-optional-fwd.h"   // std::optional [n]
-#include "smbase/std-string-fwd.h"     // std::string [n]
-#include "smbase/std-vector-fwd.h"     // stdfwd::vector [n]
+// smbase
+#include "smbase/refct-serf.h"                   // SerfRefCount, RCSerfOpt, NNRCSerf
+#include "smbase/sm-macros.h"                    // NO_OBJECT_COPIES
+#include "smbase/std-memory-fwd.h"               // std::unique_ptr [n]
+#include "smbase/std-optional-fwd.h"             // std::optional [n]
+#include "smbase/std-string-fwd.h"               // std::string [n]
+#include "smbase/std-vector-fwd.h"               // stdfwd::vector [n]
 
+// Qt
 #include <QObject>
 
-#include <iosfwd>                      // std::ostream [n]
-#include <list>                        // std::list
-#include <map>                         // std::map
+// libc++
+#include <iosfwd>                                // std::ostream [n]
+#include <list>                                  // std::list
+#include <map>                                   // std::map
 
 
 // A single client connection and its scope.
@@ -101,7 +106,7 @@ private:     // data
 
   // Access to the file system, which is needed to handle all-uses
   // queries that refer to occurrences in files that are not open.
-  NNRCSerf<VFS_AbstractConnections> const m_vfsConnections;
+  NNRCSerf<RFA_AbstractAsyncMultiClient> const m_rfaAMClient;
 
   // If true, we start the normal server when the time comes.
   // Otherwise, we start the fake test server.
@@ -192,7 +197,7 @@ public:      // methods
   // Initially no clients.
   explicit LSPClientManager(
     NNRCSerf<NamedTextDocumentList> documentList,
-    NNRCSerf<VFS_AbstractConnections> vfsConnections,
+    NNRCSerf<RFA_AbstractAsyncMultiClient> rfaAMClient,
     bool useRealServer,
     std::string logFileDirectory,
     std::ostream * NULLABLE protocolDiagnosticLog);
@@ -285,7 +290,7 @@ public:      // methods
      wait is canceled at any point (no partial results are returned).
 
      This is not `const` because it causes state transitions within
-     `m_vfsConnections`, although the expectation is there is no durable
+     `m_rfaAMClient`, although the expectation is there is no durable
      change after this call.
 
      Ensures: if return then return->size() == locations.size()

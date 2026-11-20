@@ -273,9 +273,9 @@ LSPStatusWidget *EditorWindow::lspStatusWidget() const
 }
 
 
-VFS_Connections *EditorWindow::vfsConnections() const
+RFA_AsyncMultiClient *EditorWindow::rfaAMClient() const
 {
-  return m_editorGlobal->vfsConnections();
+  return m_editorGlobal->rfaAMClient();
 }
 
 
@@ -773,7 +773,7 @@ string EditorWindow::fileChooseDialog(HostName /*INOUT*/ &hostName,
 
   FilenameInputDialog dialog(
     &(editorGlobal()->m_filenameInputDialogHistory),
-    vfsConnections(),
+    rfaAMClient(),
     this);
   dialog.setSaveAs(saveAs);
 
@@ -858,7 +858,7 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
   // the shared logic in a module that can be unit tested.
   SynchronousWaiter waiter(this);
   auto replyOrError(
-    readFileSynchronously(vfsConnections(), waiter, harn));
+    readFileSynchronously(rfaAMClient(), waiter, harn));
 
   if (replyOrError.isRight()) {
     this->complain(replyOrError.right());
@@ -915,7 +915,7 @@ std::unique_ptr<REPLY_TYPE> EditorWindow::vfsQuerySynchronously(
   HostName const &hostName, std::unique_ptr<RFA_Message> request)
 {
   SynchronousWaiter waiter(this);
-  VFS_QuerySync querySync(vfsConnections(), waiter);
+  VFS_QuerySync querySync(rfaAMClient(), waiter);
   auto replyOrError(
     querySync.issueTypedRequestSynchronously<REPLY_TYPE>(
       hostName, std::move(request)));
@@ -935,7 +935,7 @@ bool EditorWindow::checkFileExistenceSynchronously(
 {
   SynchronousWaiter waiter(this);
   auto replyOrError(
-    getFileStatusSynchronously(vfsConnections(), waiter, harn));
+    getFileStatusSynchronously(rfaAMClient(), waiter, harn));
 
   if (replyOrError.isRight()) {
     return false;
@@ -1159,7 +1159,7 @@ bool EditorWindow::reloadCurrentDocumentIfChanged()
     // Query the file modification time.
     SynchronousWaiter waiter(this);
     auto replyOrError(
-      getFileStatusSynchronously(vfsConnections(), waiter, doc->harn()));
+      getFileStatusSynchronously(rfaAMClient(), waiter, doc->harn()));
 
     if (replyOrError.isRight()) {
       complain(replyOrError.right());
@@ -2961,7 +2961,7 @@ void EditorWindow::slot_openOrSwitchToFileAtLineOpt(
   // Prompt to confirm.
   FilenameInputDialog dialog(
     &(editorGlobal()->m_filenameInputDialogHistory),
-    vfsConnections(),
+    rfaAMClient(),
     this);
 
   HostAndResourceName confirmedHarn = hfl.getHarn();

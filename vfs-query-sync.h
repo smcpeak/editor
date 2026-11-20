@@ -9,7 +9,7 @@
 #include "host-and-resource-name.h"    // HostAndResourceName
 #include "host-name.h"                 // HostName
 #include "ihfexists.h"                 // IHFExists
-#include "vfs-connections.h"           // VFS_AbstractConnections
+#include "rfa-async-multi-client.h"    // RFA_AbstractAsyncMultiClient
 
 // smqtutil
 #include "smqtutil/sync-wait.h"        // SynchronousWaiter
@@ -33,11 +33,11 @@ class VFS_QuerySync : public QObject,
   NO_OBJECT_COPIES(VFS_QuerySync);
 
 public:      // types
-  typedef VFS_AbstractConnections::RequestID RequestID;
+  typedef RFA_AbstractAsyncMultiClient::RequestID RequestID;
 
 private:     // data
   // Query interface to use.
-  VFS_AbstractConnections *m_vfsConnections;
+  RFA_AbstractAsyncMultiClient *m_rfaAMClient;
 
   // Wait mechanism.
   SynchronousWaiter &m_waiter;
@@ -56,10 +56,10 @@ private:     // data
   string m_connLostMessage;
 
 public:      // instance methods
-  // Create an object to issue queries via `vfsConnections`.  Use
+  // Create an object to issue queries via `rfaAMClient`.  Use
   // `waiter` to wait, which can (e.g.) pop up a modal window.
   VFS_QuerySync(
-    VFS_AbstractConnections *vfsConnections, SynchronousWaiter &waiter);
+    RFA_AbstractAsyncMultiClient *rfaAMClient, SynchronousWaiter &waiter);
 
   virtual ~VFS_QuerySync() override;
 
@@ -95,9 +95,9 @@ public:      // instance methods
   virtual bool hfExists(HostAndResourceName const &harn) override;
 
 protected Q_SLOTS:
-  // Handlers for VFS_AbstractConnections.
+  // Handlers for RFA_AbstractAsyncMultiClient.
   void on_rfaReplyAvailable(RequestID requestID) NOEXCEPT;
-  void on_vfsFailed(HostName hostName, string reason) NOEXCEPT;
+  void on_rfaFailed(HostName hostName, string reason) NOEXCEPT;
 };
 
 
@@ -110,7 +110,7 @@ VFS_QuerySync::issueTypedRequestSynchronously(
   // Initially empty pointer, used for error returns.
   std::unique_ptr<REPLY_TYPE> typedReply;
 
-  if (!m_vfsConnections->isValid(hostName)) {
+  if (!m_rfaAMClient->isValid(hostName)) {
     return stringb("Host " << hostName << " is invalid.");
   }
 
@@ -195,7 +195,7 @@ FailReasonOpt getROEErrorMessage(
 */
 smbase::Either<std::unique_ptr<RFA_Msg_ReadFileReply>, std::string>
 readFileSynchronously(
-  VFS_AbstractConnections *vfsConnections,
+  RFA_AbstractAsyncMultiClient *rfaAMClient,
   SynchronousWaiter &waiter,
   HostAndResourceName const &harn);
 
@@ -205,7 +205,7 @@ readFileSynchronously(
 // This has the same return cases as `readFileSynchronously`.
 smbase::Either<std::unique_ptr<RFA_Msg_FileStatusReply>, std::string>
 getFileStatusSynchronously(
-  VFS_AbstractConnections *vfsConnections,
+  RFA_AbstractAsyncMultiClient *rfaAMClient,
   SynchronousWaiter &waiter,
   HostAndResourceName const &harn);
 

@@ -5,7 +5,7 @@
 
 // editor
 #include "pixmaps.h"                   // g_editorPixmaps
-#include "vfs-connections.h"           // VFS_Connections
+#include "rfa-async-multi-client.h"    // RFA_AsyncMultiClient
 
 // smqtutil
 #include "smqtutil/qtguiutil.h"        // keysString
@@ -35,12 +35,12 @@ static int const INIT_DIALOG_WIDTH = 500;
 static int const INIT_DIALOG_HEIGHT = 400;
 
 
-ConnectionsDialog::ConnectionsDialog(VFS_Connections *vfsConnections)
+ConnectionsDialog::ConnectionsDialog(RFA_AsyncMultiClient *rfaAMClient)
   : QDialog(nullptr /*parent*/,
             Qt::WindowTitleHint |                // Window has title bar.
             Qt::WindowSystemMenuHint |           // Window system menu (move, etc.)
             Qt::WindowCloseButtonHint),          // Has a close button.
-    m_vfsConnections(vfsConnections),
+    m_rfaAMClient(rfaAMClient),
     m_tableWidget(nullptr),
     m_refreshButton(nullptr),
     m_connectButton(nullptr),
@@ -95,10 +95,10 @@ ConnectionsDialog::ConnectionsDialog(VFS_Connections *vfsConnections)
     #undef ADD_BUTTON
   }
 
-  QObject::connect(m_vfsConnections, &VFS_Connections::signal_rfaConnected,
+  QObject::connect(m_rfaAMClient, &RFA_AsyncMultiClient::signal_rfaConnected,
                    this, &ConnectionsDialog::on_rfaConnected);
-  QObject::connect(m_vfsConnections, &VFS_Connections::signal_vfsFailed,
-                   this, &ConnectionsDialog::on_vfsFailed);
+  QObject::connect(m_rfaAMClient, &RFA_AsyncMultiClient::signal_rfaFailed,
+                   this, &ConnectionsDialog::on_rfaFailed);
 
   repopulateTable();
   m_tableWidget->setCurrentCell(0, 0);
@@ -116,7 +116,7 @@ ConnectionsDialog::~ConnectionsDialog() noexcept
   disconnectSignalSender(m_restartButton);
   disconnectSignalSender(m_disconnectButton);
   disconnectSignalSender(m_closeButton);
-  disconnectSignalSender(m_vfsConnections);
+  disconnectSignalSender(m_rfaAMClient);
 }
 
 
@@ -133,7 +133,7 @@ void ConnectionsDialog::complain(string msg)
 
 void ConnectionsDialog::repopulateTable()
 {
-  std::vector<HostName> hostNames = m_vfsConnections->getHostNames();
+  std::vector<HostName> hostNames = m_rfaAMClient->getHostNames();
 
   m_tableWidget->clearContents();
   m_tableWidget->setRowCount(hostNames.size());
@@ -144,9 +144,9 @@ void ConnectionsDialog::repopulateTable()
     HostName const &hostName = hostNames.at(r);
     m_hostNameList.push_back(hostName);
 
-    bool connecting = m_vfsConnections->isConnecting(hostName);
-    bool ready      = m_vfsConnections->isReady(hostName);
-    bool failed     = m_vfsConnections->connectionFailed(hostName);
+    bool connecting = m_rfaAMClient->isConnecting(hostName);
+    bool ready      = m_rfaAMClient->isReady(hostName);
+    bool failed     = m_rfaAMClient->connectionFailed(hostName);
 
     string status = connecting? "Connecting" :
                     ready?      "Ready" :
@@ -260,9 +260,9 @@ void ConnectionsDialog::on_rfaConnected(HostName hostName) noexcept
 }
 
 
-void ConnectionsDialog::on_vfsFailed(HostName hostName, string reason) noexcept
+void ConnectionsDialog::on_rfaFailed(HostName hostName, string reason) noexcept
 {
-  TRACE1("on_vfsFailed: host=" << hostName);
+  TRACE1("on_rfaFailed: host=" << hostName);
 
   GENERIC_CATCH_BEGIN
 
@@ -301,12 +301,12 @@ void ConnectionsDialog::on_connectPressed() noexcept
 
   if (ok) {
     HostName hostName(HostName::asSSH(toString(text)));
-    if (m_vfsConnections->isValid(hostName)) {
+    if (m_rfaAMClient->isValid(hostName)) {
       complain(stringb(
         "There is already a connection for " << hostName << "."));
     }
     else {
-      m_vfsConnections->connect(hostName);
+      m_rfaAMClient->connect(hostName);
       repopulateTable();
     }
   }
@@ -324,8 +324,8 @@ void ConnectionsDialog::on_restartPressed() noexcept
   std::set<HostName> hostNames = selectedHostNames();
   for (HostName const &hostName : hostNames) {
     TRACE1("  restart: " << hostName);
-    m_vfsConnections->shutdown(hostName);
-    m_vfsConnections->connect(hostName);
+    m_rfaAMClient->shutdown(hostName);
+    m_rfaAMClient->connect(hostName);
   }
 
   repopulateTable();
@@ -354,7 +354,7 @@ void ConnectionsDialog::on_disconnectPressed() noexcept
   // Disconnect them.
   for (HostName const &hostName : hostNamesToDisconnect) {
     TRACE1("  disconnect: " << hostName);
-    m_vfsConnections->shutdown(hostName);
+    m_rfaAMClient->shutdown(hostName);
   }
 
   repopulateTable();

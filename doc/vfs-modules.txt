@@ -34,20 +34,20 @@ VFS-related modules that use Qt core (QObject) but no GUI depedence:
     and signals in its interface, and CommandRunner to manage its
     connection to the server process.
 
-  vfs-connections
+  rfa-async-multi-client
 
-    VFS_Connections, which manages a set of RFA_AsyncSingleClient
+    RFA_AsyncMultiClient, which manages a set of RFA_AsyncSingleClient
     connections to VFS servers, one per host.  Also exposes
-    VFS_AbstractConnections, an interface that can be mocked for
+    RFA_AbstractAsyncMultiClient, an interface that can be mocked for
     testing.  The interface uses Qt slots and signals.
 
   vfs-query-sync
 
     VFS_QuerySync, which offers a synchronous but cancelable interface
-    on top of VFS_AbstractConnections.  Waiting and cancelation are
+    on top of RFA_AbstractAsyncMultiClient.  Waiting and cancelation are
     provided by SynchronousWaiter (hence there is a small GUI
     dependency).  This has Qt slots to interface with
-    VFS_AbstractConnections, but does not use Qt in its public
+    RFA_AbstractAsyncMultiClient, but does not use Qt in its public
     interface.
 
 VFS-related that depends on Qt GUI:
@@ -93,13 +93,13 @@ LSP modules that use VFS:
 
   lsp-get-code-lines
 
-    Uses vfs-query-sync, vfs-connections, and sync-wait to read file
+    Uses vfs-query-sync, rfa-async-multi-client, and sync-wait to read file
     contents in order to show lines of code for the locations returned
     by an LSP query for "all uses", etc.
 
   lsp-client-manager
 
-    Uses vfs-connections and sync-wait, passing them along to
+    Uses rfa-async-multi-client and sync-wait, passing them along to
     lsp-get-code-lines.
 
 

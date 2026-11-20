@@ -9,7 +9,7 @@
 #include "host-name.h"                 // HostName
 #include "modal-dialog.h"              // ModalDialog
 #include "named-td-list.h"             // NamedTextDocumentList
-#include "vfs-connections.h"           // VFS_Connections
+#include "rfa-async-multi-client.h"    // RFA_AsyncMultiClient
 
 // smqtutil
 #include "smqtutil/sm-line-edit-fwd.h" // SMLineEdit
@@ -95,18 +95,18 @@ private:     // data
   // Assumption: The set of valid hosts does not change while this
   // dialog is active due to it being application modal.  (If a host
   // disconnects, that does not make it invalid.)
-  VFS_Connections *m_vfsConnections;
+  RFA_AsyncMultiClient *m_rfaAMClient;
 
   // List of host names shown in the drop down.
   std::vector<HostName> m_hostNameList;
 
   // Host name used for queries.
   //
-  // Invariant: m_vfsConnections->isValid(m_currentHostName)
+  // Invariant: m_rfaAMClient->isValid(m_currentHostName)
   HostName m_currentHostName;
 
   // If not zero, the ID of the current pending request.
-  VFS_Connections::RequestID m_currentRequestID;
+  RFA_AsyncMultiClient::RequestID m_currentRequestID;
 
   // If not "", the directory we are currently querying.
   string m_currentRequestDir;
@@ -178,7 +178,7 @@ private:     // funcs
 
 public:      // funcs
   FilenameInputDialog(History *history,
-                      VFS_Connections *vfsConnections,
+                      RFA_AsyncMultiClient *rfaAMClient,
                       QWidget *parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
   ~FilenameInputDialog();
 
@@ -207,8 +207,8 @@ public Q_SLOTS:
   void on_makeDirectory() NOEXCEPT;
   void on_refresh() NOEXCEPT;
 
-  // VFS_Connections slots.
-  void on_rfaReplyAvailable(VFS_Connections::RequestID requestID) NOEXCEPT;
+  // RFA_AsyncMultiClient slots.
+  void on_rfaReplyAvailable(RFA_AsyncMultiClient::RequestID requestID) NOEXCEPT;
 
   // QDialog slots.
   virtual void accept() NOEXCEPT OVERRIDE;

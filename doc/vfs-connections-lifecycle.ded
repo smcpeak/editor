@@ -188,13 +188,13 @@
     },
     {
       "end": {"entityRef": 7},
-      "label": "signal_vfsFailed",
+      "label": "signal_rfaFailed",
       "lineColor": "Red",
       "start": {"entityRef": 5}
     },
     {
       "end": {"entityRef": 8},
-      "label": "signal_vfsFailed",
+      "label": "signal_rfaFailed",
       "lineColor": "Red",
       "start": {"entityRef": 4}
     },

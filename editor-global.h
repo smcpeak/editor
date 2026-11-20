@@ -35,8 +35,8 @@
 #include "pixmaps.h"                             // Pixmaps
 #include "process-watcher-fwd.h"                 // ProcessWatcher [n]
 #include "recent-items-list-iface.h"             // RecentItemsList
+#include "rfa-async-multi-client.h"              // RFA_AsyncMultiClient
 #include "sar-panel-fwd.h"                       // SearchAndReplacePanel [n]
-#include "vfs-connections.h"                     // VFS_Connections
 
 // smbase
 #include "smbase/exclusive-write-file-fwd.h"     // smbase::ExclusiveWriteFile [n]
@@ -135,7 +135,7 @@ private:     // instance data
   BuiltinFont m_editorBuiltinFont;
 
   // Connections to local and remote file systems.
-  VFS_Connections m_vfsConnections;
+  RFA_AsyncMultiClient m_rfaAMClient;
 
   // Running child processes.
   ObjList<ProcessWatcher> m_processes;
@@ -228,7 +228,7 @@ private:     // methods
 
 private Q_SLOTS:
   // Called when a VFS connection fails.
-  void on_vfsConnectionFailed(HostName hostName, std::string reason) NOEXCEPT;
+  void on_rfaConnectionFailed(HostName hostName, std::string reason) NOEXCEPT;
 
   // Find the watcher feeding data to 'fileDoc', if any.
   ProcessWatcher *findWatcherForDoc(NamedTextDocument *fileDoc);
@@ -250,7 +250,7 @@ public:       // funcs
   // To run the app, use the 'exec()' method, inherited
   // from QApplication.
 
-  VFS_Connections *vfsConnections() { return &m_vfsConnections; }
+  RFA_AsyncMultiClient *rfaAMClient() { return &m_rfaAMClient; }
 
   // --------------------- Documents being edited ----------------------
   // Read-only access to the document list.

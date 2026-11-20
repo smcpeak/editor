@@ -1,11 +1,13 @@
-// vfs-connections-test.h
-// Tests for vfs-connections.
+// rfa-async-multi-client-test.h
+// Tests for rfa-async-multi-client.
 
-#ifndef EDITOR_VFS_CONNECTIONS_TEST_H
-#define EDITOR_VFS_CONNECTIONS_TEST_H
+// See license.txt for copyright and terms of use.
+
+#ifndef EDITOR_RFA_ASYNC_MULTI_CLIENT_TEST_H
+#define EDITOR_RFA_ASYNC_MULTI_CLIENT_TEST_H
 
 #include "unit-tests.h"                // CmdlineArgsSpan
-#include "vfs-connections.h"           // module under test
+#include "rfa-async-multi-client.h"    // module under test
 
 // smbase
 #include "smbase/str.h"                // string
@@ -15,17 +17,17 @@
 #include <QObject>
 
 
-// Test VFS_Connections.
-class VFS_ConnectionsTest : public QObject {
+// Test RFA_AsyncMultiClient.
+class RFA_AsyncMultiClientTest : public QObject {
   Q_OBJECT
-  NO_OBJECT_COPIES(VFS_ConnectionsTest);
+  NO_OBJECT_COPIES(RFA_AsyncMultiClientTest);
 
 public:      // data
   // Event loop object used to wait for results to be available.
   QEventLoop m_eventLoop;
 
   // Object to test.
-  VFS_Connections m_vfsConnections;
+  RFA_AsyncMultiClient m_rfaAMClient;
 
   // Primary host to connect to.
   HostName m_primaryHostName;
@@ -35,8 +37,8 @@ public:      // data
   HostName m_secondaryHostName;
 
 public:      // methods
-  VFS_ConnectionsTest(CmdlineArgsSpan args);
-  ~VFS_ConnectionsTest();
+  RFA_AsyncMultiClientTest(CmdlineArgsSpan args);
+  ~RFA_AsyncMultiClientTest();
 
   // True if we are using 'm_secondaryHostName'.
   bool usingSecondary() const { return !m_secondaryHostName.isLocal(); }
@@ -45,13 +47,13 @@ public:      // methods
   void waitForConnection(HostName const &hostName);
 
   // Send a single VFS_Echo request, returning the request ID.
-  VFS_Connections::RequestID sendEchoRequest(HostName const &hostName);
+  RFA_AsyncMultiClient::RequestID sendEchoRequest(HostName const &hostName);
 
   // Wait until a given reply is available.
-  void waitForReply(VFS_Connections::RequestID requestID);
+  void waitForReply(RFA_AsyncMultiClient::RequestID requestID);
 
   // Receive an available echo reply.
-  void receiveEchoReply(VFS_Connections::RequestID requestID);
+  void receiveEchoReply(RFA_AsyncMultiClient::RequestID requestID);
 
   // Test sending and receiving a single echo request.
   void testOneEcho();
@@ -66,11 +68,11 @@ public:      // methods
   void runTests();
 
 public Q_SLOTS:
-  // Handlers for VFS_Connections signals.
+  // Handlers for RFA_AsyncMultiClient signals.
   void on_rfaConnected(HostName hostName) NOEXCEPT;
-  void on_rfaReplyAvailable(VFS_Connections::RequestID requestID) NOEXCEPT;
-  void on_vfsFailed(HostName hostName, string reason) NOEXCEPT;
+  void on_rfaReplyAvailable(RFA_AsyncMultiClient::RequestID requestID) NOEXCEPT;
+  void on_rfaFailed(HostName hostName, string reason) NOEXCEPT;
 };
 
 
-#endif // EDITOR_VFS_CONNECTIONS_TEST_H
+#endif // EDITOR_RFA_ASYNC_MULTI_CLIENT_TEST_H

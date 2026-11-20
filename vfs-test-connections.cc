@@ -49,7 +49,7 @@ VFS_TestConnections::VFS_TestConnections()
 
 void VFS_TestConnections::selfCheck() const
 {
-  VFS_AbstractConnections::selfCheck();
+  RFA_AbstractAsyncMultiClient::selfCheck();
 
   // There should not be any overlap in the domains of
   // `m_issuedRequests` and `m_availableReplies`.

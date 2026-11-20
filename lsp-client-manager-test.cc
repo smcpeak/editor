@@ -48,11 +48,11 @@ void waitUntil(char const *desc, std::function<bool()> condition)
 void test_basics()
 {
   NamedTextDocumentList documentList;
-  VFS_TestConnections vfsConnections;
+  VFS_TestConnections rfaAMClient;
 
   LSPClientManager lcm(
     &documentList,
-    &vfsConnections,
+    &rfaAMClient,
     false /*useRealServer*/,
     "out/log" /*logFileDirectory*/,
     &std::cerr /*protocolDiagnosticLog*/);

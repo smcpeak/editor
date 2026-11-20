@@ -1,30 +1,30 @@
-// vfs-connections-test.cc
-// Code for vfs-connections-test.h.
+// rfa-async-multi-client-test.cc
+// Code for rfa-async-multi-client-test.h.
 
-#include "unit-tests.h"                // decl for my entry point
-#include "vfs-connections-test.h"      // this module
+#include "unit-tests.h"                          // decl for my entry point
+#include "rfa-async-multi-client-test.h"         // this module
 
 // editor
-#include "rfa-msg.h"                   // RFA_Msg_Echo
+#include "rfa-msg.h"                             // RFA_Msg_Echo
 
 // smqtutil
-#include "smqtutil/qtutil.h"           // toString(QString)
+#include "smqtutil/qtutil.h"                     // toString(QString)
 
 // smbase
-#include "smbase/exc.h"                // smbase::XBase, xfatal
-#include "smbase/sm-test.h"            // DIAG
-#include "smbase/trace.h"              // traceAddFromEnvVar
+#include "smbase/exc.h"                          // smbase::XBase, xfatal
+#include "smbase/sm-test.h"                      // DIAG
+#include "smbase/trace.h"                        // traceAddFromEnvVar
 
 // libc++
-#include <utility>                     // std::move
+#include <utility>                               // std::move
 
 using namespace smbase;
 
 
-VFS_ConnectionsTest::VFS_ConnectionsTest(CmdlineArgsSpan args)
+RFA_AsyncMultiClientTest::RFA_AsyncMultiClientTest(CmdlineArgsSpan args)
   : QObject(),
     m_eventLoop(),
-    m_vfsConnections(),
+    m_rfaAMClient(),
     m_primaryHostName(HostName::asLocal()),
     m_secondaryHostName(HostName::asLocal())
 {
@@ -34,19 +34,22 @@ VFS_ConnectionsTest::VFS_ConnectionsTest(CmdlineArgsSpan args)
     m_secondaryHostName = HostName::asSSH(args[0]);
   }
 
-  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_rfaConnected,
-                   this, &VFS_ConnectionsTest::on_rfaConnected);
-  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_rfaReplyAvailable,
-                   this, &VFS_ConnectionsTest::on_rfaReplyAvailable);
-  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_vfsFailed,
-                   this, &VFS_ConnectionsTest::on_vfsFailed);
+  QObject::connect(
+    &m_rfaAMClient, &RFA_AsyncMultiClient::signal_rfaConnected,
+    this,           &RFA_AsyncMultiClientTest::on_rfaConnected);
+  QObject::connect(
+    &m_rfaAMClient, &RFA_AsyncMultiClient::signal_rfaReplyAvailable,
+    this,           &RFA_AsyncMultiClientTest::on_rfaReplyAvailable);
+  QObject::connect(
+    &m_rfaAMClient, &RFA_AsyncMultiClient::signal_rfaFailed,
+    this,           &RFA_AsyncMultiClientTest::on_rfaFailed);
 }
 
 
-VFS_ConnectionsTest::~VFS_ConnectionsTest()
+RFA_AsyncMultiClientTest::~RFA_AsyncMultiClientTest()
 {
   // See doc/signals-and-dtors.txt.
-  QObject::disconnect(&m_vfsConnections, nullptr, this, nullptr);
+  QObject::disconnect(&m_rfaAMClient, nullptr, this, nullptr);
 }
 
 
@@ -61,29 +64,29 @@ static std::vector<unsigned char> allBytes()
 }
 
 
-void VFS_ConnectionsTest::waitForConnection(HostName const &hostName)
+void RFA_AsyncMultiClientTest::waitForConnection(HostName const &hostName)
 {
-  while (m_vfsConnections.isConnecting(hostName)) {
+  while (m_rfaAMClient.isConnecting(hostName)) {
     DIAG("waiting for connection to " << hostName);
     m_eventLoop.exec();
   }
-  if (!m_vfsConnections.isReady(hostName)) {
-    VFS_AbstractConnections::ConnectionState cs =
-      m_vfsConnections.connectionState(hostName);
+  if (!m_rfaAMClient.isReady(hostName)) {
+    RFA_AbstractAsyncMultiClient::ConnectionState cs =
+      m_rfaAMClient.connectionState(hostName);
     xfatal("connection to " << hostName << " not ready; "
            "its state is " << toString(cs));
   }
 }
 
 
-VFS_Connections::RequestID
-  VFS_ConnectionsTest::sendEchoRequest(HostName const &hostName)
+RFA_AsyncMultiClient::RequestID
+  RFA_AsyncMultiClientTest::sendEchoRequest(HostName const &hostName)
 {
-  VFS_Connections::RequestID requestID = 0;
+  RFA_AsyncMultiClient::RequestID requestID = 0;
 
   std::unique_ptr<RFA_Msg_Echo> req(new RFA_Msg_Echo);
   req->m_data = allBytes();
-  m_vfsConnections.issueRequest(requestID /*OUT*/,
+  m_rfaAMClient.issueRequest(requestID /*OUT*/,
     hostName, std::move(req));
   DIAG("sent echo request: host=" << hostName <<
        " id=" << requestID);
@@ -92,45 +95,45 @@ VFS_Connections::RequestID
 }
 
 
-void VFS_ConnectionsTest::waitForReply(
-  VFS_Connections::RequestID requestID)
+void RFA_AsyncMultiClientTest::waitForReply(
+  RFA_AsyncMultiClient::RequestID requestID)
 {
-  while (m_vfsConnections.requestIsOutstanding(requestID)) {
+  while (m_rfaAMClient.requestIsOutstanding(requestID)) {
     DIAG("waiting for reply " << requestID);
-    xassert(m_vfsConnections.numOutstandingRequests() > 0);
+    xassert(m_rfaAMClient.numOutstandingRequests() > 0);
     m_eventLoop.exec();
   }
-  if (!m_vfsConnections.replyIsAvailable(requestID)) {
+  if (!m_rfaAMClient.replyIsAvailable(requestID)) {
     xfatal("reply " << requestID << " not available");
   }
 
-  xassert(m_vfsConnections.numAvailableReplies() > 0);
+  xassert(m_rfaAMClient.numAvailableReplies() > 0);
 }
 
 
-void VFS_ConnectionsTest::receiveEchoReply(
-  VFS_Connections::RequestID requestID)
+void RFA_AsyncMultiClientTest::receiveEchoReply(
+  RFA_AsyncMultiClient::RequestID requestID)
 {
   std::unique_ptr<RFA_Message> reply(
-    m_vfsConnections.takeReply(requestID));
+    m_rfaAMClient.takeReply(requestID));
   RFA_Msg_Echo const *echoReply = reply->asEchoC();
   xassert(echoReply->m_data == allBytes());
 }
 
 
-void VFS_ConnectionsTest::testOneEcho()
+void RFA_AsyncMultiClientTest::testOneEcho()
 {
   DIAG("testOneEcho");
 
-  m_vfsConnections.selfCheck();
+  m_rfaAMClient.selfCheck();
 
-  xassert(m_vfsConnections.numOutstandingRequests() == 0);
-  xassert(m_vfsConnections.numAvailableReplies() == 0);
+  xassert(m_rfaAMClient.numOutstandingRequests() == 0);
+  xassert(m_rfaAMClient.numAvailableReplies() == 0);
 
   // Send requests.
-  VFS_Connections::RequestID primaryRequestID =
+  RFA_AsyncMultiClient::RequestID primaryRequestID =
     sendEchoRequest(m_primaryHostName);
-  VFS_Connections::RequestID secondaryRequestID = 0;
+  RFA_AsyncMultiClient::RequestID secondaryRequestID = 0;
   if (usingSecondary()) {
     secondaryRequestID = sendEchoRequest(m_secondaryHostName);
   }
@@ -147,16 +150,16 @@ void VFS_ConnectionsTest::testOneEcho()
     receiveEchoReply(secondaryRequestID);
   }
 
-  xassert(m_vfsConnections.numOutstandingRequests() == 0);
-  xassert(m_vfsConnections.numAvailableReplies() == 0);
+  xassert(m_rfaAMClient.numOutstandingRequests() == 0);
+  xassert(m_rfaAMClient.numAvailableReplies() == 0);
 }
 
 
-void VFS_ConnectionsTest::testMultipleEchos(int howMany)
+void RFA_AsyncMultiClientTest::testMultipleEchos(int howMany)
 {
   DIAG("testMultipleEchos " << howMany);
 
-  std::vector<VFS_Connections::RequestID> requestIDs;
+  std::vector<RFA_AsyncMultiClient::RequestID> requestIDs;
 
   // Enqueue a bunch at once.
   for (int i=0; i < howMany; i++) {
@@ -176,20 +179,20 @@ void VFS_ConnectionsTest::testMultipleEchos(int howMany)
   }
 
   // Receive them.
-  for (VFS_Connections::RequestID id : requestIDs) {
+  for (RFA_AsyncMultiClient::RequestID id : requestIDs) {
     waitForReply(id);
     receiveEchoReply(id);
   }
 }
 
 
-void VFS_ConnectionsTest::testCancel(bool wait)
+void RFA_AsyncMultiClientTest::testCancel(bool wait)
 {
   DIAG("testCancel wait=" << wait);
 
-  VFS_Connections::RequestID primaryRequestID =
+  RFA_AsyncMultiClient::RequestID primaryRequestID =
     sendEchoRequest(m_primaryHostName);
-  VFS_Connections::RequestID secondaryRequestID = 0;
+  RFA_AsyncMultiClient::RequestID secondaryRequestID = 0;
   if (usingSecondary()) {
     secondaryRequestID = sendEchoRequest(m_secondaryHostName);
   }
@@ -201,28 +204,28 @@ void VFS_ConnectionsTest::testCancel(bool wait)
     }
   }
 
-  m_vfsConnections.cancelRequest(primaryRequestID);
+  m_rfaAMClient.cancelRequest(primaryRequestID);
   DIAG("canceled request " << primaryRequestID);
 
   if (usingSecondary()) {
-    m_vfsConnections.cancelRequest(secondaryRequestID);
+    m_rfaAMClient.cancelRequest(secondaryRequestID);
     DIAG("canceled request " << secondaryRequestID);
   }
 }
 
 
-void VFS_ConnectionsTest::runTests()
+void RFA_AsyncMultiClientTest::runTests()
 {
-  m_vfsConnections.selfCheck();
+  m_rfaAMClient.selfCheck();
 
   DIAG("runTests: primary=" << m_primaryHostName);
   if (usingSecondary()) {
     DIAG("  secondary=" << m_secondaryHostName);
   }
 
-  m_vfsConnections.connect(m_primaryHostName);
+  m_rfaAMClient.connect(m_primaryHostName);
   if (usingSecondary()) {
-    m_vfsConnections.connect(m_secondaryHostName);
+    m_rfaAMClient.connect(m_secondaryHostName);
   }
 
   waitForConnection(m_primaryHostName);
@@ -230,16 +233,16 @@ void VFS_ConnectionsTest::runTests()
     waitForConnection(m_secondaryHostName);
   }
 
-  xassert(m_vfsConnections.isOrWasConnected(m_primaryHostName));
+  xassert(m_rfaAMClient.isOrWasConnected(m_primaryHostName));
   if (usingSecondary()) {
-    xassert(m_vfsConnections.isOrWasConnected(m_secondaryHostName));
+    xassert(m_rfaAMClient.isOrWasConnected(m_secondaryHostName));
   }
 
   DIAG("primary start dir: " <<
-       m_vfsConnections.getStartingDirectory(m_primaryHostName));
+       m_rfaAMClient.getStartingDirectory(m_primaryHostName));
   if (usingSecondary()) {
     DIAG("secondary start dir: " <<
-         m_vfsConnections.getStartingDirectory(m_secondaryHostName));
+         m_rfaAMClient.getStartingDirectory(m_secondaryHostName));
   }
 
   testOneEcho();
@@ -253,28 +256,28 @@ void VFS_ConnectionsTest::runTests()
   testCancel(true /*wait*/);
   testOneEcho();
 
-  m_vfsConnections.selfCheck();
-  m_vfsConnections.shutdownAll();
-  m_vfsConnections.selfCheck();
+  m_rfaAMClient.selfCheck();
+  m_rfaAMClient.shutdownAll();
+  m_rfaAMClient.selfCheck();
 }
 
 
-void VFS_ConnectionsTest::on_rfaConnected(HostName hostName) NOEXCEPT
+void RFA_AsyncMultiClientTest::on_rfaConnected(HostName hostName) NOEXCEPT
 {
   DIAG("connected to " << hostName);
   m_eventLoop.exit();
 }
 
 
-void VFS_ConnectionsTest::on_rfaReplyAvailable(
-  VFS_Connections::RequestID requestID) NOEXCEPT
+void RFA_AsyncMultiClientTest::on_rfaReplyAvailable(
+  RFA_AsyncMultiClient::RequestID requestID) NOEXCEPT
 {
   DIAG("got reply: " << requestID);
   m_eventLoop.exit();
 }
 
 
-void VFS_ConnectionsTest::on_vfsFailed(
+void RFA_AsyncMultiClientTest::on_rfaFailed(
   HostName hostName, string reason) NOEXCEPT
 {
   // The test infrastructure doesn't have a better way to report
@@ -291,7 +294,7 @@ void VFS_ConnectionsTest::on_vfsFailed(
 // Called from unit-tests.cc.
 void test_vfs_connections(CmdlineArgsSpan args)
 {
-  VFS_ConnectionsTest connsTest(args);
+  RFA_AsyncMultiClientTest connsTest(args);
   connsTest.runTests();
 }
 

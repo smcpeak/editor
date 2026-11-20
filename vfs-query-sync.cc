@@ -21,8 +21,8 @@
 
 
 VFS_QuerySync::VFS_QuerySync(
-  VFS_AbstractConnections *vfsConnections, SynchronousWaiter &waiter)
-  : IMEMBFP(vfsConnections),
+  RFA_AbstractAsyncMultiClient *rfaAMClient, SynchronousWaiter &waiter)
+  : IMEMBFP(rfaAMClient),
     IMEMBFP(waiter),
     m_requestID(0),
     m_hostName(HostName::asLocal()),
@@ -30,19 +30,19 @@ VFS_QuerySync::VFS_QuerySync(
     m_connLostMessage()
 {
   QObject::connect(
-    m_vfsConnections, &VFS_AbstractConnections::signal_rfaReplyAvailable,
-                              this, &VFS_QuerySync::on_rfaReplyAvailable);
+    m_rfaAMClient, &RFA_AbstractAsyncMultiClient::signal_rfaReplyAvailable,
+    this,          &VFS_QuerySync::                   on_rfaReplyAvailable);
 
   QObject::connect(
-    m_vfsConnections, &VFS_AbstractConnections::signal_vfsFailed,
-                              this, &VFS_QuerySync::on_vfsFailed);
+    m_rfaAMClient, &RFA_AbstractAsyncMultiClient::signal_rfaFailed,
+    this,          &VFS_QuerySync::                   on_rfaFailed);
 }
 
 
 VFS_QuerySync::~VFS_QuerySync()
 {
   // See doc/signals-and-dtors.txt.
-  QObject::disconnect(m_vfsConnections, nullptr, this, nullptr);
+  QObject::disconnect(m_rfaAMClient, nullptr, this, nullptr);
 }
 
 
@@ -56,7 +56,7 @@ bool VFS_QuerySync::issueRequestSynchronously(
   m_hostName = hostName;
 
   string requestDescription = request->description();
-  m_vfsConnections->issueRequest(m_requestID /*OUT*/,
+  m_rfaAMClient->issueRequest(m_requestID /*OUT*/,
     m_hostName, std::move(request));
 
   USED_FOR_DEBUGGING RequestID origRequestID = m_requestID;
@@ -144,13 +144,13 @@ bool VFS_QuerySync::hfExists(HostAndResourceName const &harn)
 void VFS_QuerySync::on_rfaReplyAvailable(RequestID requestID) NOEXCEPT
 {
   if (requestID == m_requestID) {
-    m_reply = m_vfsConnections->takeReply(requestID);
+    m_reply = m_rfaAMClient->takeReply(requestID);
     m_requestID = 0;
   }
 }
 
 
-void VFS_QuerySync::on_vfsFailed(
+void VFS_QuerySync::on_rfaFailed(
   HostName hostName, string reason) NOEXCEPT
 {
   if (m_requestID != 0 && hostName == m_hostName) {
@@ -162,7 +162,7 @@ void VFS_QuerySync::on_vfsFailed(
 
 smbase::Either<std::unique_ptr<RFA_Msg_ReadFileReply>, std::string>
 readFileSynchronously(
-  VFS_AbstractConnections *vfsConnections,
+  RFA_AbstractAsyncMultiClient *rfaAMClient,
   SynchronousWaiter &waiter,
   HostAndResourceName const &harn)
 {
@@ -171,7 +171,7 @@ readFileSynchronously(
   std::unique_ptr<RFA_Msg_ReadFileRequest> req(new RFA_Msg_ReadFileRequest);
   req->m_path = harn.resourceName();
 
-  VFS_QuerySync querySync(vfsConnections, waiter);
+  VFS_QuerySync querySync(rfaAMClient, waiter);
   return querySync.issueTypedRequestSynchronously<RFA_Msg_ReadFileReply>(
     harn.hostName(), std::move(req));
 }
@@ -179,14 +179,14 @@ readFileSynchronously(
 
 smbase::Either<std::unique_ptr<RFA_Msg_FileStatusReply>, std::string>
 getFileStatusSynchronously(
-  VFS_AbstractConnections *vfsConnections,
+  RFA_AbstractAsyncMultiClient *rfaAMClient,
   SynchronousWaiter &waiter,
   HostAndResourceName const &harn)
 {
   std::unique_ptr<RFA_Msg_FileStatusRequest> req(new RFA_Msg_FileStatusRequest);
   req->m_path = harn.resourceName();
 
-  VFS_QuerySync querySync(vfsConnections, waiter);
+  VFS_QuerySync querySync(rfaAMClient, waiter);
   return querySync.issueTypedRequestSynchronously<RFA_Msg_FileStatusReply>(
     harn.hostName(), std::move(req));
 }

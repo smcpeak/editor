@@ -6,8 +6,8 @@
 #include "fail-reason-opt.h"                     // FailReasonOpt
 #include "host-file-line.h"                      // HostFileLine
 #include "lsp-client.h"                          // LSPClientDocumentState
+#include "rfa-async-multi-client.h"              // RFA_AbstractAsyncMultiClient
 #include "td-core.h"                             // TextDocumentCore
-#include "vfs-connections.h"                     // VFS_AbstractConnections
 #include "vfs-query-sync.h"                      // readFileSynchronously
 
 #include "smqtutil/sync-wait.h"                  // SynchronousWaiter
@@ -60,7 +60,7 @@ INIT_TRACE("lsp-get-code-lines");
         related to it.)
 
      3. Communication with the VFS server(s), embodied by
-        `vfsConnections`.
+        `rfaAMClient`.
 
    Since each of these can be in various states on entry, and the
    several communication attempts can have various outcomes, it seems
@@ -71,7 +71,7 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
   SynchronousWaiter &waiter,
   std::vector<HostFileLine> const &locations,
   LSPClientDocumentState const &lspClient,
-  VFS_AbstractConnections &vfsConnections)
+  RFA_AbstractAsyncMultiClient &rfaAMClient)
 {
   TRACE2_GDVN_EXPRS("lspGetCodeLines", locations);
 
@@ -104,7 +104,7 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
     // the requests into a single message.
     TRACE2("lspGetCodeLines: querying: " << toGDValue(harn));
     auto replyOrError(
-      readFileSynchronously(&vfsConnections, waiter, harn));
+      readFileSynchronously(&rfaAMClient, waiter, harn));
 
     if (FailReasonOpt errorMsg =
           getROEErrorMessage(replyOrError)) {

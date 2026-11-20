@@ -3,7 +3,7 @@
 
 #include "connections-dialog.h"        // module under test
 
-#include "vfs-connections.h"           // VFS_Connections
+#include "rfa-async-multi-client.h"    // RFA_AsyncMultiClient
 
 #include <QApplication>
 
@@ -12,10 +12,10 @@ int connections_dialog_test(QApplication &app)
 {
   // The normal initial state is with one connection to the local
   // machine.
-  VFS_Connections connections;
-  connections.connectLocal();
+  RFA_AsyncMultiClient rfaAMClient;
+  rfaAMClient.connectLocal();
 
-  ConnectionsDialog dlg(&connections);
+  ConnectionsDialog dlg(&rfaAMClient);
 
   QObject::connect(&dlg, &QObject::destroyed, &app, &QApplication::quit);
 

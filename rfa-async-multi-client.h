@@ -1,16 +1,18 @@
-// vfs-connections.h
-// `VFS_Connections`, which accesses the VFS distributed virtual file
+// rfa-async-multi-client.h
+// `RFA_AsyncMultiClient`, which accesses the VFS distributed virtual file
 // system.
 
-#ifndef EDITOR_VFS_CONNECTIONS_H
-#define EDITOR_VFS_CONNECTIONS_H
+// See license.txt for copyright and terms of use.
 
-#include "vfs-connections-fwd.h"                 // fwds for this module
+#ifndef EDITOR_RFA_ASYNC_MULTI_CLIENT_H
+#define EDITOR_RFA_ASYNC_MULTI_CLIENT_H
+
+#include "rfa-async-multi-client-fwd.h"          // fwds for this module
 
 // editor
 #include "host-name.h"                           // HostName
-#include "rfa-msg.h"                             // RFA_Message
 #include "rfa-async-single-client-fwd.h"         // RFA_AsyncSingleClient
+#include "rfa-msg.h"                             // RFA_Message
 
 // smbase
 #include "smbase/ordered-map-iface.h"            // smbase::OrderedMap
@@ -31,11 +33,11 @@
 
 
 /* Interface to a collection of VFS connections.  This is separated from
-   `VFS_Connections` to facilitate testing; a test class can provide
+   `RFA_AsyncMultiClient` to facilitate testing; a test class can provide
    definitions of the virtual functions that avoids making actual IPC
    calls.
 
-   This methods in this class (as opposed to `VFS_Connections`) provide:
+   This methods in this class (as opposed to `RFA_AsyncMultiClient`) provide:
 
      * Read-only queries for the state of host connections.
 
@@ -65,10 +67,10 @@
    the past I used it to mean "outstanding", and I'm trying to avoid
    re-creating that confusion.
 */
-class VFS_AbstractConnections : public QObject,
-                                public SerfRefCount {
+class RFA_AbstractAsyncMultiClient : public QObject,
+                                     public SerfRefCount {
   Q_OBJECT
-  NO_OBJECT_COPIES(VFS_AbstractConnections);
+  NO_OBJECT_COPIES(RFA_AbstractAsyncMultiClient);
 
 public:      // types
   // Unique identifier for a request.  Never zero for a valid request.
@@ -101,10 +103,10 @@ protected:   // data
   std::map<RequestID, std::unique_ptr<RFA_Message> > m_availableReplies;
 
 public:      // methods
-  virtual ~VFS_AbstractConnections() override;
+  virtual ~RFA_AbstractAsyncMultiClient() override;
 
   // Initial state with no available replies.
-  VFS_AbstractConnections();
+  RFA_AbstractAsyncMultiClient();
 
   // Assert invariants.
   virtual void selfCheck() const;
@@ -213,19 +215,19 @@ Q_SIGNALS:
   void signal_rfaReplyAvailable(RequestID requestID);
 
   // Emitted when 'connectionFailed' becomes true.
-  void signal_vfsFailed(HostName hostName, std::string reason);
+  void signal_rfaFailed(HostName hostName, std::string reason);
 };
 
 
 // Returns a string like "CS_READY".
-char const *toString(VFS_AbstractConnections::ConnectionState s);
+char const *toString(RFA_AbstractAsyncMultiClient::ConnectionState s);
 
 
 // Collection of active RFA_AsyncSingleClient objects, and an asynchronous
 // query interface on top of them.
-class VFS_Connections : public VFS_AbstractConnections {
+class RFA_AsyncMultiClient : public RFA_AbstractAsyncMultiClient {
   Q_OBJECT
-  NO_OBJECT_COPIES(VFS_Connections);
+  NO_OBJECT_COPIES(RFA_AsyncMultiClient);
 
 private:     // types
   // A request that has been issued by a client but not yet sent on any
@@ -249,8 +251,8 @@ private:     // types
   // Information related to the connection to a specific host.
   class Connection {
   public:      // data
-    // Parent set of connections.  Never null.
-    RCSerf<VFS_Connections> m_connections;
+    // Parent set of client connections.  Never null.
+    RCSerf<RFA_AsyncMultiClient> m_parentAMClient;
 
     // The host.
     HostName m_hostName;
@@ -282,10 +284,10 @@ private:     // types
 
   public:      // methods
     // Establish a new connection to `hostName`, as a part of the
-    // collection `connections`.
+    // collection `parentAMClient`.
     //
-    // Requires: connections != nullptr
-    Connection(VFS_Connections *connections, HostName const &hostName);
+    // Requires: parentAMClient != nullptr
+    Connection(RFA_AsyncMultiClient *parentAMClient, HostName const &hostName);
 
     ~Connection();
 
@@ -346,8 +348,8 @@ private:      // methods
   Connection * NULLABLE signalRecipientConnection();
 
 public:      // methods
-  VFS_Connections();
-  virtual ~VFS_Connections() override;
+  RFA_AsyncMultiClient();
+  virtual ~RFA_AsyncMultiClient() override;
 
   // Throw an exception if an invariant does not hold.
   void selfCheck() const override;
@@ -389,7 +391,7 @@ public:      // methods
   void shutdownAll();
 
   // ---------------------- Requests and replies -----------------------
-  // `VFS_AbstractConnections` request methods.
+  // `RFA_AbstractAsyncMultiClient` request methods.
   virtual void issueRequest(
     RequestID &requestID /*OUT*/,
     HostName const &hostName,
@@ -406,4 +408,4 @@ protected Q_SLOTS:
 };
 
 
-#endif // EDITOR_VFS_CONNECTIONS_H
+#endif // EDITOR_RFA_ASYNC_MULTI_CLIENT_H

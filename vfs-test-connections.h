@@ -7,7 +7,7 @@
 #define EDITOR_VFS_TEST_CONNECTIONS_H
 
 #include "host-name-fwd.h"                       // HostName [n]
-#include "vfs-connections.h"                     // VFS_AbstractConnections
+#include "rfa-async-multi-client.h"              // RFA_AbstractAsyncMultiClient
 #include "rfa-msg-fwd.h"                         // RFA_ReadFile{Request,Reply} [n]
 
 #include "smbase/either-fwd.h"                   // smbase::Either
@@ -21,7 +21,7 @@
 
 
 // VFS access for testing purposes, without actual IPC.
-class VFS_TestConnections : public VFS_AbstractConnections {
+class VFS_TestConnections : public RFA_AbstractAsyncMultiClient {
   Q_OBJECT
   NO_OBJECT_COPIES(VFS_TestConnections);
 
@@ -57,7 +57,7 @@ public:      // methods
 
   virtual void selfCheck() const override;
 
-  // --------------------- VFS_Connections methods ---------------------
+  // ------------------ RFA_AsyncMultiClient methods -------------------
   virtual ConnectionState connectionState(
     HostName const &hostName) const override;
   virtual void issueRequest(
