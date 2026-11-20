@@ -9,7 +9,7 @@
 #include "lsp-client.h"                          // LSPClientDocumentState
 #include "rfa-mock-async-multi-client.h"         // RFA_MockAsyncMultiClient
 
-#include "smqtutil/sync-wait.h"                  // SynchronousWaiter
+#include "smqtutil/sync-wait.h"                  // MockSynchronousWaiter
 
 #include "smbase/chained-cond.h"                 // smbase::cc::z_le_lt
 #include "smbase/either.h"                       // smbase::Either [h]
@@ -93,7 +93,7 @@ public:      // data
   // Locations to look up.
   std::vector<HostFileLine> locations;
 
-  TestSynchronousWaiter waiter;
+  MockSynchronousWaiter waiter;
 
   TestLSPClient lspClient;
 
