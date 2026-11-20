@@ -28,15 +28,15 @@ VFS-related modules with no Qt dependence:
 
 VFS-related modules that use Qt core (QObject) but no GUI depedence:
 
-  vfs-query
+  rfa-async-single-client
 
-    VFS_FileSystemQuery, the asynchronous VFS client.  Uses Qt slots
+    RFA_AsyncSingleClient, the asynchronous VFS client.  Uses Qt slots
     and signals in its interface, and CommandRunner to manage its
     connection to the server process.
 
   vfs-connections
 
-    VFS_Connections, which manages a set of VFS_FileSystemQuery
+    VFS_Connections, which manages a set of RFA_AsyncSingleClient
     connections to VFS servers, one per host.  Also exposes
     VFS_AbstractConnections, an interface that can be mocked for
     testing.  The interface uses Qt slots and signals.
@@ -80,13 +80,13 @@ Editor GUI modules that use VFS:
   editor-widget
 
     Uses vfs-query-sync, sync-wait, and nearby-file for "open file at
-    cursor".  Also uses vfs-query (async) to update file status such as
+    cursor".  Also uses rfa-async-single-client to update file status such as
     modified-on-disk.
 
   filename-input
 
     Uses vfs-query-sync and sync-wait to create new directories.
-    However, it primarily uses vfs-query (async) to retrieve directory
+    However, it primarily uses rfa-async-single-client to retrieve directory
     contents as the user navigates.
 
 LSP modules that use VFS:

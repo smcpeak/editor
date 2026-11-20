@@ -19,21 +19,21 @@ using namespace smbase;
 FSServerTest::FSServerTest()
   : QObject(),
     m_eventLoop(),
-    m_fsQuery()
+    m_rfaASClient()
 {
-  QObject::connect(&m_fsQuery, &VFS_FileSystemQuery::signal_vfsConnected,
-                   this, &FSServerTest::on_vfsConnected);
-  QObject::connect(&m_fsQuery, &VFS_FileSystemQuery::signal_vfsReplyAvailable,
-                   this, &FSServerTest::on_vfsReplyAvailable);
-  QObject::connect(&m_fsQuery, &VFS_FileSystemQuery::signal_vfsFailureAvailable,
-                   this, &FSServerTest::on_vfsFailureAvailable);
+  QObject::connect(&m_rfaASClient, &RFA_AsyncSingleClient::signal_rfaConnected,
+                   this, &FSServerTest::on_rfaConnected);
+  QObject::connect(&m_rfaASClient, &RFA_AsyncSingleClient::signal_rfaReplyAvailable,
+                   this, &FSServerTest::on_rfaReplyAvailable);
+  QObject::connect(&m_rfaASClient, &RFA_AsyncSingleClient::signal_rfaFailureAvailable,
+                   this, &FSServerTest::on_rfaFailureAvailable);
 }
 
 
 FSServerTest::~FSServerTest()
 {
   // See doc/signals-and-dtors.txt.
-  QObject::disconnect(&m_fsQuery, nullptr, this, nullptr);
+  QObject::disconnect(&m_rfaASClient, nullptr, this, nullptr);
 }
 
 
@@ -45,12 +45,12 @@ std::unique_ptr<RFA_Message> FSServerTest::getNextReply()
   DIAG("  waiting ...");
   m_eventLoop.exec();
 
-  if (m_fsQuery.hasFailed()) {
-    xfatal(m_fsQuery.getFailureReason());
+  if (m_rfaASClient.hasFailed()) {
+    xfatal(m_rfaASClient.getFailureReason());
   }
 
-  xassert(m_fsQuery.hasReply());
-  return m_fsQuery.takeReply();
+  xassert(m_rfaASClient.hasReply());
+  return m_rfaASClient.takeReply();
 }
 
 
@@ -65,19 +65,19 @@ void FSServerTest::runTests(HostName const &hostName)
   runFileReadWriteTests();
   runGetDirEntriesTest();
 
-  m_fsQuery.shutdown();
+  m_rfaASClient.shutdown();
 }
 
 
 void FSServerTest::connect(HostName const &hostName)
 {
-  m_fsQuery.connect(hostName);
-  while (m_fsQuery.isConnecting()) {
+  m_rfaASClient.connect(hostName);
+  while (m_rfaASClient.isConnecting()) {
     DIAG("connecting ...");
     m_eventLoop.exec();
   }
-  if (m_fsQuery.hasFailed()) {
-    xfatal(m_fsQuery.getFailureReason());
+  if (m_rfaASClient.hasFailed()) {
+    xfatal(m_rfaASClient.getFailureReason());
   }
 }
 
@@ -90,7 +90,7 @@ void FSServerTest::runPathQuery(string const &path)
   {
     RFA_Msg_FileStatusRequest req;
     req.m_path = path;
-    m_fsQuery.sendRequest(req);
+    m_rfaASClient.sendRequest(req);
   }
 
   // Receive.
@@ -111,7 +111,7 @@ void FSServerTest::runEchoTest(std::vector<unsigned char> const &data)
 
   RFA_Msg_Echo request;
   request.m_data = data;
-  m_fsQuery.sendRequest(request);
+  m_rfaASClient.sendRequest(request);
 
   std::unique_ptr<RFA_Message> replyMsg(getNextReply());
   RFA_Msg_Echo const *reply = replyMsg->asEchoC();
@@ -184,7 +184,7 @@ void FSServerTest::runFileReadWriteTests()
     RFA_Msg_WriteFileRequest req;
     req.m_path = fname;
     req.m_contents = data;
-    m_fsQuery.sendRequest(req);
+    m_rfaASClient.sendRequest(req);
 
     std::unique_ptr<RFA_Message> replyMsg(getNextReply());
     RFA_Msg_WriteFileReply const *reply = replyMsg->asWriteFileReplyC();
@@ -201,7 +201,7 @@ void FSServerTest::runFileReadWriteTests()
   {
     RFA_Msg_ReadFileRequest req;
     req.m_path = fname;
-    m_fsQuery.sendRequest(req);
+    m_rfaASClient.sendRequest(req);
 
     std::unique_ptr<RFA_Message> replyMsg(getNextReply());
     RFA_Msg_ReadFileReply const *reply = replyMsg->asReadFileReplyC();
@@ -219,7 +219,7 @@ void FSServerTest::runFileReadWriteTests()
   {
     RFA_Msg_DeleteFileRequest req;
     req.m_path = fname;
-    m_fsQuery.sendRequest(req);
+    m_rfaASClient.sendRequest(req);
 
     std::unique_ptr<RFA_Message> replyMsg(getNextReply());
     RFA_Msg_DeleteFileReply const *reply = replyMsg->asDeleteFileReplyC();
@@ -232,7 +232,7 @@ void FSServerTest::runFileReadWriteTests()
   {
     RFA_Msg_FileStatusRequest req;
     req.m_path = fname;
-    m_fsQuery.sendRequest(req);
+    m_rfaASClient.sendRequest(req);
 
     std::unique_ptr<RFA_Message> replyMsg(getNextReply());
     RFA_Msg_FileStatusReply const *reply = replyMsg->asFileStatusReplyC();
@@ -243,7 +243,7 @@ void FSServerTest::runFileReadWriteTests()
   {
     RFA_Msg_ReadFileRequest req;
     req.m_path = fname;
-    m_fsQuery.sendRequest(req);
+    m_rfaASClient.sendRequest(req);
 
     std::unique_ptr<RFA_Message> replyMsg(getNextReply());
     RFA_Msg_ReadFileReply const *reply = replyMsg->asReadFileReplyC();
@@ -257,7 +257,7 @@ void FSServerTest::runGetDirEntriesTest()
 {
   RFA_Msg_GetDirEntriesRequest req;
   req.m_path = ".";
-  m_fsQuery.sendRequest(req);
+  m_rfaASClient.sendRequest(req);
 
   std::unique_ptr<RFA_Message> replyMsg(getNextReply());
   RFA_Msg_GetDirEntriesReply const *reply = replyMsg->asGetDirEntriesReplyC();
@@ -273,17 +273,17 @@ void FSServerTest::runGetDirEntriesTest()
 }
 
 
-void FSServerTest::on_vfsConnected() NOEXCEPT
+void FSServerTest::on_rfaConnected() NOEXCEPT
 {
   m_eventLoop.exit();
 }
 
-void FSServerTest::on_vfsReplyAvailable() NOEXCEPT
+void FSServerTest::on_rfaReplyAvailable() NOEXCEPT
 {
   m_eventLoop.exit();
 }
 
-void FSServerTest::on_vfsFailureAvailable() NOEXCEPT
+void FSServerTest::on_rfaFailureAvailable() NOEXCEPT
 {
   m_eventLoop.exit();
 }
@@ -304,7 +304,7 @@ void test_editor_fs_server(CmdlineArgsSpan args)
       string path = toString(args[1]);
       fsServerTest.connect(hostname);
       fsServerTest.runPathQuery(path);
-      fsServerTest.m_fsQuery.shutdown();
+      fsServerTest.m_rfaASClient.shutdown();
       return;
     }
   }

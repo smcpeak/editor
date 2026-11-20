@@ -25,7 +25,7 @@
 #include <string>                      // std::string
 
 
-// Like VFS_FileSystemQuery, but with a synchronous interface and an
+// Like RFA_AsyncSingleClient, but with a synchronous interface and an
 // implementation that has a GUI to allow the user to cancel requests.
 class VFS_QuerySync : public QObject,
                       public IHFExists {
@@ -96,7 +96,7 @@ public:      // instance methods
 
 protected Q_SLOTS:
   // Handlers for VFS_AbstractConnections.
-  void on_vfsReplyAvailable(RequestID requestID) NOEXCEPT;
+  void on_rfaReplyAvailable(RequestID requestID) NOEXCEPT;
   void on_vfsFailed(HostName hostName, string reason) NOEXCEPT;
 };
 

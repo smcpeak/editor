@@ -34,10 +34,10 @@ VFS_ConnectionsTest::VFS_ConnectionsTest(CmdlineArgsSpan args)
     m_secondaryHostName = HostName::asSSH(args[0]);
   }
 
-  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_vfsConnected,
-                   this, &VFS_ConnectionsTest::on_vfsConnected);
-  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_vfsReplyAvailable,
-                   this, &VFS_ConnectionsTest::on_vfsReplyAvailable);
+  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_rfaConnected,
+                   this, &VFS_ConnectionsTest::on_rfaConnected);
+  QObject::connect(&m_vfsConnections, &VFS_Connections::signal_rfaReplyAvailable,
+                   this, &VFS_ConnectionsTest::on_rfaReplyAvailable);
   QObject::connect(&m_vfsConnections, &VFS_Connections::signal_vfsFailed,
                    this, &VFS_ConnectionsTest::on_vfsFailed);
 }
@@ -259,14 +259,14 @@ void VFS_ConnectionsTest::runTests()
 }
 
 
-void VFS_ConnectionsTest::on_vfsConnected(HostName hostName) NOEXCEPT
+void VFS_ConnectionsTest::on_rfaConnected(HostName hostName) NOEXCEPT
 {
   DIAG("connected to " << hostName);
   m_eventLoop.exit();
 }
 
 
-void VFS_ConnectionsTest::on_vfsReplyAvailable(
+void VFS_ConnectionsTest::on_rfaReplyAvailable(
   VFS_Connections::RequestID requestID) NOEXCEPT
 {
   DIAG("got reply: " << requestID);

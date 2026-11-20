@@ -120,8 +120,8 @@ void VFS_TestConnections::slot_processRequests()
       mapInsertUniqueMove(m_availableReplies, id,
         std::unique_ptr<RFA_Message>(processRFR(rfr).release()));
 
-      TRACE1("emitting signal_vfsReplyAvailable(" << id << ")");
-      Q_EMIT signal_vfsReplyAvailable(id);
+      TRACE1("emitting signal_rfaReplyAvailable(" << id << ")");
+      Q_EMIT signal_rfaReplyAvailable(id);
     }
 
     else {

@@ -227,8 +227,8 @@ EditorWidget::EditorWidget(NamedTextDocument *tdf,
   // editor widget.
   installEventFilter(this);
 
-  QObject::connect(vfsConnections(), &VFS_Connections::signal_vfsReplyAvailable,
-                   this, &EditorWidget::on_vfsReplyAvailable);
+  QObject::connect(vfsConnections(), &VFS_Connections::signal_rfaReplyAvailable,
+                   this, &EditorWidget::on_rfaReplyAvailable);
   QObject::connect(vfsConnections(), &VFS_Connections::signal_vfsFailed,
                    this, &EditorWidget::on_vfsConnectionFailed);
 
@@ -518,13 +518,13 @@ void EditorWidget::cancelFileStatusRequestIfAny()
 }
 
 
-void EditorWidget::on_vfsReplyAvailable(
+void EditorWidget::on_rfaReplyAvailable(
   VFS_Connections::RequestID requestID) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
   if (requestID == m_fileStatusRequestID) {
-    TRACE1("on_vfsReplyAvailable: id=" << requestID);
+    TRACE1("on_rfaReplyAvailable: id=" << requestID);
 
     xassert(m_editor == m_fileStatusRequestEditor);
 

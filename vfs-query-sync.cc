@@ -30,8 +30,8 @@ VFS_QuerySync::VFS_QuerySync(
     m_connLostMessage()
 {
   QObject::connect(
-    m_vfsConnections, &VFS_AbstractConnections::signal_vfsReplyAvailable,
-                              this, &VFS_QuerySync::on_vfsReplyAvailable);
+    m_vfsConnections, &VFS_AbstractConnections::signal_rfaReplyAvailable,
+                              this, &VFS_QuerySync::on_rfaReplyAvailable);
 
   QObject::connect(
     m_vfsConnections, &VFS_AbstractConnections::signal_vfsFailed,
@@ -141,7 +141,7 @@ bool VFS_QuerySync::hfExists(HostAndResourceName const &harn)
 }
 
 
-void VFS_QuerySync::on_vfsReplyAvailable(RequestID requestID) NOEXCEPT
+void VFS_QuerySync::on_rfaReplyAvailable(RequestID requestID) NOEXCEPT
 {
   if (requestID == m_requestID) {
     m_reply = m_vfsConnections->takeReply(requestID);

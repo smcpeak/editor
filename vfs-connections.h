@@ -5,29 +5,29 @@
 #ifndef EDITOR_VFS_CONNECTIONS_H
 #define EDITOR_VFS_CONNECTIONS_H
 
-#include "vfs-connections-fwd.h"       // fwds for this module
+#include "vfs-connections-fwd.h"                 // fwds for this module
 
 // editor
-#include "host-name.h"                 // HostName
-#include "rfa-msg.h"                   // RFA_Message
-#include "vfs-query-fwd.h"             // VFS_FileSystemQuery
+#include "host-name.h"                           // HostName
+#include "rfa-msg.h"                             // RFA_Message
+#include "rfa-async-single-client-fwd.h"         // RFA_AsyncSingleClient
 
 // smbase
-#include "smbase/ordered-map-iface.h"  // smbase::OrderedMap
-#include "smbase/refct-serf.h"         // SerfRefCount
-#include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
+#include "smbase/ordered-map-iface.h"            // smbase::OrderedMap
+#include "smbase/refct-serf.h"                   // SerfRefCount
+#include "smbase/sm-macros.h"                    // NO_OBJECT_COPIES
 
 // qt
 #include <QObject>
 
 // libc++
-#include <cstdint>                     // std::uint64_t
-#include <list>                        // std::list
-#include <map>                         // std::map
-#include <memory>                      // std::unique_ptr
-#include <string>                      // std::string
-#include <utility>                     // std::move
-#include <vector>                      // std::vector
+#include <cstdint>                               // std::uint64_t
+#include <list>                                  // std::list
+#include <map>                                   // std::map
+#include <memory>                                // std::unique_ptr
+#include <string>                                // std::string
+#include <utility>                               // std::move
+#include <vector>                                // std::vector
 
 
 /* Interface to a collection of VFS connections.  This is separated from
@@ -55,7 +55,7 @@
         of this class cannot distinguish between states 1 and 2.)
 
      3. The reply is received, making it "available".  The
-        `signal_vfsReplyAvailable` fires upon this event.
+        `signal_rfaReplyAvailable` fires upon this event.
 
      4. The reply is taken by `takeReply`, at which point its lifecycle
         for the purpose of this class ends.
@@ -80,7 +80,7 @@ public:      // types
   // diagram.
   //
   // Note: These states have some similarities with
-  // VFS_FileSystemQuery::State, but also important differences.  FSQ is
+  // RFA_AsyncSingleClient::State, but also important differences.  FSQ is
   // the lower-level module.
   enum ConnectionState {
     CS_INVALID,                        // Unknown host.
@@ -138,7 +138,7 @@ public:      // methods
   bool localIsReady() const { return isReady(HostName::asLocal()); }
 
   // True if we finished connecting to 'hostName' (and therefore became
-  // 'isReady' and emitted 'signal_vfsConnected'), even if we then lost
+  // 'isReady' and emitted 'signal_rfaConnected'), even if we then lost
   // the connection.
   bool isOrWasConnected(HostName const &hostName) const;
 
@@ -207,10 +207,10 @@ public:      // methods
 Q_SIGNALS:
   // Emitted when 'isConnecting(hostName)==true' transitions to
   // 'isReady(hostName)'.
-  void signal_vfsConnected(HostName hostName);
+  void signal_rfaConnected(HostName hostName);
 
   // Emitted when 'replyIsAvailable(requestID)' becomes true.
-  void signal_vfsReplyAvailable(RequestID requestID);
+  void signal_rfaReplyAvailable(RequestID requestID);
 
   // Emitted when 'connectionFailed' becomes true.
   void signal_vfsFailed(HostName hostName, std::string reason);
@@ -221,7 +221,7 @@ Q_SIGNALS:
 char const *toString(VFS_AbstractConnections::ConnectionState s);
 
 
-// Collection of active VFS_FileSystemQuery objects, and an asynchronous
+// Collection of active RFA_AsyncSingleClient objects, and an asynchronous
 // query interface on top of them.
 class VFS_Connections : public VFS_AbstractConnections {
   Q_OBJECT
@@ -257,7 +257,7 @@ private:     // types
 
     // The underlying query object.  Never null until teardown in the
     // destructor.
-    std::unique_ptr<VFS_FileSystemQuery> m_fsQuery;
+    std::unique_ptr<RFA_AsyncSingleClient> m_rfaASClient;
 
     // If true, we have 'm_startingDirectory'.  Otherwise, we are still
     // connecting, or processing the query to get that directory.
@@ -271,11 +271,11 @@ private:     // types
     // separators.
     std::string m_startingDirectory;
 
-    // ID of the request currently being serviced by 'm_fsQuery', or 0
+    // ID of the request currently being serviced by 'm_rfaASClient', or 0
     // if none is.
     RequestID m_currentRequestID;
 
-    // Sequence of queued requests to send.  VFS_FileSystemQuery only
+    // Sequence of queued requests to send.  RFA_AsyncSingleClient only
     // allows one request at a time, so while a request is in flight,
     // additional requests are queued here.
     std::list<QueuedRequest> m_queuedRequests;
@@ -301,7 +301,7 @@ private:     // types
     // True if 'requestID' has not received its reply.
     bool requestIsOutstanding(RequestID requestID) const;
 
-    // If 'm_fsQuery' is ready, and there are queued requests, send the
+    // If 'm_rfaASClient' is ready, and there are queued requests, send the
     // next one.
     void issueQueuedRequest();
 
@@ -340,7 +340,7 @@ private:      // methods
   Connection       *conn (HostName const &hostName)
     { return const_cast<Connection*>(connC(hostName)); }
 
-  // Assuming we received a signal from a VFS_FileSystemQuery, find and
+  // Assuming we received a signal from a RFA_AsyncSingleClient, find and
   // return the Connection associated with the sender.  Return nullptr
   // if one cannot be found.
   Connection * NULLABLE signalRecipientConnection();
@@ -399,10 +399,10 @@ public:      // methods
   virtual int numOutstandingRequests() const override;
 
 protected Q_SLOTS:
-  // Handlers for VFS_FileSystemQuery.
-  void on_vfsConnected() NOEXCEPT;
-  void on_vfsReplyAvailable() NOEXCEPT;
-  void on_vfsFailureAvailable() NOEXCEPT;
+  // Handlers for RFA_AsyncSingleClient.
+  void on_rfaConnected() NOEXCEPT;
+  void on_rfaReplyAvailable() NOEXCEPT;
+  void on_rfaFailureAvailable() NOEXCEPT;
 };
 
 

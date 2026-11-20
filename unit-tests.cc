@@ -142,7 +142,7 @@ static void entry(int argc, char **argv)
 
   RUN_TEST(text_search);               // deps: fasttime, line-index, td-core, td-editor
 
-  RUN_TEST(vfs_connections);           // deps: host-name, rfa-msg, vfs-query
+  RUN_TEST(vfs_connections);           // deps: host-name, rfa-msg, rfa-async-single-client
 
   // This depends on `lsp_client`, but only in a fairly simple way, and
   // this test should be much faster.

@@ -6,8 +6,8 @@
 
 // editor
 #include "host-name.h"                 // HostName
+#include "rfa-async-single-client.h"   // RFA_AsyncSingleClient
 #include "rfa-msg.h"                   // RFA_Msg_FileStatusReply
-#include "vfs-query.h"                 // VFS_FileSystemQuery
 
 // smbase
 #include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
@@ -30,7 +30,7 @@ public:      // data
   QEventLoop m_eventLoop;
 
   // Query manager object.
-  VFS_FileSystemQuery m_fsQuery;
+  RFA_AsyncSingleClient m_rfaASClient;
 
 public:      // methods
   FSServerTest();
@@ -62,10 +62,10 @@ public:      // methods
   void runGetDirEntriesTest();
 
 public Q_SLOTS:
-  // Handlers for VFS_FileSystemQuery signals.
-  void on_vfsConnected() NOEXCEPT;
-  void on_vfsReplyAvailable() NOEXCEPT;
-  void on_vfsFailureAvailable() NOEXCEPT;
+  // Handlers for RFA_AsyncSingleClient signals.
+  void on_rfaConnected() NOEXCEPT;
+  void on_rfaReplyAvailable() NOEXCEPT;
+  void on_rfaFailureAvailable() NOEXCEPT;
 };
 
 

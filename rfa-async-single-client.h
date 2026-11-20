@@ -1,38 +1,40 @@
-// vfs-query.h
-// VFS_FileSystemQuery class.
+// rfa-async-single-client.h
+// RFA_AsyncSingleClient class.
 
-#ifndef EDITOR_VFS_QUERY_H
-#define EDITOR_VFS_QUERY_H
+// See license.txt for copyright and terms of use.
 
-#include "vfs-query-fwd.h"             // fwds for this module
+#ifndef EDITOR_RFA_ASYNC_SINGLE_CLIENT_H
+#define EDITOR_RFA_ASYNC_SINGLE_CLIENT_H
+
+#include "rfa-async-single-client-fwd.h"         // fwds for this module
 
 // editor
-#include "command-runner.h"            // CommandRunner
-#include "host-name.h"                 // HostName
-#include "rfa-msg.h"                   // RFA_Message
+#include "command-runner.h"                      // CommandRunner
+#include "host-name.h"                           // HostName
+#include "rfa-msg.h"                             // RFA_Message
 
 // smbase
-#include "smbase/sm-file-util.h"       // SMFileUtil
-#include "smbase/str.h"                // string
+#include "smbase/sm-file-util.h"                 // SMFileUtil
+#include "smbase/str.h"                          // string
 
 // qt
 #include <QByteArray>
 #include <QObject>
 
 // libc++
-#include <memory>                      // std::unique_ptr
+#include <memory>                                // std::unique_ptr
 
 // libc
-#include <stdint.h>                    // int64_t
+#include <stdint.h>                              // int64_t
 
 
 // Class to issue asynchronous file system queries to a process that
-// implements the VFS protocol.  The process could be locally serving
+// implements the RFA protocol.  The process could be locally serving
 // the requests or an SSH process communicating to the real server on
 // another machine.
-class VFS_FileSystemQuery : public QObject {
+class RFA_AsyncSingleClient : public QObject {
   Q_OBJECT
-  NO_OBJECT_COPIES(VFS_FileSystemQuery);
+  NO_OBJECT_COPIES(RFA_AsyncSingleClient);
 
 public:      // types
   // States that the query object can be in.
@@ -93,11 +95,11 @@ private:     // methods
   void innerSendRequest(RFA_Message const &msg);
 
 public:      // methods
-  VFS_FileSystemQuery();
+  RFA_AsyncSingleClient();
 
   // Preferably, 'shutdown' should be explicitly called before the
   // destructor is.
-  virtual ~VFS_FileSystemQuery() noexcept;
+  virtual ~RFA_AsyncSingleClient() noexcept;
 
   // Get current state.
   State state() const { return m_state; }
@@ -136,7 +138,7 @@ public:      // methods
   // This can be useful when a client sees an invalid response from the
   // server and wants to mark the connection as invalid.
   //
-  // Calling this causes the 'signal_vfsFailureAvailable' signal to be
+  // Calling this causes the 'signal_rfaFailureAvailable' signal to be
   // emitted (unless there was a prior failure; the signal is only sent
   // once).
   //
@@ -157,13 +159,13 @@ public:      // methods
 
 Q_SIGNALS:
   // Emitted when state() transitions from S_CONNECTING to S_READY.
-  void signal_vfsConnected();
+  void signal_rfaConnected();
 
   // Emitted when state() becomes S_HAS_REPLY.
-  void signal_vfsReplyAvailable();
+  void signal_rfaReplyAvailable();
 
   // Emitted when state() becomes S_FAILED.
-  void signal_vfsFailureAvailable();
+  void signal_rfaFailureAvailable();
 
 protected Q_SLOTS:
   // Handlers for CommandRunner signals.
@@ -174,7 +176,7 @@ protected Q_SLOTS:
 
 
 // Returns a string like "S_READY".
-char const *toString(VFS_FileSystemQuery::State s);
+char const *toString(RFA_AsyncSingleClient::State s);
 
 
-#endif // EDITOR_VFS_QUERY_H
+#endif // EDITOR_RFA_ASYNC_SINGLE_CLIENT_H

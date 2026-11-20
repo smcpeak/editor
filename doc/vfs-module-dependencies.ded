@@ -39,7 +39,7 @@
         "x": 355,
         "y": 340
       },
-      "name": "vfs-query",
+      "name": "rfa-async-single-client",
       "size": {
         "h": 20,
         "w": 100

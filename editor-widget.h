@@ -859,7 +859,7 @@ public Q_SLOTS:
   void scrollToCol(int col);
 
   // Handlers for VFS_Connections.
-  void on_vfsReplyAvailable(VFS_Connections::RequestID requestID) NOEXCEPT;
+  void on_rfaReplyAvailable(VFS_Connections::RequestID requestID) NOEXCEPT;
   void on_vfsConnectionFailed(HostName hostName, string reason) NOEXCEPT;
 
   // Handler for `DiagnosticDetailsDialog`.

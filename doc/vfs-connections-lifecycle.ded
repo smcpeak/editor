@@ -182,7 +182,7 @@
     },
     {
       "end": {"entityRef": 5},
-      "label": "signal_vfsConnected",
+      "label": "signal_rfaConnected",
       "lineColor": "Blue",
       "start": {"entityRef": 4}
     },

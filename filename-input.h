@@ -208,7 +208,7 @@ public Q_SLOTS:
   void on_refresh() NOEXCEPT;
 
   // VFS_Connections slots.
-  void on_vfsReplyAvailable(VFS_Connections::RequestID requestID) NOEXCEPT;
+  void on_rfaReplyAvailable(VFS_Connections::RequestID requestID) NOEXCEPT;
 
   // QDialog slots.
   virtual void accept() NOEXCEPT OVERRIDE;

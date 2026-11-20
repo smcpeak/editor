@@ -1,7 +1,7 @@
-// vfs-query.cc
-// Code for vfs-query.h.
+// rfa-async-single-client.cc
+// Code for rfa-async-single-client.h.
 
-#include "vfs-query.h"                 // this module
+#include "rfa-async-single-client.h"   // this module
 
 // editor
 #include "waiting-counter.h"           // adjWaitingCounter
@@ -29,7 +29,7 @@
 #include <string.h>                    // memcpy
 
 
-VFS_FileSystemQuery::VFS_FileSystemQuery()
+RFA_AsyncSingleClient::RFA_AsyncSingleClient()
   : QObject(),
     m_state(S_CREATED),
     m_hostName(HostName::asLocal()),
@@ -40,15 +40,15 @@ VFS_FileSystemQuery::VFS_FileSystemQuery()
     m_failureReason()
 {
   QObject::connect(&m_commandRunner, &CommandRunner::signal_outputDataReady,
-                   this, &VFS_FileSystemQuery::on_outputDataReady);
+                   this, &RFA_AsyncSingleClient::on_outputDataReady);
   QObject::connect(&m_commandRunner, &CommandRunner::signal_errorDataReady,
-                   this, &VFS_FileSystemQuery::on_errorDataReady);
+                   this, &RFA_AsyncSingleClient::on_errorDataReady);
   QObject::connect(&m_commandRunner, &CommandRunner::signal_processTerminated,
-                   this, &VFS_FileSystemQuery::on_processTerminated);
+                   this, &RFA_AsyncSingleClient::on_processTerminated);
 }
 
 
-VFS_FileSystemQuery::~VFS_FileSystemQuery() noexcept
+RFA_AsyncSingleClient::~RFA_AsyncSingleClient() noexcept
 {
   GENERIC_CATCH_BEGIN
 
@@ -65,16 +65,16 @@ VFS_FileSystemQuery::~VFS_FileSystemQuery() noexcept
 }
 
 
-static bool isWaitingState(VFS_FileSystemQuery::State s)
+static bool isWaitingState(RFA_AsyncSingleClient::State s)
 {
-  return s == VFS_FileSystemQuery::S_CONNECTING ||
-         s == VFS_FileSystemQuery::S_WAITING;
+  return s == RFA_AsyncSingleClient::S_CONNECTING ||
+         s == RFA_AsyncSingleClient::S_WAITING;
 }
 
 
-void VFS_FileSystemQuery::setState(State s)
+void RFA_AsyncSingleClient::setState(State s)
 {
-  TRACE("VFS_FileSystemQuery",
+  TRACE("RFA_AsyncSingleClient",
     "setState: " << toString(m_state) << " -> " << toString(s));
 
   // Inform 'EventReplay' if our waitingness has changed.
@@ -86,27 +86,27 @@ void VFS_FileSystemQuery::setState(State s)
 }
 
 
-void VFS_FileSystemQuery::disconnectSignals()
+void RFA_AsyncSingleClient::disconnectSignals()
 {
   QObject::disconnect(&m_commandRunner, nullptr, this, nullptr);
 }
 
 
-void VFS_FileSystemQuery::recordFailure(string const &reason)
+void RFA_AsyncSingleClient::recordFailure(string const &reason)
 {
   if (state() != S_FAILED) {
     setState(S_FAILED);
     m_failureReason = reason;
-    Q_EMIT signal_vfsFailureAvailable();
+    Q_EMIT signal_rfaFailureAvailable();
   }
   else {
-    TRACE("VFS_FileSystemQuery",
+    TRACE("RFA_AsyncSingleClient",
       "recordFailure: discarding additional reason: " << reason);
   }
 }
 
 
-void VFS_FileSystemQuery::checkForCompleteReply()
+void RFA_AsyncSingleClient::checkForCompleteReply()
 {
   uint32_t replyBytesSize = m_replyBytes.size();
   if (replyBytesSize < 4) {
@@ -129,7 +129,7 @@ void VFS_FileSystemQuery::checkForCompleteReply()
     return;
   }
 
-  if (tracingSys("VFS_FileSystemQuery_detail")) {
+  if (tracingSys("RFA_AsyncSingleClient_detail")) {
     printQByteArray(m_replyBytes, "reply bytes");
   }
 
@@ -138,7 +138,7 @@ void VFS_FileSystemQuery::checkForCompleteReply()
   StreamFlatten flat(&iss);
   m_replyMessage.reset(RFA_Message::deserialize(flat));
 
-  TRACE("VFS_FileSystemQuery",
+  TRACE("RFA_AsyncSingleClient",
     "received reply: type=" << toString(m_replyMessage->messageType()) <<
     " len=" << replyLen);
 
@@ -159,10 +159,10 @@ void VFS_FileSystemQuery::checkForCompleteReply()
       // Confirm compatibility.
       if (getVer->m_version == RFA_currentVersion) {
         // Good to go.
-        TRACE("VFS_FileSystemQuery", "confirmed protocol compatibility");
+        TRACE("RFA_AsyncSingleClient", "confirmed protocol compatibility");
         setState(S_READY);
         m_replyMessage.reset(nullptr);
-        Q_EMIT signal_vfsConnected();
+        Q_EMIT signal_rfaConnected();
       }
       else {
         recordFailure(stringb(
@@ -182,12 +182,12 @@ void VFS_FileSystemQuery::checkForCompleteReply()
 
   else {
     setState(S_HAS_REPLY);
-    Q_EMIT signal_vfsReplyAvailable();
+    Q_EMIT signal_rfaReplyAvailable();
   }
 }
 
 
-void VFS_FileSystemQuery::connect(HostName const &hostname)
+void RFA_AsyncSingleClient::connect(HostName const &hostname)
 {
   xassert(state() == S_CREATED);
 
@@ -241,7 +241,7 @@ void VFS_FileSystemQuery::connect(HostName const &hostname)
     m_commandRunner.setArguments(args);
   }
 
-  TRACE("VFS_FileSystemQuery",
+  TRACE("RFA_AsyncSingleClient",
     "starting command: " << toString(m_commandRunner.getCommandLine()));
   m_commandRunner.startAsynchronous();
 
@@ -251,13 +251,13 @@ void VFS_FileSystemQuery::connect(HostName const &hostname)
 }
 
 
-HostName VFS_FileSystemQuery::getHostName() const
+HostName RFA_AsyncSingleClient::getHostName() const
 {
   return m_hostName;
 }
 
 
-void VFS_FileSystemQuery::innerSendRequest(RFA_Message const &msg)
+void RFA_AsyncSingleClient::innerSendRequest(RFA_Message const &msg)
 {
   // Serialize the message.
   std::string serMessage;
@@ -280,17 +280,17 @@ void VFS_FileSystemQuery::innerSendRequest(RFA_Message const &msg)
   memcpy(envelope.data()+4, serMessage.data(), serMsgLen);
 
   // Send that to the child process.
-  TRACE("VFS_FileSystemQuery",
+  TRACE("RFA_AsyncSingleClient",
     "sending message: type=" << toString(msg.messageType()) <<
     " len=" << serMsgLen);
-  if (tracingSys("VFS_FileSystemQuery_detail")) {
+  if (tracingSys("RFA_AsyncSingleClient_detail")) {
     printQByteArray(envelope, "envelope bytes");
   }
   m_commandRunner.putInputData(envelope);
 }
 
 
-void VFS_FileSystemQuery::sendRequest(RFA_Message const &msg)
+void RFA_AsyncSingleClient::sendRequest(RFA_Message const &msg)
 {
   xassert(state() == S_READY);
 
@@ -300,7 +300,7 @@ void VFS_FileSystemQuery::sendRequest(RFA_Message const &msg)
 }
 
 
-std::unique_ptr<RFA_Message> VFS_FileSystemQuery::takeReply()
+std::unique_ptr<RFA_Message> RFA_AsyncSingleClient::takeReply()
 {
   xassert(state() == S_HAS_REPLY);
   setState(S_READY);
@@ -308,21 +308,21 @@ std::unique_ptr<RFA_Message> VFS_FileSystemQuery::takeReply()
 }
 
 
-void VFS_FileSystemQuery::markAsFailed(string const &reason)
+void RFA_AsyncSingleClient::markAsFailed(string const &reason)
 {
   xassert(state() != S_DEAD);
   recordFailure(reason);
 }
 
 
-string VFS_FileSystemQuery::getFailureReason()
+string RFA_AsyncSingleClient::getFailureReason()
 {
   xassert(state() == S_FAILED);
   return m_failureReason;
 }
 
 
-void VFS_FileSystemQuery::shutdown()
+void RFA_AsyncSingleClient::shutdown()
 {
   disconnectSignals();
   setState(S_DEAD);
@@ -331,26 +331,26 @@ void VFS_FileSystemQuery::shutdown()
 }
 
 
-void VFS_FileSystemQuery::on_outputDataReady() NOEXCEPT
+void RFA_AsyncSingleClient::on_outputDataReady() NOEXCEPT
 {
-  TRACE("VFS_FileSystemQuery", "on_outputDataReady");
+  TRACE("RFA_AsyncSingleClient", "on_outputDataReady");
 
   m_replyBytes.append(m_commandRunner.takeOutputData());
   checkForCompleteReply();
 }
 
-void VFS_FileSystemQuery::on_errorDataReady() NOEXCEPT
+void RFA_AsyncSingleClient::on_errorDataReady() NOEXCEPT
 {
-  TRACE("VFS_FileSystemQuery", "on_errorDataReady");
+  TRACE("RFA_AsyncSingleClient", "on_errorDataReady");
 
   // Just accumulate the error bytes.  We'll deal with them when
   // looking at output data or process termination.
   m_errorBytes.append(m_commandRunner.takeErrorData());
 }
 
-void VFS_FileSystemQuery::on_processTerminated() NOEXCEPT
+void RFA_AsyncSingleClient::on_processTerminated() NOEXCEPT
 {
-  TRACE("VFS_FileSystemQuery", "on_processTerminated");
+  TRACE("RFA_AsyncSingleClient", "on_processTerminated");
 
   // An uncommanded termination is an error.  (And a commanded
   // termination is preceded by disconnecting signals, so we would not
@@ -366,8 +366,8 @@ void VFS_FileSystemQuery::on_processTerminated() NOEXCEPT
 
 
 DEFINE_ENUMERATION_TO_STRING(
-  VFS_FileSystemQuery::State,
-  VFS_FileSystemQuery::NUM_STATES,
+  RFA_AsyncSingleClient::State,
+  RFA_AsyncSingleClient::NUM_STATES,
   (
     "S_CREATED",
     "S_CONNECTING",

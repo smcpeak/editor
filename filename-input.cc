@@ -157,8 +157,8 @@ FilenameInputDialog::FilenameInputDialog(
   this->resize(m_history->m_dialogSize);
 
   QObject::connect(
-    m_vfsConnections, &VFS_Connections::signal_vfsReplyAvailable,
-    this, &FilenameInputDialog::on_vfsReplyAvailable);
+    m_vfsConnections, &VFS_Connections::signal_rfaReplyAvailable,
+    this, &FilenameInputDialog::on_rfaReplyAvailable);
 }
 
 
@@ -299,14 +299,14 @@ void FilenameInputDialog::cancelCurrentRequestIfAny()
 }
 
 
-void FilenameInputDialog::on_vfsReplyAvailable(
+void FilenameInputDialog::on_rfaReplyAvailable(
   VFS_Connections::RequestID requestID) NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
   if (requestID == m_currentRequestID) {
     TRACE("FilenameInputDialog",
-      "on_vfsReplyAvailable: reply arrived for: " << m_currentRequestDir);
+      "on_rfaReplyAvailable: reply arrived for: " << m_currentRequestDir);
 
     std::unique_ptr<RFA_Message> reply(
       m_vfsConnections->takeReply(requestID));

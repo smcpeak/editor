@@ -95,8 +95,8 @@ ConnectionsDialog::ConnectionsDialog(VFS_Connections *vfsConnections)
     #undef ADD_BUTTON
   }
 
-  QObject::connect(m_vfsConnections, &VFS_Connections::signal_vfsConnected,
-                   this, &ConnectionsDialog::on_vfsConnected);
+  QObject::connect(m_vfsConnections, &VFS_Connections::signal_rfaConnected,
+                   this, &ConnectionsDialog::on_rfaConnected);
   QObject::connect(m_vfsConnections, &VFS_Connections::signal_vfsFailed,
                    this, &ConnectionsDialog::on_vfsFailed);
 
@@ -247,9 +247,9 @@ void ConnectionsDialog::keyPressEvent(QKeyEvent *k) noexcept
 }
 
 
-void ConnectionsDialog::on_vfsConnected(HostName hostName) noexcept
+void ConnectionsDialog::on_rfaConnected(HostName hostName) noexcept
 {
-  TRACE1("on_vfsConnected: host=" << hostName);
+  TRACE1("on_rfaConnected: host=" << hostName);
 
   GENERIC_CATCH_BEGIN
 
