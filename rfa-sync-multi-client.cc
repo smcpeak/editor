@@ -1,8 +1,9 @@
-// vfs-query-sync.cc
-// Code for vfs-query-sync.h.
+// rfa-sync-multi-client.cc
+// Code for rfa-sync-multi-client.h.
 
-#include "vfs-query-sync.h"            // this module
+#include "rfa-sync-multi-client.h"     // this module
 
+// editor
 #include "waiting-counter.h"           // IncDecWaitingCounter
 
 // smqtutil
@@ -20,7 +21,7 @@
 #include <utility>                     // std::move
 
 
-VFS_QuerySync::VFS_QuerySync(
+RFA_SyncMultiClient::RFA_SyncMultiClient(
   RFA_AbstractAsyncMultiClient *rfaAMClient, SynchronousWaiter &waiter)
   : IMEMBFP(rfaAMClient),
     IMEMBFP(waiter),
@@ -31,22 +32,22 @@ VFS_QuerySync::VFS_QuerySync(
 {
   QObject::connect(
     m_rfaAMClient, &RFA_AbstractAsyncMultiClient::signal_rfaReplyAvailable,
-    this,          &VFS_QuerySync::                   on_rfaReplyAvailable);
+    this,          &RFA_SyncMultiClient::             on_rfaReplyAvailable);
 
   QObject::connect(
     m_rfaAMClient, &RFA_AbstractAsyncMultiClient::signal_rfaFailed,
-    this,          &VFS_QuerySync::                   on_rfaFailed);
+    this,          &RFA_SyncMultiClient::             on_rfaFailed);
 }
 
 
-VFS_QuerySync::~VFS_QuerySync()
+RFA_SyncMultiClient::~RFA_SyncMultiClient()
 {
   // See doc/signals-and-dtors.txt.
   QObject::disconnect(m_rfaAMClient, nullptr, this, nullptr);
 }
 
 
-bool VFS_QuerySync::issueRequestSynchronously(
+bool RFA_SyncMultiClient::issueRequestSynchronously(
   HostName const &hostName,
   std::unique_ptr<RFA_Message> request,
   std::unique_ptr<RFA_Message> /*OUT*/ &reply,
@@ -61,7 +62,7 @@ bool VFS_QuerySync::issueRequestSynchronously(
 
   USED_FOR_DEBUGGING RequestID origRequestID = m_requestID;
 
-  TRACE("VFS_QuerySync",
+  TRACE("RFA_SyncMultiClient",
     "request " << origRequestID << ": issued: " << requestDescription);
 
   // Inform the test infrastructure that we are awaiting IPC.
@@ -80,21 +81,21 @@ bool VFS_QuerySync::issueRequestSynchronously(
     requestDescription);
 
   if (!completed) {
-    TRACE("VFS_QuerySync",
+    TRACE("RFA_SyncMultiClient",
       "request " << origRequestID << ": canceled");
     m_requestID = 0;
     return false;
   }
 
   if (m_reply) {
-    TRACE("VFS_QuerySync",
+    TRACE("RFA_SyncMultiClient",
       "request " << origRequestID <<
       ": got reply: " << m_reply->description());
     reply = std::move(m_reply);
     return true;
   }
   else if (!m_connLostMessage.empty()) {
-    TRACE("VFS_QuerySync",
+    TRACE("RFA_SyncMultiClient",
       "request " << origRequestID <<
       ": conn lost: " << m_connLostMessage);
     connLostMessage = m_connLostMessage;
@@ -103,15 +104,15 @@ bool VFS_QuerySync::issueRequestSynchronously(
   }
   else {
     // Should not happen.
-    TRACE("VFS_QuerySync",
+    TRACE("RFA_SyncMultiClient",
       "request " << origRequestID << ": what happened?");
-    DEV_WARNING("VFS_QuerySync: not canceled, succeeded, nor failed?");
+    DEV_WARNING("RFA_SyncMultiClient: not canceled, succeeded, nor failed?");
     return false;
   }
 }
 
 
-bool VFS_QuerySync::hfExists(HostAndResourceName const &harn)
+bool RFA_SyncMultiClient::hfExists(HostAndResourceName const &harn)
 {
   std::unique_ptr<RFA_Msg_FileStatusRequest> req(new RFA_Msg_FileStatusRequest);
   req->m_path = harn.resourceName();
@@ -132,7 +133,7 @@ bool VFS_QuerySync::hfExists(HostAndResourceName const &harn)
     }
   }
   else {
-    TRACE("VFS_QuerySync",
+    TRACE("RFA_SyncMultiClient",
       "hfExists(" << harn << "): " << replyOrError.right());
 
     // On error, just say the file does not exist.
@@ -141,7 +142,7 @@ bool VFS_QuerySync::hfExists(HostAndResourceName const &harn)
 }
 
 
-void VFS_QuerySync::on_rfaReplyAvailable(RequestID requestID) NOEXCEPT
+void RFA_SyncMultiClient::on_rfaReplyAvailable(RequestID requestID) NOEXCEPT
 {
   if (requestID == m_requestID) {
     m_reply = m_rfaAMClient->takeReply(requestID);
@@ -150,7 +151,7 @@ void VFS_QuerySync::on_rfaReplyAvailable(RequestID requestID) NOEXCEPT
 }
 
 
-void VFS_QuerySync::on_rfaFailed(
+void RFA_SyncMultiClient::on_rfaFailed(
   HostName hostName, string reason) NOEXCEPT
 {
   if (m_requestID != 0 && hostName == m_hostName) {
@@ -171,8 +172,8 @@ readFileSynchronously(
   std::unique_ptr<RFA_Msg_ReadFileRequest> req(new RFA_Msg_ReadFileRequest);
   req->m_path = harn.resourceName();
 
-  VFS_QuerySync querySync(rfaAMClient, waiter);
-  return querySync.issueTypedRequestSynchronously<RFA_Msg_ReadFileReply>(
+  RFA_SyncMultiClient rfaSMClient(rfaAMClient, waiter);
+  return rfaSMClient.issueTypedRequestSynchronously<RFA_Msg_ReadFileReply>(
     harn.hostName(), std::move(req));
 }
 
@@ -186,8 +187,8 @@ getFileStatusSynchronously(
   std::unique_ptr<RFA_Msg_FileStatusRequest> req(new RFA_Msg_FileStatusRequest);
   req->m_path = harn.resourceName();
 
-  VFS_QuerySync querySync(rfaAMClient, waiter);
-  return querySync.issueTypedRequestSynchronously<RFA_Msg_FileStatusReply>(
+  RFA_SyncMultiClient rfaSMClient(rfaAMClient, waiter);
+  return rfaSMClient.issueTypedRequestSynchronously<RFA_Msg_FileStatusReply>(
     harn.hostName(), std::move(req));
 }
 

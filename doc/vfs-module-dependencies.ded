@@ -50,7 +50,7 @@
         "x": 150,
         "y": 240
       },
-      "name": "vfs-query-sync",
+      "name": "rfa-sync-multi-client",
       "size": {
         "h": 20,
         "w": 305
@@ -112,7 +112,7 @@
       }
     },
     {
-      "attributes": "rfa-async-multi-client\nvfs-query-sync\nrfa-msg\nsync-wait\n",
+      "attributes": "rfa-async-multi-client\nrfa-sync-multi-client\nrfa-msg\nsync-wait\n",
       "loc": {
         "x": 150,
         "y": 135

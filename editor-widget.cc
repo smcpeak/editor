@@ -28,13 +28,13 @@
 #include "lsp-symbol-request-kind.h"             // LSPSymbolRequestKind
 #include "lsp-version-number.h"                  // LSP_VersionNumber
 #include "nearby-file.h"                         // getNearbyFilename
-#include "styledb.h"                             // StyleDB, TextCategoryAndStyle
 #include "range-text-repl.h"                     // RangeTextReplacement
+#include "rfa-sync-multi-client.h"               // RFA_SyncMultiClient
+#include "styledb.h"                             // StyleDB, TextCategoryAndStyle
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
 #include "tdd-proposed-fix.h"                    // TDD_ProposedFix
 #include "textcategory.h"                        // LineCategoryAOAs, etc.
 #include "uri-util.h"                            // getFileURIPath, makeFileURI
-#include "vfs-query-sync.h"                      // VFS_QuerySync
 #include "waiting-counter.h"                     // IncDecWaitingCounter
 #include "wrapped-integer-inl.h"                 // WrappedInteger::operator++ defn
 
@@ -635,14 +635,14 @@ void EditorWidget::openDiagnosticOrFileAtCursor(
   editorGlobal()->getUniqueDocumentDirectories(prefixes);
 
   SynchronousWaiter waiter(this);
-  VFS_QuerySync querySync(rfaAMClient(), waiter);
+  RFA_SyncMultiClient rfaSMClient(rfaAMClient(), waiter);
 
   // Convert to model coordinates in order to get a byte index into
   // `lineText`.
   TextMCoord cursorMC = m_editor->toMCoord(cursorLC);
 
   std::optional<HostFile_OptLineByte> hostFileAndLine =
-    getNearbyFilename(querySync, prefixes,
+    getNearbyFilename(rfaSMClient, prefixes,
                       lineText, cursorMC.m_byteIndex);
 
   if (!hostFileAndLine) {

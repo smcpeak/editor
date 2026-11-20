@@ -7,8 +7,8 @@
 #include "host-file-line.h"                      // HostFileLine
 #include "lsp-client.h"                          // LSPClientDocumentState
 #include "rfa-async-multi-client.h"              // RFA_AbstractAsyncMultiClient
+#include "rfa-sync-multi-client.h"               // readFileSynchronously
 #include "td-core.h"                             // TextDocumentCore
-#include "vfs-query-sync.h"                      // readFileSynchronously
 
 #include "smqtutil/sync-wait.h"                  // SynchronousWaiter
 

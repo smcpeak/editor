@@ -23,12 +23,12 @@
 #include "macro-creator-dialog.h"                // MacroCreatorDialog
 #include "macro-run-dialog.h"                    // MacroRunDialog
 #include "pixmaps.h"                             // g_editorPixmaps
+#include "rfa-sync-multi-client.h"               // RFA_SyncMultiClient, readFileSynchronously
 #include "sar-panel.h"                           // SearchAndReplacePanel
 #include "status-bar.h"                          // StatusBarDisplay
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
 #include "td-editor.h"                           // TextDocumentEditor
 #include "textinput.h"                           // TextInputDialog
-#include "vfs-query-sync.h"                      // VFS_QuerySync, readFileSynchronously
 #include "waiting-counter.h"                     // IncDecWaitingCounter
 
 // smqtutil
@@ -915,9 +915,9 @@ std::unique_ptr<REPLY_TYPE> EditorWindow::vfsQuerySynchronously(
   HostName const &hostName, std::unique_ptr<RFA_Message> request)
 {
   SynchronousWaiter waiter(this);
-  VFS_QuerySync querySync(rfaAMClient(), waiter);
+  RFA_SyncMultiClient rfaSMClient(rfaAMClient(), waiter);
   auto replyOrError(
-    querySync.issueTypedRequestSynchronously<REPLY_TYPE>(
+    rfaSMClient.issueTypedRequestSynchronously<REPLY_TYPE>(
       hostName, std::move(request)));
 
   if (replyOrError.isRight()) {

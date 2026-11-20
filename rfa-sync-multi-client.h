@@ -1,8 +1,10 @@
-// vfs-query-sync.h
-// VFS_QuerySync class.
+// rfa-sync-multi-client.h
+// RFA_SyncMultiClient class.
 
-#ifndef EDITOR_VFS_QUERY_SYNC_H
-#define EDITOR_VFS_QUERY_SYNC_H
+// See license.txt for copyright and terms of use.
+
+#ifndef EDITOR_RFA_SYNC_MULTI_CLIENT_H
+#define EDITOR_RFA_SYNC_MULTI_CLIENT_H
 
 // editor
 #include "fail-reason-opt.h"           // FailReasonOpt
@@ -25,12 +27,13 @@
 #include <string>                      // std::string
 
 
-// Like RFA_AsyncSingleClient, but with a synchronous interface and an
-// implementation that has a GUI to allow the user to cancel requests.
-class VFS_QuerySync : public QObject,
-                      public IHFExists {
+// Like RFA_AsyncMultiClient, but with a synchronous interface and an
+// implementation that (via SynchronousWaiter) can be hooked up to a GUI
+// to allow the user to cancel requests.
+class RFA_SyncMultiClient : public QObject,
+                            public IHFExists {
   Q_OBJECT
-  NO_OBJECT_COPIES(VFS_QuerySync);
+  NO_OBJECT_COPIES(RFA_SyncMultiClient);
 
 public:      // types
   typedef RFA_AbstractAsyncMultiClient::RequestID RequestID;
@@ -58,10 +61,10 @@ private:     // data
 public:      // instance methods
   // Create an object to issue queries via `rfaAMClient`.  Use
   // `waiter` to wait, which can (e.g.) pop up a modal window.
-  VFS_QuerySync(
+  RFA_SyncMultiClient(
     RFA_AbstractAsyncMultiClient *rfaAMClient, SynchronousWaiter &waiter);
 
-  virtual ~VFS_QuerySync() override;
+  virtual ~RFA_SyncMultiClient() override;
 
   // Issue 'request' and wait for the reply.  If a reply arrives, set
   // 'reply' to it and return true.  If the connection is lost, set
@@ -103,7 +106,7 @@ protected Q_SLOTS:
 
 template <class REPLY_TYPE>
 smbase::Either<std::unique_ptr<REPLY_TYPE>, std::string>
-VFS_QuerySync::issueTypedRequestSynchronously(
+RFA_SyncMultiClient::issueTypedRequestSynchronously(
   HostName const &hostName,
   std::unique_ptr<RFA_Message> request)
 {
@@ -210,4 +213,4 @@ getFileStatusSynchronously(
   HostAndResourceName const &harn);
 
 
-#endif // EDITOR_VFS_QUERY_SYNC_H
+#endif // EDITOR_RFA_SYNC_MULTI_CLIENT_H

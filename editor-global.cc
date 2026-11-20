@@ -28,10 +28,10 @@
 #include "open-files-dialog.h"                   // OpenFilesDialog
 #include "process-watcher.h"                     // ProcessWatcher
 #include "recent-items-list.h"                   // RecentItemsList
+#include "rfa-sync-multi-client.h"               // readFileSynchronously
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics (implicit)
 #include "textinput.h"                           // TextInputDialog
 #include "uri-util.h"                            // getFileURIPath
-#include "vfs-query-sync.h"                      // readFileSynchronously
 
 // smqtutil
 #include "smqtutil/gdvalue-qt.h"                 // toGDValue(QString)

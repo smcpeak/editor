@@ -5,7 +5,7 @@
 
 // editor
 #include "fail-reason-opt.h"           // FailReasonOpt
-#include "vfs-query-sync.h"            // VFS_QuerySync
+#include "rfa-sync-multi-client.h"     // RFA_SyncMultiClient
 
 // smqtutil
 #include "smqtutil/qstringb.h"         // qstringb
@@ -699,14 +699,14 @@ void FilenameInputDialog::on_makeDirectory() NOEXCEPT
   TRACE("FilenameInputDialog",
     "Making directory: " << doubleQuote(filename));
   SynchronousWaiter waiter(this);
-  VFS_QuerySync querySync(m_rfaAMClient, waiter);
+  RFA_SyncMultiClient rfaSMClient(m_rfaAMClient, waiter);
 
   auto req = std::make_unique<RFA_Msg_MakeDirectoryRequest>();
   req->m_path = filename;
 
   // Synchronous request.
   auto replyOrError =
-    querySync.issueTypedRequestSynchronously<RFA_Msg_MakeDirectoryReply>(
+    rfaSMClient.issueTypedRequestSynchronously<RFA_Msg_MakeDirectoryReply>(
       m_currentHostName, std::move(req));
 
   if (FailReasonOpt errorMsg =

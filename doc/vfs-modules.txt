@@ -22,7 +22,7 @@ VFS-related modules with no Qt dependence:
 
     Defines IHFExists, a synchronous, non-cancelable, and Qt-free
     interface to a subset of VFS capability.  Implemented by
-    VFS_QuerySync for production use, and TestIHFExists for testing.
+    RFA_SyncMultiClient for production use, and TestIHFExists for testing.
 
     TODO: It should expose cancelation and error messages.
 
@@ -41,9 +41,9 @@ VFS-related modules that use Qt core (QObject) but no GUI depedence:
     RFA_AbstractAsyncMultiClient, an interface that can be mocked for
     testing.  The interface uses Qt slots and signals.
 
-  vfs-query-sync
+  rfa-sync-multi-client
 
-    VFS_QuerySync, which offers a synchronous but cancelable interface
+    RFA_SyncMultiClient, which offers a synchronous but cancelable interface
     on top of RFA_AbstractAsyncMultiClient.  Waiting and cancelation are
     provided by SynchronousWaiter (hence there is a small GUI
     dependency).  This has Qt slots to interface with
@@ -70,22 +70,22 @@ Editor GUI modules that use VFS:
 
   editor-global
 
-    Uses vfs-query-sync to read editor files.  Uses sync-wait too.
+    Uses rfa-sync-multi-client to read editor files.  Uses sync-wait too.
 
   editor-window
 
-    Uses vfs-query-sync to read and write editor files.  Uses
+    Uses rfa-sync-multi-client to read and write editor files.  Uses
     sync-wait (with GUI dependence) for wait/cancel.
 
   editor-widget
 
-    Uses vfs-query-sync, sync-wait, and nearby-file for "open file at
+    Uses rfa-sync-multi-client, sync-wait, and nearby-file for "open file at
     cursor".  Also uses rfa-async-single-client to update file status such as
     modified-on-disk.
 
   filename-input
 
-    Uses vfs-query-sync and sync-wait to create new directories.
+    Uses rfa-sync-multi-client and sync-wait to create new directories.
     However, it primarily uses rfa-async-single-client to retrieve directory
     contents as the user navigates.
 
@@ -93,7 +93,7 @@ LSP modules that use VFS:
 
   lsp-get-code-lines
 
-    Uses vfs-query-sync, rfa-async-multi-client, and sync-wait to read file
+    Uses rfa-sync-multi-client, rfa-async-multi-client, and sync-wait to read file
     contents in order to show lines of code for the locations returned
     by an LSP query for "all uses", etc.
 
