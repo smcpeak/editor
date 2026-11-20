@@ -148,6 +148,11 @@ could be moved to the left, I usually do not do that.  (It's a minor
 hassle, it creates extra revision control churn, and there is a decent
 chance I'll have to push them to the right again soon.)
 
+The alignment described here can be performed automatically by the
+format-header-comments.py script in github.com/smcpeak/scripts, by
+passing the #include lines through it as a filter (in my editor, the
+Alt+A function does that).
+
 
 Brace notation
 --------------
