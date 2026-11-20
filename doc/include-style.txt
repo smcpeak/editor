@@ -60,6 +60,13 @@ The general order is meant to be top-down, although the must-be-first
 headers of course break that.
 
 
+Order within groups
+-------------------
+
+Within a group, #includes are sorted as if by the `env LANG=C sort`
+command.
+
+
 Using declarations
 ------------------
 
