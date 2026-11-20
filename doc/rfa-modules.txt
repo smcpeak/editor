@@ -1,8 +1,8 @@
-vfs-modules.txt
+rfa-modules.txt
 Explanation of the main RFA-related modules
 
 
-See also vfs-module-dependencies.ded[.png].
+See also rfa-module-dependencies.ded[.png].
 
 
 RFA-related modules with no Qt dependence:

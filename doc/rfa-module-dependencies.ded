@@ -14,18 +14,18 @@
     },
     {
       "loc": {
-        "x": 465,
+        "x": 430,
         "y": 340
       },
       "name": "rfa-sync-local-client",
       "size": {
         "h": 20,
-        "w": 100
+        "w": 135
       }
     },
     {
       "loc": {
-        "x": 205,
+        "x": 170,
         "y": 380
       },
       "name": "nearby-file (IHFExists)",
@@ -36,13 +36,13 @@
     },
     {
       "loc": {
-        "x": 355,
+        "x": 260,
         "y": 340
       },
       "name": "rfa-async-single-client",
       "size": {
         "h": 20,
-        "w": 100
+        "w": 155
       }
     },
     {
@@ -53,7 +53,7 @@
       "name": "rfa-sync-multi-client",
       "size": {
         "h": 20,
-        "w": 305
+        "w": 265
       }
     },
     {
@@ -91,13 +91,13 @@
     },
     {
       "loc": {
-        "x": 355,
+        "x": 260,
         "y": 300
       },
       "name": "rfa-async-multi-client",
       "size": {
         "h": 20,
-        "w": 100
+        "w": 155
       }
     },
     {
