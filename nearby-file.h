@@ -5,28 +5,15 @@
 #define EDITOR_NEARBY_FILE_H
 
 // editor
-#include "byte-index-fwd.h"                      // ByteIndex [n]
-#include "host-and-resource-name-fwd.h"          // HostAndResourceName [n]
-#include "host-file-olb-fwd.h"                   // HostFile_OptLineByte [n]
+#include "byte-index-fwd.h"                      // ByteIndex [f]
+#include "host-and-resource-name-fwd.h"          // HostAndResourceName [f]
+#include "host-file-olb-fwd.h"                   // HostFile_OptLineByte [f]
+#include "ihfexists-fwd.h"                       // IHFExists [f]
 
 // smbase
-#include "smbase/std-optional-fwd.h"             // std::optional [n]
-#include "smbase/std-string-fwd.h"               // std::string [n]
-#include "smbase/std-vector-fwd.h"               // stdfwd::vector [n]
-
-
-// Interface with which to test the existence of a host+file.
-class IHFExists {
-public:      // methods
-  /* From the client's perspective, invoking this method does not change
-     the state of the receiver object.  However, this method is not
-     `const` because the main implementor of it, `VFS_QuerySync`, needs
-     to invoke non-const helper methods due to maintaining state related
-     to the communication used to answer the question.  I'm not sure if
-     there is or should be a better way to handle this situation.
-  */
-  virtual bool hfExists(HostAndResourceName const &harn) = 0;
-};
+#include "smbase/std-optional-fwd.h"             // std::optional [f]
+#include "smbase/std-string-fwd.h"               // std::string [f]
+#include "smbase/std-vector-fwd.h"               // stdfwd::vector [f]
 
 
 /* Given a string `haystack` and an offset of a character within that

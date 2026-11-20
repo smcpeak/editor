@@ -4,18 +4,23 @@
 #ifndef EDITOR_VFS_QUERY_SYNC_H
 #define EDITOR_VFS_QUERY_SYNC_H
 
+// editor
 #include "fail-reason-opt.h"           // FailReasonOpt
 #include "host-and-resource-name.h"    // HostAndResourceName
 #include "host-name.h"                 // HostName
-#include "nearby-file.h"               // IHFExists
+#include "ihfexists.h"                 // IHFExists
 #include "vfs-connections.h"           // VFS_AbstractConnections
 
+// smqtutil
 #include "smqtutil/sync-wait.h"        // SynchronousWaiter
 
+// smbase
 #include "smbase/either.h"             // smbase::Either
 
+// Qt
 #include <QObject>
 
+// libc++
 #include <optional>                    // std::optional
 #include <string>                      // std::string
 

@@ -8,6 +8,7 @@
 #include "byte-index.h"                // ByteIndex, at
 #include "host-and-resource-name.h"    // HostAndResourceName
 #include "host-file-olb.h"             // HostFile_OptLineByte
+#include "ihfexists.h"                 // IHFExists
 #include "line-number.h"               // LineNumber
 #include "wrapped-integer-inl.h"       // WrappedInteger::operator++ defn
 
