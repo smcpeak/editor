@@ -865,7 +865,7 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
     return;
   }
 
-  std::unique_ptr<RFA_ReadFileReply> &rfr = replyOrError.left();
+  std::unique_ptr<RFA_Msg_ReadFileReply> &rfr = replyOrError.left();
   if (!rfr) {
     // The request was canceled.
     return;
@@ -941,7 +941,7 @@ bool EditorWindow::checkFileExistenceSynchronously(
     return false;
   }
   else {
-    std::unique_ptr<RFA_FileStatusReply> &reply = replyOrError.left();
+    std::unique_ptr<RFA_Msg_FileStatusReply> &reply = replyOrError.left();
     return reply &&
            reply->m_success &&
            reply->m_fileKind == SMFileUtil::FK_REGULAR;
@@ -1004,11 +1004,11 @@ void EditorWindow::writeTheFile()
 {
   RCSerf<NamedTextDocument> file = this->currentDocument();
 
-  std::unique_ptr<RFA_WriteFileRequest> req(new RFA_WriteFileRequest);
+  std::unique_ptr<RFA_Msg_WriteFileRequest> req(new RFA_Msg_WriteFileRequest);
   req->m_path = file->filename();
   req->m_contents = file->getWholeFile();
-  std::unique_ptr<RFA_WriteFileReply> reply(
-    vfsQuerySynchronously<RFA_WriteFileReply>(file->hostName(),
+  std::unique_ptr<RFA_Msg_WriteFileReply> reply(
+    vfsQuerySynchronously<RFA_Msg_WriteFileReply>(file->hostName(),
                                               std::move(req)));
 
   if (reply) {
@@ -1166,7 +1166,7 @@ bool EditorWindow::reloadCurrentDocumentIfChanged()
       return false;
     }
 
-    std::unique_ptr<RFA_FileStatusReply> &reply = replyOrError.left();
+    std::unique_ptr<RFA_Msg_FileStatusReply> &reply = replyOrError.left();
     if (!reply) {
       return false;    // Canceled.
     }

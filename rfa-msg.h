@@ -36,7 +36,7 @@
 //    2: Add {Read,Write,Delete}File{Request,Reply}.
 //    3: Make FileStatus{Request,Reply} inherit Path{Request,Reply}.
 //    4: Add GetDirEntries{Request,Reply}.
-//    5: Add RFA_PathReply::m_failureReasonCode.
+//    5: Add RFA_Msg_PathReply::m_failureReasonCode.
 //    6: Modify set of PortableErrorCodes.
 //    7: Add MakeDirectory{Request,Reply}.
 //
@@ -82,12 +82,12 @@ public:      // methods
   virtual void xfer(Flatten &flat) = 0;
 
   // Test for dynamic object type.
-  #define RFA_DECLARE_DOWNCASTS(destType)                                                     \
-    bool is##destType() const { return messageType() == RFA_MT_##destType; }                  \
-    RFA_##destType const *as##destType##C() const;                                            \
-    RFA_##destType *as##destType() { return const_cast<RFA_##destType*>(as##destType##C()); } \
-    RFA_##destType const *if##destType##C() const;                                            \
-    RFA_##destType *if##destType() { return const_cast<RFA_##destType*>(if##destType##C()); }
+  #define RFA_DECLARE_DOWNCASTS(destType)                                                             \
+    bool is##destType() const { return messageType() == RFA_MT_##destType; }                          \
+    RFA_Msg_##destType const *as##destType##C() const;                                                \
+    RFA_Msg_##destType *as##destType() { return const_cast<RFA_Msg_##destType*>(as##destType##C()); } \
+    RFA_Msg_##destType const *if##destType##C() const;                                                \
+    RFA_Msg_##destType *if##destType() { return const_cast<RFA_Msg_##destType*>(if##destType##C()); }
 
   FOR_EACH_RFA_MESSAGE_TYPE(RFA_DECLARE_DOWNCASTS)
 
@@ -98,15 +98,15 @@ public:      // methods
 // Get the protocol version that the server understands.
 //
 // The request and reply are the same message type.
-class RFA_GetVersion : public RFA_Message {
+class RFA_Msg_GetVersion : public RFA_Message {
 public:
   // In the request, this is the version the client understands.  In
   // the reply, it is what the server understands.
   int32_t m_version;
 
 public:
-  RFA_GetVersion();
-  virtual ~RFA_GetVersion() override;
+  RFA_Msg_GetVersion();
+  virtual ~RFA_Msg_GetVersion() override;
 
   // RFA_Message methods.
   virtual RFA_MessageType messageType() const override
@@ -117,14 +117,14 @@ public:
 
 // For testing the message interface, simply respond with the given
 // string.  The request and reply are the same message type.
-class RFA_Echo : public RFA_Message {
+class RFA_Msg_Echo : public RFA_Message {
 public:      // data
   // Data to be echoed.
   std::vector<unsigned char> m_data;
 
 public:      // methods
-  RFA_Echo();
-  virtual ~RFA_Echo() override;
+  RFA_Msg_Echo();
+  virtual ~RFA_Msg_Echo() override;
 
   // RFA_Message methods.
   virtual RFA_MessageType messageType() const override
@@ -134,7 +134,7 @@ public:      // methods
 
 
 // Abstract base class for requests applicable to a file system path.
-class RFA_PathRequest : public RFA_Message {
+class RFA_Msg_PathRequest : public RFA_Message {
 public:      // data
   // Path to the file of interest.
   //
@@ -144,8 +144,8 @@ public:      // data
   string m_path;
 
 public:      // methods
-  RFA_PathRequest();
-  virtual ~RFA_PathRequest() override;
+  RFA_Msg_PathRequest();
+  virtual ~RFA_Msg_PathRequest() override;
 
   // RFA_Message methods.
   virtual string description() const override;
@@ -154,7 +154,7 @@ public:      // methods
 
 
 // Abstract base class for replies to a PathRequest.
-class RFA_PathReply : public RFA_Message {
+class RFA_Msg_PathReply : public RFA_Message {
 public:      // data
   // True if the operation completed successfully.  Initially true.
   bool m_success;
@@ -168,8 +168,8 @@ public:      // data
   string m_failureReasonString;
 
 public:      // methods
-  RFA_PathReply();
-  virtual ~RFA_PathReply() override;
+  RFA_Msg_PathReply();
+  virtual ~RFA_Msg_PathReply() override;
 
   // Set the failure reason, and set 'm_success' to false.
   void setFailureReason(smbase::PortableErrorCode reasonCode,
@@ -182,10 +182,10 @@ public:      // methods
 
 
 // Query a file status: kind and timestamp.
-class RFA_FileStatusRequest : public RFA_PathRequest {
+class RFA_Msg_FileStatusRequest : public RFA_Msg_PathRequest {
 public:      // methods
-  RFA_FileStatusRequest();
-  virtual ~RFA_FileStatusRequest() override;
+  RFA_Msg_FileStatusRequest();
+  virtual ~RFA_Msg_FileStatusRequest() override;
 
   // RFA_Message methods.
   virtual RFA_MessageType messageType() const override
@@ -193,12 +193,12 @@ public:      // methods
 };
 
 
-// Reply for RFA_FileStatusRequest.
+// Reply for RFA_Msg_FileStatusRequest.
 //
 // If the path does not exist, then 'm_fileKind' is set to 'FK_NONE',
 // and 'm_success' is true.  There is not currently a case where this
 // reply carries a failure.
-class RFA_FileStatusReply : public RFA_PathReply {
+class RFA_Msg_FileStatusReply : public RFA_Msg_PathReply {
 public:      // data
   // Absolute directory containing 'm_path'.  This always ends with a
   // directory separator.
@@ -217,8 +217,8 @@ public:      // data
   int64_t m_fileModificationTime;
 
 public:      // methods
-  RFA_FileStatusReply();
-  virtual ~RFA_FileStatusReply() override;
+  RFA_Msg_FileStatusReply();
+  virtual ~RFA_Msg_FileStatusReply() override;
 
   // RFA_Message methods.
   virtual RFA_MessageType messageType() const override
@@ -229,10 +229,10 @@ public:      // methods
 
 
 // Request to read the contents of a file.
-class RFA_ReadFileRequest : public RFA_PathRequest {
+class RFA_Msg_ReadFileRequest : public RFA_Msg_PathRequest {
 public:      // methods
-  RFA_ReadFileRequest();
-  virtual ~RFA_ReadFileRequest() override;
+  RFA_Msg_ReadFileRequest();
+  virtual ~RFA_Msg_ReadFileRequest() override;
 
   // RFA_Message methods.
   virtual RFA_MessageType messageType() const override
@@ -241,7 +241,7 @@ public:      // methods
 
 
 // Reply with contents of a file.
-class RFA_ReadFileReply : public RFA_PathReply {
+class RFA_Msg_ReadFileReply : public RFA_Msg_PathReply {
 public:      // data
   // File contents.
   std::vector<unsigned char> m_contents;
@@ -253,8 +253,8 @@ public:      // data
   bool m_readOnly;
 
 public:      // methods
-  RFA_ReadFileReply();
-  virtual ~RFA_ReadFileReply() override;
+  RFA_Msg_ReadFileReply();
+  virtual ~RFA_Msg_ReadFileReply() override;
 
   // RFA_Message methods.
   virtual RFA_MessageType messageType() const override
@@ -265,14 +265,14 @@ public:      // methods
 
 
 // Request to write the contents of a file.
-class RFA_WriteFileRequest : public RFA_PathRequest {
+class RFA_Msg_WriteFileRequest : public RFA_Msg_PathRequest {
 public:      // data
   // File contents to write.
   std::vector<unsigned char> m_contents;
 
 public:      // methods
-  RFA_WriteFileRequest();
-  virtual ~RFA_WriteFileRequest() override;
+  RFA_Msg_WriteFileRequest();
+  virtual ~RFA_Msg_WriteFileRequest() override;
 
   // RFA_Message methods.
   virtual RFA_MessageType messageType() const override
@@ -281,16 +281,16 @@ public:      // methods
 };
 
 
-// Reply to RFA_WriteFileRequest.
-class RFA_WriteFileReply : public RFA_PathReply {
+// Reply to RFA_Msg_WriteFileRequest.
+class RFA_Msg_WriteFileReply : public RFA_Msg_PathReply {
 public:      // data
   // Modification time as reported by the file system *after* writing
   // the file's contents.
   int64_t m_fileModificationTime;
 
 public:      // methods
-  RFA_WriteFileReply();
-  virtual ~RFA_WriteFileReply() override;
+  RFA_Msg_WriteFileReply();
+  virtual ~RFA_Msg_WriteFileReply() override;
 
   // RFA_Message methods.
   virtual RFA_MessageType messageType() const override
@@ -300,10 +300,10 @@ public:      // methods
 
 
 // Request to delete a file.
-class RFA_DeleteFileRequest : public RFA_PathRequest {
+class RFA_Msg_DeleteFileRequest : public RFA_Msg_PathRequest {
 public:      // methods
-  RFA_DeleteFileRequest();
-  virtual ~RFA_DeleteFileRequest() override;
+  RFA_Msg_DeleteFileRequest();
+  virtual ~RFA_Msg_DeleteFileRequest() override;
 
   // RFA_Message methods.
   virtual RFA_MessageType messageType() const override
@@ -311,11 +311,11 @@ public:      // methods
 };
 
 
-// Reply to RFA_DeleteFileRequest.
-class RFA_DeleteFileReply : public RFA_PathReply {
+// Reply to RFA_Msg_DeleteFileRequest.
+class RFA_Msg_DeleteFileReply : public RFA_Msg_PathReply {
 public:      // methods
-  RFA_DeleteFileReply();
-  virtual ~RFA_DeleteFileReply() override;
+  RFA_Msg_DeleteFileReply();
+  virtual ~RFA_Msg_DeleteFileReply() override;
 
   // RFA_Message methods.
   virtual RFA_MessageType messageType() const override
@@ -324,10 +324,10 @@ public:      // methods
 
 
 // Get the contents of 'm_path' as a directory.
-class RFA_GetDirEntriesRequest : public RFA_PathRequest {
+class RFA_Msg_GetDirEntriesRequest : public RFA_Msg_PathRequest {
 public:      // methods
-  RFA_GetDirEntriesRequest();
-  virtual ~RFA_GetDirEntriesRequest() override;
+  RFA_Msg_GetDirEntriesRequest();
+  virtual ~RFA_Msg_GetDirEntriesRequest() override;
 
   // RFA_Message methods.
   virtual RFA_MessageType messageType() const override
@@ -335,15 +335,15 @@ public:      // methods
 };
 
 
-// Reply to RFA_GetDirEntriesRequest.
-class RFA_GetDirEntriesReply : public RFA_PathReply {
+// Reply to RFA_Msg_GetDirEntriesRequest.
+class RFA_Msg_GetDirEntriesReply : public RFA_Msg_PathReply {
 public:      // data
   // Entries of 'm_path', sorted by name.
   std::vector<SMFileUtil::DirEntryInfo> m_entries;
 
 public:      // methods
-  RFA_GetDirEntriesReply();
-  virtual ~RFA_GetDirEntriesReply() override;
+  RFA_Msg_GetDirEntriesReply();
+  virtual ~RFA_Msg_GetDirEntriesReply() override;
 
   // RFA_Message methods.
   virtual RFA_MessageType messageType() const override
@@ -357,10 +357,10 @@ public:      // methods
 // This only creates one level of directory; `m_path` must be of the
 // form "$DIR/$NAME", where $DIR exists and $NAME does not.
 //
-class RFA_MakeDirectoryRequest : public RFA_PathRequest {
+class RFA_Msg_MakeDirectoryRequest : public RFA_Msg_PathRequest {
 public:      // methods
-  RFA_MakeDirectoryRequest();
-  virtual ~RFA_MakeDirectoryRequest() override;
+  RFA_Msg_MakeDirectoryRequest();
+  virtual ~RFA_Msg_MakeDirectoryRequest() override;
 
   // RFA_Message methods.
   virtual RFA_MessageType messageType() const override
@@ -368,11 +368,11 @@ public:      // methods
 };
 
 
-// Reply to RFA_MakeDirectoryRequest.
-class RFA_MakeDirectoryReply : public RFA_PathReply {
+// Reply to RFA_Msg_MakeDirectoryRequest.
+class RFA_Msg_MakeDirectoryReply : public RFA_Msg_PathReply {
 public:      // methods
-  RFA_MakeDirectoryReply();
-  virtual ~RFA_MakeDirectoryReply() override;
+  RFA_Msg_MakeDirectoryReply();
+  virtual ~RFA_Msg_MakeDirectoryReply() override;
 
   // RFA_Message methods.
   virtual RFA_MessageType messageType() const override

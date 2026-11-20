@@ -88,14 +88,14 @@ void FSServerTest::runPathQuery(string const &path)
 
   // Send.
   {
-    RFA_FileStatusRequest req;
+    RFA_Msg_FileStatusRequest req;
     req.m_path = path;
     m_fsQuery.sendRequest(req);
   }
 
   // Receive.
   std::unique_ptr<RFA_Message> replyMsg(getNextReply());
-  RFA_FileStatusReply *reply = replyMsg->asFileStatusReply();
+  RFA_Msg_FileStatusReply *reply = replyMsg->asFileStatusReply();
   xassert(reply->m_success);
   VPVAL(reply->m_dirName);
   VPVAL(reply->m_fileName);
@@ -109,12 +109,12 @@ void FSServerTest::runEchoTest(std::vector<unsigned char> const &data)
 {
   DIAG("runEchoTest: data size is " << data.size());
 
-  RFA_Echo request;
+  RFA_Msg_Echo request;
   request.m_data = data;
   m_fsQuery.sendRequest(request);
 
   std::unique_ptr<RFA_Message> replyMsg(getNextReply());
-  RFA_Echo const *reply = replyMsg->asEchoC();
+  RFA_Msg_Echo const *reply = replyMsg->asEchoC();
 
   // Verify that the reply is what was sent.
   xassert(reply->m_data == data);
@@ -181,13 +181,13 @@ void FSServerTest::runFileReadWriteTests()
 
   // Write.
   {
-    RFA_WriteFileRequest req;
+    RFA_Msg_WriteFileRequest req;
     req.m_path = fname;
     req.m_contents = data;
     m_fsQuery.sendRequest(req);
 
     std::unique_ptr<RFA_Message> replyMsg(getNextReply());
-    RFA_WriteFileReply const *reply = replyMsg->asWriteFileReplyC();
+    RFA_Msg_WriteFileReply const *reply = replyMsg->asWriteFileReplyC();
     if (reply->m_success) {
       modTime = reply->m_fileModificationTime;
       VPVAL(modTime);
@@ -199,12 +199,12 @@ void FSServerTest::runFileReadWriteTests()
 
   // Read.
   {
-    RFA_ReadFileRequest req;
+    RFA_Msg_ReadFileRequest req;
     req.m_path = fname;
     m_fsQuery.sendRequest(req);
 
     std::unique_ptr<RFA_Message> replyMsg(getNextReply());
-    RFA_ReadFileReply const *reply = replyMsg->asReadFileReplyC();
+    RFA_Msg_ReadFileReply const *reply = replyMsg->asReadFileReplyC();
     if (reply->m_success) {
       xassert(reply->m_contents == data);
       xassert(reply->m_fileModificationTime == modTime);
@@ -217,12 +217,12 @@ void FSServerTest::runFileReadWriteTests()
 
   // Delete.
   {
-    RFA_DeleteFileRequest req;
+    RFA_Msg_DeleteFileRequest req;
     req.m_path = fname;
     m_fsQuery.sendRequest(req);
 
     std::unique_ptr<RFA_Message> replyMsg(getNextReply());
-    RFA_DeleteFileReply const *reply = replyMsg->asDeleteFileReplyC();
+    RFA_Msg_DeleteFileReply const *reply = replyMsg->asDeleteFileReplyC();
     if (!reply->m_success) {
       xfatal(reply->m_failureReasonString);
     }
@@ -230,23 +230,23 @@ void FSServerTest::runFileReadWriteTests()
 
   // Check deletion.
   {
-    RFA_FileStatusRequest req;
+    RFA_Msg_FileStatusRequest req;
     req.m_path = fname;
     m_fsQuery.sendRequest(req);
 
     std::unique_ptr<RFA_Message> replyMsg(getNextReply());
-    RFA_FileStatusReply const *reply = replyMsg->asFileStatusReplyC();
+    RFA_Msg_FileStatusReply const *reply = replyMsg->asFileStatusReplyC();
     xassert(reply->m_fileKind == SMFileUtil::FK_NONE);
   }
 
   // Read non-existent.
   {
-    RFA_ReadFileRequest req;
+    RFA_Msg_ReadFileRequest req;
     req.m_path = fname;
     m_fsQuery.sendRequest(req);
 
     std::unique_ptr<RFA_Message> replyMsg(getNextReply());
-    RFA_ReadFileReply const *reply = replyMsg->asReadFileReplyC();
+    RFA_Msg_ReadFileReply const *reply = replyMsg->asReadFileReplyC();
     xassert(!reply->m_success);
     xassert(reply->m_failureReasonCode == PortableErrorCode::PEC_FILE_NOT_FOUND);
   }
@@ -255,12 +255,12 @@ void FSServerTest::runFileReadWriteTests()
 
 void FSServerTest::runGetDirEntriesTest()
 {
-  RFA_GetDirEntriesRequest req;
+  RFA_Msg_GetDirEntriesRequest req;
   req.m_path = ".";
   m_fsQuery.sendRequest(req);
 
   std::unique_ptr<RFA_Message> replyMsg(getNextReply());
-  RFA_GetDirEntriesReply const *reply = replyMsg->asGetDirEntriesReplyC();
+  RFA_Msg_GetDirEntriesReply const *reply = replyMsg->asGetDirEntriesReplyC();
   xassert(reply->m_success);
   DIAG("number of entries: " << reply->m_entries.size());
 

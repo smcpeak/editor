@@ -222,18 +222,18 @@ int innerMain()
       case RFA_MT_GetVersion:
         // For now, have the server just ignore the incoming version
         // number, and let the client diagnose mismatches.
-        sendReply(RFA_GetVersion());
+        sendReply(RFA_Msg_GetVersion());
         break;
 
       case RFA_MT_Echo: {
-        RFA_Echo const *echo = message->asEchoC();
+        RFA_Msg_Echo const *echo = message->asEchoC();
         sendReply(*echo);
         break;
       }
 
       case RFA_MT_FileStatusRequest: {
-        RFA_FileStatusRequest const *pathRequest = message->asFileStatusRequestC();
-        RFA_FileStatusReply pathReply(localImpl.queryPath(*pathRequest));
+        RFA_Msg_FileStatusRequest const *pathRequest = message->asFileStatusRequestC();
+        RFA_Msg_FileStatusReply pathReply(localImpl.queryPath(*pathRequest));
         sendReply(pathReply);
         break;
       }

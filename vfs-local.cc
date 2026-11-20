@@ -24,11 +24,11 @@ using namespace smbase;
   }
 
 
-RFA_FileStatusReply VFS_LocalImpl::queryPath(RFA_FileStatusRequest const &req)
+RFA_Msg_FileStatusReply VFS_LocalImpl::queryPath(RFA_Msg_FileStatusRequest const &req)
 {
   SMFileUtil sfu;
 
-  RFA_FileStatusReply reply;
+  RFA_Msg_FileStatusReply reply;
 
   try {
     // Get an absolute path, using whatever is the current directory for
@@ -51,12 +51,12 @@ RFA_FileStatusReply VFS_LocalImpl::queryPath(RFA_FileStatusRequest const &req)
 }
 
 
-RFA_ReadFileReply VFS_LocalImpl::readFile(
-  RFA_ReadFileRequest const &req)
+RFA_Msg_ReadFileReply VFS_LocalImpl::readFile(
+  RFA_Msg_ReadFileRequest const &req)
 {
   SMFileUtil sfu;
 
-  RFA_ReadFileReply reply;
+  RFA_Msg_ReadFileReply reply;
 
   try {
     reply.m_contents = sfu.readFile(req.m_path);
@@ -73,12 +73,12 @@ RFA_ReadFileReply VFS_LocalImpl::readFile(
 }
 
 
-RFA_WriteFileReply VFS_LocalImpl::writeFile(
-  RFA_WriteFileRequest const &req)
+RFA_Msg_WriteFileReply VFS_LocalImpl::writeFile(
+  RFA_Msg_WriteFileRequest const &req)
 {
   SMFileUtil sfu;
 
-  RFA_WriteFileReply reply;
+  RFA_Msg_WriteFileReply reply;
 
   try {
     sfu.writeFile(req.m_path, req.m_contents);
@@ -92,12 +92,12 @@ RFA_WriteFileReply VFS_LocalImpl::writeFile(
 }
 
 
-RFA_DeleteFileReply VFS_LocalImpl::deleteFile(
-  RFA_DeleteFileRequest const &req)
+RFA_Msg_DeleteFileReply VFS_LocalImpl::deleteFile(
+  RFA_Msg_DeleteFileRequest const &req)
 {
   SMFileUtil sfu;
 
-  RFA_DeleteFileReply reply;
+  RFA_Msg_DeleteFileReply reply;
 
   try {
     sfu.removeFile(req.m_path);
@@ -108,12 +108,12 @@ RFA_DeleteFileReply VFS_LocalImpl::deleteFile(
 }
 
 
-RFA_GetDirEntriesReply VFS_LocalImpl::getDirEntries(
-  RFA_GetDirEntriesRequest const &req)
+RFA_Msg_GetDirEntriesReply VFS_LocalImpl::getDirEntries(
+  RFA_Msg_GetDirEntriesRequest const &req)
 {
   SMFileUtil sfu;
 
-  RFA_GetDirEntriesReply reply;
+  RFA_Msg_GetDirEntriesReply reply;
 
   try {
     ArrayStack<SMFileUtil::DirEntryInfo> entries;
@@ -130,12 +130,12 @@ RFA_GetDirEntriesReply VFS_LocalImpl::getDirEntries(
 }
 
 
-RFA_MakeDirectoryReply VFS_LocalImpl::makeDirectory(
-  RFA_MakeDirectoryRequest const &req)
+RFA_Msg_MakeDirectoryReply VFS_LocalImpl::makeDirectory(
+  RFA_Msg_MakeDirectoryRequest const &req)
 {
   SMFileUtil sfu;
 
-  RFA_MakeDirectoryReply reply;
+  RFA_Msg_MakeDirectoryReply reply;
 
   try {
     sfu.createDirectory(req.m_path);

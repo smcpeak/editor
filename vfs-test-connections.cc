@@ -116,7 +116,7 @@ void VFS_TestConnections::slot_processRequests()
     std::unique_ptr<RFA_Message> msg = std::move((*it).second);
     m_issuedRequests.erase(it);
 
-    if (auto rfr = dynamic_cast<RFA_ReadFileRequest const *>(msg.get())) {
+    if (auto rfr = dynamic_cast<RFA_Msg_ReadFileRequest const *>(msg.get())) {
       mapInsertUniqueMove(m_availableReplies, id,
         std::unique_ptr<RFA_Message>(processRFR(rfr).release()));
 
@@ -131,10 +131,10 @@ void VFS_TestConnections::slot_processRequests()
 }
 
 
-std::unique_ptr<RFA_ReadFileReply> VFS_TestConnections::processRFR(
-  RFA_ReadFileRequest const *rfr)
+std::unique_ptr<RFA_Msg_ReadFileReply> VFS_TestConnections::processRFR(
+  RFA_Msg_ReadFileRequest const *rfr)
 {
-  std::unique_ptr<RFA_ReadFileReply> reply(new RFA_ReadFileReply);
+  std::unique_ptr<RFA_Msg_ReadFileReply> reply(new RFA_Msg_ReadFileReply);
 
   if (auto itOpt = mapFindOpt(m_files, rfr->m_path)) {
     FileReplyData const &fdata = (**itOpt).second;

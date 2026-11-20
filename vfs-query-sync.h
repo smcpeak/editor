@@ -193,7 +193,7 @@ FailReasonOpt getROEErrorMessage(
    The `getROEErrorMessage` function above can be used to combine the
    handling of the error cases (2 and 4).
 */
-smbase::Either<std::unique_ptr<RFA_ReadFileReply>, std::string>
+smbase::Either<std::unique_ptr<RFA_Msg_ReadFileReply>, std::string>
 readFileSynchronously(
   VFS_AbstractConnections *vfsConnections,
   SynchronousWaiter &waiter,
@@ -203,7 +203,7 @@ readFileSynchronously(
 // Get timestamp, etc., for 'fname'.
 //
 // This has the same return cases as `readFileSynchronously`.
-smbase::Either<std::unique_ptr<RFA_FileStatusReply>, std::string>
+smbase::Either<std::unique_ptr<RFA_Msg_FileStatusReply>, std::string>
 getFileStatusSynchronously(
   VFS_AbstractConnections *vfsConnections,
   SynchronousWaiter &waiter,

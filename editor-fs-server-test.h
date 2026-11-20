@@ -6,7 +6,7 @@
 
 // editor
 #include "host-name.h"                 // HostName
-#include "rfa-msg.h"                   // RFA_FileStatusReply
+#include "rfa-msg.h"                   // RFA_Msg_FileStatusReply
 #include "vfs-query.h"                 // VFS_FileSystemQuery
 
 // smbase

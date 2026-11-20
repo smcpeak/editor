@@ -16,12 +16,12 @@
 // This class synchronously turns requests into replies.
 class VFS_LocalImpl {
 public:      // methods
-  RFA_FileStatusReply    queryPath    (RFA_FileStatusRequest    const &req);
-  RFA_ReadFileReply      readFile     (RFA_ReadFileRequest      const &req);
-  RFA_WriteFileReply     writeFile    (RFA_WriteFileRequest     const &req);
-  RFA_DeleteFileReply    deleteFile   (RFA_DeleteFileRequest    const &req);
-  RFA_GetDirEntriesReply getDirEntries(RFA_GetDirEntriesRequest const &req);
-  RFA_MakeDirectoryReply makeDirectory(RFA_MakeDirectoryRequest const &req);
+  RFA_Msg_FileStatusReply    queryPath    (RFA_Msg_FileStatusRequest    const &req);
+  RFA_Msg_ReadFileReply      readFile     (RFA_Msg_ReadFileRequest      const &req);
+  RFA_Msg_WriteFileReply     writeFile    (RFA_Msg_WriteFileRequest     const &req);
+  RFA_Msg_DeleteFileReply    deleteFile   (RFA_Msg_DeleteFileRequest    const &req);
+  RFA_Msg_GetDirEntriesReply getDirEntries(RFA_Msg_GetDirEntriesRequest const &req);
+  RFA_Msg_MakeDirectoryReply makeDirectory(RFA_Msg_MakeDirectoryRequest const &req);
 };
 
 

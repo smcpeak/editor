@@ -46,8 +46,8 @@ protected Q_SLOTS:
   void slot_processRequests();
 
   // Process the RFR request.
-  std::unique_ptr<RFA_ReadFileReply> processRFR(
-    RFA_ReadFileRequest const *rfr);
+  std::unique_ptr<RFA_Msg_ReadFileReply> processRFR(
+    RFA_Msg_ReadFileRequest const *rfr);
 
 public:      // methods
   virtual ~VFS_TestConnections() override;

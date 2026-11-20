@@ -155,7 +155,7 @@ void VFS_FileSystemQuery::checkForCompleteReply()
 
   if (state() == S_CONNECTING) {
     // Check that the reply is the version message.
-    if (RFA_GetVersion const *getVer = m_replyMessage->ifGetVersionC()) {
+    if (RFA_Msg_GetVersion const *getVer = m_replyMessage->ifGetVersionC()) {
       // Confirm compatibility.
       if (getVer->m_version == RFA_currentVersion) {
         // Good to go.
@@ -246,7 +246,7 @@ void VFS_FileSystemQuery::connect(HostName const &hostname)
   m_commandRunner.startAsynchronous();
 
   // Attempt to establish version compatibility.
-  RFA_GetVersion getVer;
+  RFA_Msg_GetVersion getVer;
   innerSendRequest(getVer);
 }
 

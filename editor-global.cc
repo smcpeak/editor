@@ -677,7 +677,7 @@ bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
       return false;
     }
 
-    std::unique_ptr<RFA_ReadFileReply> &rfr = replyOrError.left();
+    std::unique_ptr<RFA_Msg_ReadFileReply> &rfr = replyOrError.left();
     if (!rfr) {
       // User canceled.
       return false;

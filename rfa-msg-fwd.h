@@ -6,8 +6,8 @@
 
 // Abstract message classes.
 class RFA_Message;
-class RFA_PathRequest;
-class RFA_PathReply;
+class RFA_Msg_PathRequest;
+class RFA_Msg_PathReply;
 
 // Do 'macro' for every kind of RFA message.
 //
@@ -29,8 +29,7 @@ class RFA_PathReply;
   macro(MakeDirectoryReply)              \
   /*nothing*/
 
-// TODO: Rename the message classes as RFA_Msg_*.
-#define FORWARD_DECLARE_RFA_CLASS(type) class RFA_##type;
+#define FORWARD_DECLARE_RFA_CLASS(type) class RFA_Msg_##type;
 
 FOR_EACH_RFA_MESSAGE_TYPE(FORWARD_DECLARE_RFA_CLASS)
 

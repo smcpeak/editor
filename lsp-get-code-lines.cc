@@ -115,7 +115,7 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
         DocOrError(*errorMsg));
     }
     else {
-      std::unique_ptr<RFA_ReadFileReply> &rfr = replyOrError.left();
+      std::unique_ptr<RFA_Msg_ReadFileReply> &rfr = replyOrError.left();
       if (rfr) {
         // Error would be handled above.
         xassert(rfr->m_success);

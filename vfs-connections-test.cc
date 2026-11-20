@@ -5,7 +5,7 @@
 #include "vfs-connections-test.h"      // this module
 
 // editor
-#include "rfa-msg.h"                   // RFA_Echo
+#include "rfa-msg.h"                   // RFA_Msg_Echo
 
 // smqtutil
 #include "smqtutil/qtutil.h"           // toString(QString)
@@ -81,7 +81,7 @@ VFS_Connections::RequestID
 {
   VFS_Connections::RequestID requestID = 0;
 
-  std::unique_ptr<RFA_Echo> req(new RFA_Echo);
+  std::unique_ptr<RFA_Msg_Echo> req(new RFA_Msg_Echo);
   req->m_data = allBytes();
   m_vfsConnections.issueRequest(requestID /*OUT*/,
     hostName, std::move(req));
@@ -113,7 +113,7 @@ void VFS_ConnectionsTest::receiveEchoReply(
 {
   std::unique_ptr<RFA_Message> reply(
     m_vfsConnections.takeReply(requestID));
-  RFA_Echo const *echoReply = reply->asEchoC();
+  RFA_Msg_Echo const *echoReply = reply->asEchoC();
   xassert(echoReply->m_data == allBytes());
 }
 

@@ -275,7 +275,7 @@ void VFS_Connections::connect(HostName const &hostName)
   // connection is ready for use.
   Connection *c = conn(hostName);
   xassert(!c->m_haveStartingDirectory);
-  std::unique_ptr<RFA_FileStatusRequest> req(new RFA_FileStatusRequest);
+  std::unique_ptr<RFA_Msg_FileStatusRequest> req(new RFA_Msg_FileStatusRequest);
   req->m_path = ".";
   c->issueRequest(m_nextRequestID++, std::move(req));
 }
@@ -525,7 +525,7 @@ void VFS_Connections::on_vfsReplyAvailable() NOEXCEPT
         "  for host " << c->m_hostName <<
         ", got starting directory reply: " << genericReply->description());
 
-      if (RFA_FileStatusReply const *reply =
+      if (RFA_Msg_FileStatusReply const *reply =
             genericReply->asFileStatusReplyC()) {
         if (reply->m_success) {
           if (reply->m_dirExists) {

@@ -497,7 +497,7 @@ void EditorWidget::requestFileStatus()
 
   cancelFileStatusRequestIfAny();
 
-  std::unique_ptr<RFA_FileStatusRequest> req(new RFA_FileStatusRequest);
+  std::unique_ptr<RFA_Msg_FileStatusRequest> req(new RFA_Msg_FileStatusRequest);
   req->m_path = getDocument()->filename();
   vfsConnections()->issueRequest(m_fileStatusRequestID,
     getDocument()->hostName(), std::move(req));
@@ -533,7 +533,7 @@ void EditorWidget::on_vfsReplyAvailable(
 
     std::unique_ptr<RFA_Message> genericReply(
       vfsConnections()->takeReply(requestID));
-    RFA_FileStatusReply const *reply =
+    RFA_Msg_FileStatusReply const *reply =
       genericReply->asFileStatusReplyC();
     if (reply->m_success &&
         reply->m_fileKind == SMFileUtil::FK_REGULAR) {
