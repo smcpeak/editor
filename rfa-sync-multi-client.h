@@ -65,25 +65,13 @@ public:      // instance methods
 
   virtual ~RFA_SyncMultiClient() override;
 
-  // Issue 'request' and wait for the reply.  If a reply arrives, set
-  // 'reply' to it and return true.  If the connection is lost, set
-  // 'connLostMessage' to the error message and return true.  If the
-  // user cancels the request, return false.
-  bool issueRequestSynchronously(
+  // Issue 'request' and wait for the reply.
+  ReplyPtrOptOrError<RFA_Message>
+  issueRequestSynchronously(
     HostName const &hostName,
-    std::unique_ptr<RFA_Message> request,
-    ReplyPtrOpt<RFA_Message> /*OUT*/ &reply,
-    string /*OUT*/ &connLostMessage);
+    std::unique_ptr<RFA_Message> request);
 
-  // Issue 'request' synchronously, expecting to get 'REPLY_TYPE' in the
-  // left alternative.  Note that it could be a failure reply.
-  //
-  // If there is an error, including if 'hostName' is invalid, return an
-  // error message in the right alternative.
-  //
-  // If the request is canceled, return the left alternative with a null
-  // pointer.
-  //
+  // Issue 'request' synchronously, expecting to get 'REPLY_TYPE'.
   template <class REPLY_TYPE>
   ReplyPtrOptOrError<REPLY_TYPE>
   issueTypedRequestSynchronously(
@@ -109,39 +97,36 @@ RFA_SyncMultiClient::issueTypedRequestSynchronously(
   HostName const &hostName,
   std::unique_ptr<RFA_Message> request)
 {
-  // Initially empty pointer.
-  ReplyPtrOpt<REPLY_TYPE> typedReply;
+  // Issue the request using the generic interface.
+  ReplyPtrOptOrError<RFA_Message> replyOrError =
+    issueRequestSynchronously(hostName, std::move(request));
 
-  if (!m_rfaAMClient->isValid(hostName)) {
-    return stringb("Host " << hostName << " is invalid.");
+  if (replyOrError.isRight()) {
+    // Relay the error message.
+    return ReplyPtrOptOrError<REPLY_TYPE>(replyOrError.rightC());
   }
 
-  // Issue the request.
-  ReplyPtrOpt<RFA_Message> genericReply;
-  string connLostMessage;
-  if (!issueRequestSynchronously(
-         hostName, std::move(request), genericReply, connLostMessage)) {
-    // Request was canceled; `typedReply` is still empty.
-    return typedReply;
+  xassert(replyOrError.isLeft());
+  ReplyPtrOpt<RFA_Message> &reply = replyOrError.left();
+
+  if (!reply.hasValue()) {
+    // Relay the absent value.
+    return ReplyPtrOptOrError<REPLY_TYPE>();
   }
 
-  if (!connLostMessage.empty()) {
-    return stringb("RFA connection lost: " << connLostMessage);
-  }
-
-  if (REPLY_TYPE *r = dynamic_cast<REPLY_TYPE*>(genericReply.get())) {
-    // Move the pointer from `genericReply` to `typedReply`.  This
-    // discards the return value from `release()` because it has the
-    // generic type, while `r` has the specific type.
-    (void)genericReply.release();
-    typedReply.reset(r);
-    return typedReply;
+  if (REPLY_TYPE *r = dynamic_cast<REPLY_TYPE*>(reply.get())) {
+    // Move the pointer from `genericReply` to a `ReplyPtrOptOrError`
+    // with a more specific message type.  This discards the return
+    // value from `release()` because it has the generic type, while `r`
+    // has the specific type.
+    (void)reply.release();
+    return ReplyPtrOptOrError<REPLY_TYPE>(r);
   }
 
   else {
-    return stringb(
+    return ReplyPtrOptOrError<REPLY_TYPE>(stringb(
       "Server responded with incorrect message type: " <<
-      toString(genericReply->messageType()));
+      toString(reply->messageType())));
   }
 }
 

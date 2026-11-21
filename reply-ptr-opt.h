@@ -57,7 +57,8 @@ public:      // methods
   ReplyPtrOpt()
     : Base() {}
 
-  // Create a present or absent value depending on `ptr`.
+  // Create a present or absent value depending on `ptr`.  If `ptr` is
+  // not nullptr, this takes ownership of it.
   ReplyPtrOpt(REPLY_TYPE * NULLABLE ptr)
     : Base(ptr) {}
 
@@ -95,6 +96,9 @@ public:      // methods
 
   The `getROEErrorMessage` function below can be used to combine the
   handling of the error cases (2 and 4).
+
+  TODO: `getROEErrorMessage` isn't "below".  Move it here and make it a
+  member function.
 */
 template <typename REPLY_TYPE>
 class ReplyPtrOptOrError :

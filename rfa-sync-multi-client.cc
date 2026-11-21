@@ -47,25 +47,31 @@ RFA_SyncMultiClient::~RFA_SyncMultiClient()
 }
 
 
-bool RFA_SyncMultiClient::issueRequestSynchronously(
+ReplyPtrOptOrError<RFA_Message>
+RFA_SyncMultiClient::issueRequestSynchronously(
   HostName const &hostName,
-  std::unique_ptr<RFA_Message> request,
-  ReplyPtrOpt<RFA_Message> /*OUT*/ &reply,
-  string /*OUT*/ &connLostMessage)
+  std::unique_ptr<RFA_Message> request)
 {
   xassert(!m_requestID);
+
+  if (!m_rfaAMClient->isValid(hostName)) {
+    return ReplyPtrOptOrError<RFA_Message>(
+      stringb("Host " << hostName << " is invalid."));
+  }
+
   m_hostName = hostName;
 
   string requestDescription = request->description();
   m_rfaAMClient->issueRequest(m_requestID /*OUT*/,
     m_hostName, std::move(request));
 
-  USED_FOR_DEBUGGING RequestID origRequestID = m_requestID;
+  USED_FOR_DEBUGGING
+  RequestID origRequestID = m_requestID;
 
   TRACE("RFA_SyncMultiClient",
     "request " << origRequestID << ": issued: " << requestDescription);
 
-  // Inform the test infrastructure that we are awaiting IPC.
+  // Inform the event replay infrastructure that we are awaiting IPC.
   IncDecWaitingCounter idwc;
 
   auto doneCondition = [this]() -> bool {
@@ -77,37 +83,36 @@ bool RFA_SyncMultiClient::issueRequestSynchronously(
   bool completed = m_waiter.waitUntil(
     doneCondition,
     500 /*msec*/,
-    "Waiting for RFA query",
+    "Waiting for Remote File Access reply",
     requestDescription);
 
   if (!completed) {
     TRACE("RFA_SyncMultiClient",
       "request " << origRequestID << ": canceled");
     m_requestID = 0;
-    return false;
+    return ReplyPtrOptOrError<RFA_Message>();
   }
 
   if (m_reply) {
     TRACE("RFA_SyncMultiClient",
       "request " << origRequestID <<
       ": got reply: " << m_reply->description());
-    reply = std::move(m_reply);
-    return true;
+    return ReplyPtrOptOrError<RFA_Message>(std::move(m_reply));
   }
   else if (!m_connLostMessage.empty()) {
     TRACE("RFA_SyncMultiClient",
       "request " << origRequestID <<
       ": conn lost: " << m_connLostMessage);
-    connLostMessage = m_connLostMessage;
+    ReplyPtrOptOrError<RFA_Message> ret(m_connLostMessage);
     m_connLostMessage = "";
-    return true;
+    return ret;
   }
   else {
     // Should not happen.
     TRACE("RFA_SyncMultiClient",
       "request " << origRequestID << ": what happened?");
     DEV_WARNING("RFA_SyncMultiClient: not canceled, succeeded, nor failed?");
-    return false;
+    return ReplyPtrOptOrError<RFA_Message>();
   }
 }
 
