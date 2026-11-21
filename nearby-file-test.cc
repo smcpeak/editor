@@ -107,7 +107,7 @@ static void populate(MockHFExists &hfe)
     "/smbase/sm-test.h",
   };
   for (auto s : localPaths) {
-    hfe.m_existingHARNs.insert(HostAndResourceName::localFile(s));
+    hfe.add(HostAndResourceName::localFile(s));
   }
 
   // Also some remote paths.
@@ -117,7 +117,7 @@ static void populate(MockHFExists &hfe)
   };
   HostName remoteHost(HostName::asSSH("host"));
   for (auto s : remotePaths) {
-    hfe.m_existingHARNs.insert(HostAndResourceName(remoteHost, s));
+    hfe.add(HostAndResourceName(remoteHost, s));
   }
 }
 

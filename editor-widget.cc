@@ -3712,7 +3712,11 @@ bool EditorWidget::eventFilter(QObject *watched, QEvent *event) NOEXCEPT
 
 bool EditorWidget::editSafetyCheck()
 {
-  EditSafetyProblem esp = getDocument()->checkEditSafety();
+  // TODO: Encapsulate this sequence of two lines.
+  GUISynchronousWaiter waiter(this);
+  RFA_SyncMultiClient rfaSMClient(rfaAMClient(), waiter);
+
+  EditSafetyProblem esp = getDocument()->checkEditSafety(rfaSMClient);
   if (esp == ESP_READ_ONLY) {
     if (!promptOverrideReadOnly()) {
       // Document is still read-only, user does not want to override.
@@ -3721,10 +3725,14 @@ bool EditorWidget::editSafetyCheck()
     else {
       // The read-only flag has been cleared, but there might still be a
       // different safety problem, so check again.
-      esp = getDocument()->checkEditSafety();
+      esp = getDocument()->checkEditSafety(rfaSMClient);
     }
   }
   xassert(esp != ESP_READ_ONLY);
+
+  // The safety check may have set the document's `m_modifiedOnDisk`
+  // flag.
+  this->redraw();
 
   if (esp == ESP_MODIFIED_ON_DISK) {
     if (!promptEditDespiteModified()) {

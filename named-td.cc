@@ -3,13 +3,16 @@
 
 #include "named-td.h"                  // this module
 
+// editor
 #include "doc-type-hilite.h"           // makeHighlighterForLanguage
 #include "fail-reason-opt.h"           // FailReasonOpt
+#include "ihfexists.h"                 // IHFExists
 #include "lsp-conv.h"                  // convertLSPDiagsToTDD
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
 #include "td-obs-recorder.h"           // TextDocumentObservationRecorder
 
+// smbase
 #include "smbase/dev-warning.h"        // DEV_WARNING
 #include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional)
 #include "smbase/gdvalue-unique-ptr.h" // gdv::toGDValue(std::unique_ptr)
@@ -25,6 +28,7 @@
 #include "smbase/string-util.h"        // replaceAll
 #include "smbase/xassert.h"            // xassertPrecondition
 
+// libc++
 #include <cstdint>                     // std::int64_t
 #include <utility>                     // std::move
 
@@ -242,7 +246,8 @@ string NamedTextDocument::fileStatusString() const
 }
 
 
-EditSafetyProblem NamedTextDocument::checkEditSafety() const
+EditSafetyProblem NamedTextDocument::checkEditSafety(
+  IHFExists &hfExists)
 {
   if (isReadOnly()) {
     return ESP_READ_ONLY;
@@ -257,6 +262,24 @@ EditSafetyProblem NamedTextDocument::checkEditSafety() const
 
   if (m_modifiedOnDisk) {
     return ESP_MODIFIED_ON_DISK;
+  }
+
+  if (std::optional<std::int64_t> modTime =
+        hfExists.hfModTime(harn())) {
+    if (*modTime != m_lastFileTimestamp) {
+      TRACE1_GDVN_EXPRS("checkEditSafety: modified file",
+        harn(),
+        *modTime,
+        m_lastFileTimestamp);
+
+      m_modifiedOnDisk = true;
+      return ESP_MODIFIED_ON_DISK;
+    }
+    else {
+      TRACE2_GDVN_EXPRS("checkEditSafety: file is unmodified",
+        harn(),
+        m_lastFileTimestamp);
+    }
   }
 
   return ESP_NONE;

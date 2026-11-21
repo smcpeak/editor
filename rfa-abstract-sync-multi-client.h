@@ -15,6 +15,7 @@
 
 // smbase
 #include "smbase/sm-unique-ptr.h"                // smbase::UniquePtr
+#include "smbase/std-optional-fwd.h"             // std::optional [f]
 #include "smbase/stringb.h"                      // stringb
 #include "smbase/xassert.h"                      // xassert
 
@@ -51,7 +52,8 @@ public:      // methods
     smbase::UniquePtr<RFA_Message> request);
 
   // IHFExists methods.
-  virtual bool hfExists(HostAndResourceName const &harn) override;
+  virtual std::optional<std::int64_t> hfModTime(
+    HostAndResourceName const &harn) override;
 
   // ---- Methods that encapsulate request creation ----
   // Read the contents of `harn`.

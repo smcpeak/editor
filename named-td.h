@@ -11,12 +11,13 @@
 #include "doc-type.h"                  // DocumentType
 #include "fail-reason-opt.h"           // FailReasonOpt
 #include "hilite.h"                    // Highlighter
+#include "ihfexists-fwd.h"             // IHFExists [f]
 #include "td-diagnostics.h"            // TextDocumentDiagnostics::DocEntry
 #include "td-obs-recorder.h"           // TextDocumentObservationRecorder
 #include "td.h"                        // TextDocument
 
 // smbase
-#include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue [f]
 #include "smbase/refct-serf.h"         // RCSerf
 #include "smbase/str.h"                // string
 
@@ -123,13 +124,15 @@ private:     // data
   bool m_highlightTrailingWhitespace;
 
 public:      // data
-  // Modification timestamp (unix time) the last time we interacted
-  // with it on the file system.
+  // Modification timestamp (unix time) the last time we read or wrote
+  // its contents on the file system.
   //
   // This is 0 for an untitled document or a file that does not yet exist,
   // although there is never a reason to explicitly check for that
   // since we have 'hasFilename' for the former, and for the latter, we
   // always try to stat() the file before comparing its timestamp.
+  //
+  // TODO: Create a typedef for `std::int64_t` used as a timestamp.
   std::int64_t m_lastFileTimestamp;
 
   // If true, the on-disk contents have changed since the last time we
@@ -220,8 +223,9 @@ public:      // funcs
   string fileStatusString() const;
 
   // The user is about to change the file.  Report on whether and why we
-  // should prompt before allowing it.
-  EditSafetyProblem checkEditSafety() const;
+  // should prompt before allowing it.  Additionally, if we discover
+  // that the document was modified, set `m_modifiedOnDisk`.
+  EditSafetyProblem checkEditSafety(IHFExists &hfExists);
 
   // ------------------------- file contents ---------------------------
   // Discard existing contents and set them based on the given info.

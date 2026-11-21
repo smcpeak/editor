@@ -5,6 +5,9 @@
 
 #include "named-td.h"                            // module to test
 
+// editor
+#include "mock-hfexists.h"                       // MockHFExists
+
 // smbase
 #include "smbase/gdvalue.h"                      // gdv::GDValue
 #include "smbase/nonport.h"                      // getFileModificationTime
@@ -186,11 +189,14 @@ void testUndoPastSavePoint()
 
 // Check `doc.checkEditSafety()` against `expect`.
 #define EXPECT_ESP(doc, expect) \
-  EXPECT_EQ_GDVSER((doc).checkEditSafety(), expect)
+  EXPECT_EQ_GDVSER((doc).checkEditSafety(hfe), expect)
 
 
-void testCheckEditSafety()
+// Test with an empty `MockHFExists`.
+void testCheckEditSafety_emptyHFE()
 {
+  MockHFExists hfe;
+
   NamedTextDocument doc;
 
   // Initially, there are no problems.
@@ -235,6 +241,41 @@ void testCheckEditSafety()
   doc.replaceFileAndStats(std::vector<unsigned char>{'b', '\n'},
                           0 /*modTime*/, true /*readOnly*/);
   EXPECT_ESP(doc, ESP_READ_ONLY);
+}
+
+
+void testCheckEditSafety_populatedHFE()
+{
+  HostAndResourceName harn = HostAndResourceName::localFile("foo");
+
+  MockHFExists hfe;
+  std::int64_t ts = 3;
+  hfe.addTS(harn, ts);
+
+  NamedTextDocument doc;
+  doc.setDocumentName(DocumentName::fromFilenameHarn(harn));
+  doc.m_lastFileTimestamp = 3;
+
+  // No problems.
+  EXPECT_ESP(doc, ESP_NONE);
+  xassert(!doc.m_modifiedOnDisk);
+
+  // Some other process modified the file!
+  hfe.setTS(harn, ts+1);
+
+  // Now it should be reported as modified.
+  EXPECT_ESP(doc, ESP_MODIFIED_ON_DISK);
+
+  // And the flag should be set.
+  xassert(doc.m_modifiedOnDisk);
+
+  // Reset it.
+  doc.m_modifiedOnDisk = false;
+
+  // Even for an older timestamp.
+  hfe.setTS(harn, ts-1);
+  EXPECT_ESP(doc, ESP_MODIFIED_ON_DISK);
+  xassert(doc.m_modifiedOnDisk);
 }
 
 
@@ -287,7 +328,8 @@ void test_named_td(CmdlineArgsSpan args)
   testReadFile();
   testSetDocumentProcessStatus();
   testUndoPastSavePoint();
-  testCheckEditSafety();
+  testCheckEditSafety_emptyHFE();
+  testCheckEditSafety_populatedHFE();
   test_toGDValue();
 
   xassert(NamedTextDocument::s_objectCount == 0);

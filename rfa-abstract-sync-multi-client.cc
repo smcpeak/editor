@@ -28,7 +28,8 @@ RFA_AbstractSyncMultiClient::RFA_AbstractSyncMultiClient()
 {}
 
 
-bool RFA_AbstractSyncMultiClient::hfExists(HostAndResourceName const &harn)
+std::optional<std::int64_t> RFA_AbstractSyncMultiClient::hfModTime(
+  HostAndResourceName const &harn)
 {
   smbase::UniquePtr<RFA_Msg_FileStatusRequest> req(new RFA_Msg_FileStatusRequest);
   req->m_path = harn.resourceName();
@@ -37,23 +38,22 @@ bool RFA_AbstractSyncMultiClient::hfExists(HostAndResourceName const &harn)
     issueTypedRequestSynchronously<RFA_Msg_FileStatusReply>(
       harn.hostName(), std::move(req)));
 
-  if (replyOrError.isLeft()) {
-    smbase::UniquePtr<RFA_Msg_FileStatusReply> &reply = replyOrError.left();
-    if (reply) {
-      return reply->m_success &&
-             reply->m_fileKind == SMFileUtil::FK_REGULAR;
-    }
-    else {
-      // If the user cancels, we will say the file does not exist.
-      return false;
-    }
+  if (FailReasonOpt reason = replyOrError.getEitherErrorMessage()) {
+    TRACE1("hfModTime(" << harn << "): " << *reason);
+    return std::nullopt;
   }
-  else {
-    TRACE1("hfExists(" << harn << "): " << replyOrError.right());
 
-    // On error, just say the file does not exist.
-    return false;
+  xassert(replyOrError.isLeft());
+  smbase::UniquePtr<RFA_Msg_FileStatusReply> &reply = replyOrError.left();
+  if (reply) {
+    xassert(reply->m_success);
+    if (reply->m_fileKind == SMFileUtil::FK_REGULAR) {
+      return reply->m_fileModificationTime;
+    }
   }
+
+  // User canceled or the file was a different kind.
+  return std::nullopt;
 }
 
 

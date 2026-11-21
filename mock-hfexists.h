@@ -10,18 +10,35 @@
 #include "ihfexists.h"                 // IHFExists
 #include "host-and-resource-name.h"    // HostAndResourceName
 
+// smbase
+#include "smbase/std-optional-fwd.h"   // std::optional [f]
+
 // libc++
-#include <set>                         // std::set
+#include <cstdint>                     // std::int64_t
+#include <map>                         // std::set
 
 
 // Class that recognizes a fixed set of host+file pairs.
 class MockHFExists : public IHFExists {
 public:      // data
-  // Set of recognized names.
-  std::set<HostAndResourceName> m_existingHARNs;
+  // Map from recognized names to timestamps.
+  std::map<HostAndResourceName, std::int64_t> m_existingHARNs;
 
 public:      // methods
-  virtual bool hfExists(HostAndResourceName const &harn) override;
+  // Add `harn` to `m_existingHARNs`, using its `size()+1` as the
+  // timestamp.  This is useful when, in a test, we just care about the
+  // set of files, not their timestamps.
+  void add(HostAndResourceName const &harn);
+
+  // Add and specify the timestamp.  `harn` must not already be mapped.
+  void addTS(HostAndResourceName const &harn, std::int64_t ts);
+
+  // Change an existing timestamp.
+  void setTS(HostAndResourceName const &harn, std::int64_t ts);
+
+  // IHFExists methods
+  virtual std::optional<std::int64_t> hfModTime(
+    HostAndResourceName const &harn) override;
 };
 
 
