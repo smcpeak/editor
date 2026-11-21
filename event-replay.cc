@@ -9,6 +9,7 @@
 
 // editor
 #include "debug-values.h"                        // DEBUG_VALUES
+#include "file-mod-time.h"                       // getFileModTime
 #include "waiting-counter.h"                     // g_waitingCounter, IncDecWaitingCounter
 
 // smqtutil
@@ -27,7 +28,7 @@
 #include "smbase/gdvalue-vector.h"               // gdv::toGDValue(std::vector)
 #include "smbase/gdvalue.h"                      // gdv::GDValue
 #include "smbase/overflow.h"                     // safeToInt
-#include "smbase/nonport.h"                      // getMilliseconds, getFileModificationTime
+#include "smbase/nonport.h"                      // getMilliseconds
 #include "smbase/run-process.h"                  // RunProcess
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-is-equal.h"                  // smbase::is_equal
@@ -1010,14 +1011,12 @@ void EventReplay::replayCall(GDValue const &command)
   else if (funcName == "TouchFile") {
     BIND_STRING_ARGS1(fname);
 
-    std::int64_t beforeModUnixTime = 0;
-    getFileModificationTime(fname.c_str(), beforeModUnixTime /*OUT*/);
+    FileTimestamp beforeModUnixTime = getFileModTime(fname);
 
     SMFileUtil sfu;
     sfu.touchFile(fname);
 
-    std::int64_t afterModUnixTime = 0;
-    getFileModificationTime(fname.c_str(), afterModUnixTime /*OUT*/);
+    FileTimestamp afterModUnixTime = getFileModTime(fname);
 
     if (beforeModUnixTime == afterModUnixTime &&
         beforeModUnixTime != 0) {

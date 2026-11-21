@@ -24,9 +24,6 @@
 // libc++
 #include <memory>                                // std::unique_ptr
 
-// libc
-#include <stdint.h>                              // int64_t
-
 
 // Class to issue asynchronous file system queries to a process that
 // implements the RFA protocol.  The process could be locally serving

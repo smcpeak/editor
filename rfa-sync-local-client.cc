@@ -3,9 +3,11 @@
 
 #include "rfa-sync-local-client.h"               // this module
 
+// editor
+#include "file-mod-time.h"                       // getFileModTime
+
 // smbase
 #include "smbase/exc.h"                          // smbase::XBase
-#include "smbase/nonport.h"                      // getFileModificationTime
 #include "smbase/portable-error-code.h"          // smbase::PortableErrorCode
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/syserr.h"                       // smbase::XSysError
@@ -41,8 +43,7 @@ RFA_Msg_FileStatusReply RFA_SyncLocalClient::queryPath(RFA_Msg_FileStatusRequest
     reply.m_dirExists = sfu.absolutePathExists(reply.m_dirName);
     if (reply.m_dirExists) {
       reply.m_fileKind = sfu.getFileKind(pathname);
-      (void)getFileModificationTime(pathname.c_str(),
-                                    reply.m_fileModificationTime);
+      reply.m_fileModificationTime = getFileModTime(pathname);
     }
   }
   PATH_REQUEST_CATCH_BLOCK
@@ -60,12 +61,8 @@ RFA_Msg_ReadFileReply RFA_SyncLocalClient::readFile(
 
   try {
     reply.m_contents = sfu.readFile(req.m_path);
-
-    (void)getFileModificationTime(req.m_path.c_str(),
-                                  reply.m_fileModificationTime);
-
+    reply.m_fileModificationTime = getFileModTime(req.m_path);
     reply.m_readOnly = sfu.isReadOnly(req.m_path);
-
   }
   PATH_REQUEST_CATCH_BLOCK
 
@@ -82,9 +79,7 @@ RFA_Msg_WriteFileReply RFA_SyncLocalClient::writeFile(
 
   try {
     sfu.writeFile(req.m_path, req.m_contents);
-
-    (void)getFileModificationTime(req.m_path.c_str(),
-                                  reply.m_fileModificationTime);
+    reply.m_fileModificationTime = getFileModTime(req.m_path);
   }
   PATH_REQUEST_CATCH_BLOCK
 

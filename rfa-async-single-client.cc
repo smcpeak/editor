@@ -13,7 +13,6 @@
 #include "smbase/bflatten.h"           // StreamFlatten
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
 #include "smbase/flatten.h"            // serializeIntNBO
-#include "smbase/nonport.h"            // getFileModificationTime
 #include "smbase/overflow.h"           // writeConvertedNumber
 #include "smbase/sm-macros.h"          // DEFINE_ENUMERATION_TO_STRING
 #include "smbase/trace.h"              // TRACE

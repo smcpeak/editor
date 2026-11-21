@@ -10,6 +10,9 @@
 
 #include "rfa-msg-fwd.h"                         // FOR_EACH_RFA_MESSAGE_TYPE, plus fwds for this module
 
+// editor
+#include "file-mod-time.h"                       // FileTimestamp
+
 // smbase
 #include "smbase/flatten-fwd.h"                  // Flatten
 #include "smbase/portable-error-code.h"          // smbase::PortableErrorCode
@@ -17,10 +20,8 @@
 #include "smbase/str.h"                          // string
 
 // libc++
+#include <cstdint>                               // std::int32_t
 #include <vector>                                // std::vector
-
-// libc
-#include <stdint.h>                              // int64_t, int32_t
 
 
 // Protocol version described in this file.
@@ -40,7 +41,7 @@
 //    6: Modify set of PortableErrorCodes.
 //    7: Add MakeDirectory{Request,Reply}.
 //
-int32_t const RFA_currentVersion = 7;
+std::int32_t const RFA_currentVersion = 7;
 
 
 // Possible kinds of RFA messages.
@@ -102,7 +103,7 @@ class RFA_Msg_GetVersion : public RFA_Message {
 public:
   // In the request, this is the version the client understands.  In
   // the reply, it is what the server understands.
-  int32_t m_version;
+  std::int32_t m_version;
 
 public:
   RFA_Msg_GetVersion();
@@ -214,7 +215,7 @@ public:      // data
   SMFileUtil::FileKind m_fileKind;
 
   // If 'm_fileName' exists, its unix modification time.
-  int64_t m_fileModificationTime;
+  FileTimestamp m_fileModificationTime;
 
 public:      // methods
   RFA_Msg_FileStatusReply();
@@ -247,7 +248,7 @@ public:      // data
   std::vector<unsigned char> m_contents;
 
   // Modification time as reported by the file system.
-  int64_t m_fileModificationTime;
+  FileTimestamp m_fileModificationTime;
 
   // True if the file is marked read-only.
   bool m_readOnly;
@@ -286,7 +287,7 @@ class RFA_Msg_WriteFileReply : public RFA_Msg_PathReply {
 public:      // data
   // Modification time as reported by the file system *after* writing
   // the file's contents.
-  int64_t m_fileModificationTime;
+  FileTimestamp m_fileModificationTime;
 
 public:      // methods
   RFA_Msg_WriteFileReply();

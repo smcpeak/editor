@@ -28,7 +28,7 @@ RFA_AbstractSyncMultiClient::RFA_AbstractSyncMultiClient()
 {}
 
 
-std::optional<std::int64_t> RFA_AbstractSyncMultiClient::hfModTime(
+std::optional<FileTimestamp> RFA_AbstractSyncMultiClient::hfModTime(
   HostAndResourceName const &harn)
 {
   smbase::UniquePtr<RFA_Msg_FileStatusRequest> req(new RFA_Msg_FileStatusRequest);

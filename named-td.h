@@ -10,6 +10,7 @@
 #include "doc-name.h"                  // DocumentName
 #include "doc-type.h"                  // DocumentType
 #include "fail-reason-opt.h"           // FailReasonOpt
+#include "file-mod-time.h"             // FileTimestamp
 #include "hilite.h"                    // Highlighter
 #include "ihfexists-fwd.h"             // IHFExists [f]
 #include "td-diagnostics.h"            // TextDocumentDiagnostics::DocEntry
@@ -22,7 +23,6 @@
 #include "smbase/str.h"                // string
 
 // c++
-#include <cstdint>                     // std::int64_t
 #include <map>                         // std::map
 #include <memory>                      // std::unique_ptr
 #include <optional>                    // std::optional
@@ -131,9 +131,7 @@ public:      // data
   // although there is never a reason to explicitly check for that
   // since we have 'hasFilename' for the former, and for the latter, we
   // always try to stat() the file before comparing its timestamp.
-  //
-  // TODO: Create a typedef for `std::int64_t` used as a timestamp.
-  std::int64_t m_lastFileTimestamp;
+  FileTimestamp m_lastFileTimestamp;
 
   // If true, the on-disk contents have changed since the last time we
   // saved or loaded the file.
@@ -230,7 +228,7 @@ public:      // funcs
   // ------------------------- file contents ---------------------------
   // Discard existing contents and set them based on the given info.
   void replaceFileAndStats(std::vector<unsigned char> const &contents,
-                           std::int64_t fileModificationTime,
+                           FileTimestamp fileModificationTime,
                            bool readOnly);
 
   // ------------------------- LSP diagnostics -------------------------

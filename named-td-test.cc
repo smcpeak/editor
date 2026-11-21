@@ -6,11 +6,11 @@
 #include "named-td.h"                            // module to test
 
 // editor
+#include "file-mod-time.h"                       // getFileModTime
 #include "mock-hfexists.h"                       // MockHFExists
 
 // smbase
 #include "smbase/gdvalue.h"                      // gdv::GDValue
-#include "smbase/nonport.h"                      // getFileModificationTime
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-noexcept.h"                  // NOEXCEPT
@@ -79,8 +79,7 @@ void readFile(NamedTextDocument &doc)
 
   std::vector<unsigned char> bytes(sfu.readFile(fname));
 
-  int64_t modTime;
-  (void)getFileModificationTime(fname.c_str(), modTime);
+  FileTimestamp modTime = getFileModTime(fname);
 
   bool readOnly = sfu.isReadOnly(fname);
 
@@ -135,7 +134,7 @@ void writeFile(NamedTextDocument &doc)
 
   // This is what `EditorWindow::writeTheFile` does after a successful
   // file write.
-  (void)getFileModificationTime(fname.c_str(), doc.m_lastFileTimestamp);
+  doc.m_lastFileTimestamp = getFileModTime(fname);
   doc.m_modifiedOnDisk = false;
   doc.noUnsavedChanges();
 }
@@ -249,7 +248,7 @@ void testCheckEditSafety_populatedHFE()
   HostAndResourceName harn = HostAndResourceName::localFile("foo");
 
   MockHFExists hfe;
-  std::int64_t ts = 3;
+  FileTimestamp ts = 3;
   hfe.addTS(harn, ts);
 
   NamedTextDocument doc;

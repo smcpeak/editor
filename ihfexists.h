@@ -9,13 +9,11 @@
 #include "ihfexists-fwd.h"                       // fwds for this module
 
 // editor
+#include "file-mod-time.h"                       // FileTimestamp
 #include "host-and-resource-name-fwd.h"          // HostAndResourceName [f]
 
 // smbase
 #include "smbase/std-optional-fwd.h"             // std::optional [f]
-
-// libc++
-#include <cstdint>                               // std::int64_t
 
 
 /*
@@ -60,7 +58,7 @@ public:      // methods
     time, that is returned as Unix time.  Otherwise (file missing, wrong
     kind, comms error, etc.) return nullptr.
   */
-  virtual std::optional<std::int64_t> hfModTime(
+  virtual std::optional<FileTimestamp> hfModTime(
     HostAndResourceName const &harn) = 0;
 };
 

@@ -7,6 +7,7 @@
 #define EDITOR_MOCK_HFEXISTS_H
 
 // editor
+#include "file-mod-time.h"             // FileTimestamp
 #include "ihfexists.h"                 // IHFExists
 #include "host-and-resource-name.h"    // HostAndResourceName
 
@@ -14,7 +15,6 @@
 #include "smbase/std-optional-fwd.h"   // std::optional [f]
 
 // libc++
-#include <cstdint>                     // std::int64_t
 #include <map>                         // std::set
 
 
@@ -22,7 +22,7 @@
 class MockHFExists : public IHFExists {
 public:      // data
   // Map from recognized names to timestamps.
-  std::map<HostAndResourceName, std::int64_t> m_existingHARNs;
+  std::map<HostAndResourceName, FileTimestamp> m_existingHARNs;
 
 public:      // methods
   // Add `harn` to `m_existingHARNs`, using its `size()+1` as the
@@ -31,13 +31,13 @@ public:      // methods
   void add(HostAndResourceName const &harn);
 
   // Add and specify the timestamp.  `harn` must not already be mapped.
-  void addTS(HostAndResourceName const &harn, std::int64_t ts);
+  void addTS(HostAndResourceName const &harn, FileTimestamp ts);
 
   // Change an existing timestamp.
-  void setTS(HostAndResourceName const &harn, std::int64_t ts);
+  void setTS(HostAndResourceName const &harn, FileTimestamp ts);
 
   // IHFExists methods
-  virtual std::optional<std::int64_t> hfModTime(
+  virtual std::optional<FileTimestamp> hfModTime(
     HostAndResourceName const &harn) override;
 };
 

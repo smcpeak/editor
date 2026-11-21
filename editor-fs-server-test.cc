@@ -177,7 +177,7 @@ void FSServerTest::runFileReadWriteTests()
 
   std::vector<unsigned char> data(allBytes());
   string fname = "efst.tmp";
-  int64_t modTime;
+  FileTimestamp modTime;
 
   // Write.
   {

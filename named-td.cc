@@ -29,7 +29,6 @@
 #include "smbase/xassert.h"            // xassertPrecondition
 
 // libc++
-#include <cstdint>                     // std::int64_t
 #include <utility>                     // std::move
 
 using namespace gdv;
@@ -264,7 +263,7 @@ EditSafetyProblem NamedTextDocument::checkEditSafety(
     return ESP_MODIFIED_ON_DISK;
   }
 
-  if (std::optional<std::int64_t> modTime =
+  if (std::optional<FileTimestamp> modTime =
         hfExists.hfModTime(harn())) {
     if (*modTime != m_lastFileTimestamp) {
       TRACE1_GDVN_EXPRS("checkEditSafety: modified file",
@@ -289,7 +288,7 @@ EditSafetyProblem NamedTextDocument::checkEditSafety(
 // -------------------------- file contents ----------------------------
 void NamedTextDocument::replaceFileAndStats(
   std::vector<unsigned char> const &contents,
-  std::int64_t fileModificationTime,
+  FileTimestamp fileModificationTime,
   bool readOnly)
 {
   HTT_TASK("NamedTextDocument::replaceFileAndStats");

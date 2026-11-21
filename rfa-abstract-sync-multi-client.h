@@ -52,7 +52,7 @@ public:      // methods
     smbase::UniquePtr<RFA_Message> request);
 
   // IHFExists methods.
-  virtual std::optional<std::int64_t> hfModTime(
+  virtual std::optional<FileTimestamp> hfModTime(
     HostAndResourceName const &harn) override;
 
   // ---- Methods that encapsulate request creation ----

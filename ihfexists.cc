@@ -13,7 +13,7 @@ IHFExists::~IHFExists()
 
 bool IHFExists::hfExists(HostAndResourceName const &harn)
 {
-  std::optional<std::int64_t> modTime = hfModTime(harn);
+  std::optional<FileTimestamp> modTime = hfModTime(harn);
   return modTime.has_value();
 }
 
