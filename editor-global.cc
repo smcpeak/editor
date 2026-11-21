@@ -38,6 +38,7 @@
 #include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtguiutil.h"                  // showRaiseAndActivateWindow, messageBox
 #include "smqtutil/qtutil.h"                     // toQString, installSMQtUtilMessageHandler
+#include "smqtutil/silent-mbox-filter.h"         // SilentMessageBoxFilter
 #include "smqtutil/sync-wait.h"                  // GUISynchronousWaiter
 #include "smqtutil/timer-event-loop.h"           // sleepWhilePumpingEvents
 
@@ -1810,6 +1811,10 @@ static int innerMain(int argc, char **argv)
         // message.
         EXN_CONTEXT(app.m_eventTestFileName);
         HTT_TASK_DYNAMIC_LABEL(app.m_eventTestFileName);
+
+        // Disable message box sounds since they are annoying to listen
+        // to while the automated tests run.
+        SilentMessageBoxFilter silentFilter(&app);
 
         EventReplay replay(app.m_eventTestCommands, selfCheck);
         std::string error = replay.runTest();
