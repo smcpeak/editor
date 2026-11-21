@@ -108,7 +108,7 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
       readFileSynchronously(&rfaAMClient, waiter, harn));
 
     if (FailReasonOpt errorMsg =
-          getROEErrorMessage(replyOrError)) {
+          replyOrError.getEitherErrorMessage()) {
       // Store the error message.
       TRACE2("lspGetCodeLines: got error for " << toGDValue(harn) <<
              ": " << *errorMsg);

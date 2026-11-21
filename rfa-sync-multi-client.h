@@ -7,7 +7,6 @@
 #define EDITOR_RFA_SYNC_MULTI_CLIENT_H
 
 // editor
-#include "fail-reason-opt.h"           // FailReasonOpt
 #include "host-and-resource-name.h"    // HostAndResourceName
 #include "host-name.h"                 // HostName
 #include "ihfexists.h"                 // IHFExists
@@ -128,35 +127,6 @@ RFA_SyncMultiClient::issueTypedRequestSynchronously(
       "Server responded with incorrect message type: " <<
       toString(reply->messageType())));
   }
-}
-
-
-/* If `replyOrError` has an error message in either half, extract and
-   return it.
-
-   Ensures:
-     if return == nullopt:
-       replyOrError.isLeft() == true and
-       if replyOrError.left() != nullptr:
-         replyOrError.left()->m_success == true
-*/
-template <class REPLY_TYPE>
-FailReasonOpt getROEErrorMessage(
-  ReplyPtrOptOrError<REPLY_TYPE> const &replyOrError)
-{
-  if (replyOrError.isRight()) {
-    return replyOrError.right();
-  }
-  else {
-    std::unique_ptr<REPLY_TYPE> const &reply = replyOrError.left();
-    if (reply && !reply->m_success) {
-      return stringb(
-        reply->m_failureReasonString <<
-        " (code " << reply->m_failureReasonCode << ")");
-    }
-  }
-
-  return std::nullopt;
 }
 
 

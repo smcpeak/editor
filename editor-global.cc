@@ -672,7 +672,7 @@ bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
       readFileSynchronously(&m_rfaAMClient, waiter, doc->harn()));
 
     if (FailReasonOpt errorMsg =
-          getROEErrorMessage(replyOrError)) {
+          replyOrError.getEitherErrorMessage()) {
       messageBox(parentWidget, "Error", toQString(*errorMsg));
       return false;
     }

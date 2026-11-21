@@ -9,6 +9,7 @@
 #include "reply-ptr-opt-fwd.h"         // fwds for this module
 
 // editor
+#include "fail-reason-opt.h"           // FailReasonOpt
 #include "rfa-msg.h"                   // RFA_Message
 
 // smbase
@@ -94,11 +95,8 @@ public:      // methods
     4. Error message in right alternative: RFA communication error, for
        example the connection was terminated.
 
-  The `getROEErrorMessage` function below can be used to combine the
-  handling of the error cases (2 and 4).
-
-  TODO: `getROEErrorMessage` isn't "below".  Move it here and make it a
-  member function.
+  The `getEitherErrorMessage` method can be used to combine the handling
+  of the error cases (2 and 4).
 */
 template <typename REPLY_TYPE>
 class ReplyPtrOptOrError :
@@ -124,6 +122,37 @@ public:      // methods
 
   ReplyPtrOptOrError(ReplyPtrOptOrError &&obj)
     : Base(std::move(obj)) {}
+
+  /* If `replyOrError` has an error message in either half, extract and
+     return it.
+
+     If this returns nullptr, then the caller can be sure this object
+     carries a reply object that is either null or successful.
+
+     That is, this function ensures:
+
+       (return == nullopt) ==>
+         (isLeft() &&
+          (left() != nullptr) ==>
+            left()->m_success
+         ))
+  */
+  FailReasonOpt getEitherErrorMessage() const
+  {
+    if (this->isRight()) {
+      return this->right();
+    }
+    else {
+      std::unique_ptr<REPLY_TYPE> const &reply = this->left();
+      if (reply && !reply->m_success) {
+        return stringb(
+          reply->m_failureReasonString <<
+          " (code " << reply->m_failureReasonCode << ")");
+      }
+    }
+
+    return std::nullopt;
+  }
 };
 
 

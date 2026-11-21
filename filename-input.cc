@@ -711,7 +711,7 @@ void FilenameInputDialog::on_makeDirectory() NOEXCEPT
       m_currentHostName, std::move(req));
 
   if (FailReasonOpt errorMsg =
-        getROEErrorMessage(replyOrError)) {
+        replyOrError.getEitherErrorMessage()) {
     TRACE("FilenameInputDialog",
       "Directory creation error: " << *errorMsg);
     messageBox(this, "Make directory error", toQString(*errorMsg));
