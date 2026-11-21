@@ -266,6 +266,7 @@ EDITOR_OBJS += os-wait-timer.o
 EDITOR_OBJS += positive-line-count.o
 EDITOR_OBJS += python_hilite.yy.o
 EDITOR_OBJS += range-text-repl.o
+EDITOR_OBJS += rfa-abstract-sync-multi-client.o
 EDITOR_OBJS += rfa-async-multi-client.moc.o
 EDITOR_OBJS += rfa-async-multi-client.o
 EDITOR_OBJS += rfa-async-single-client.moc.o

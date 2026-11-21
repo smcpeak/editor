@@ -118,36 +118,6 @@ RFA_SyncMultiClient::issueRequestSynchronously(
 }
 
 
-bool RFA_SyncMultiClient::hfExists(HostAndResourceName const &harn)
-{
-  smbase::UniquePtr<RFA_Msg_FileStatusRequest> req(new RFA_Msg_FileStatusRequest);
-  req->m_path = harn.resourceName();
-
-  auto replyOrError(
-    issueTypedRequestSynchronously<RFA_Msg_FileStatusReply>(
-      harn.hostName(), std::move(req)));
-
-  if (replyOrError.isLeft()) {
-    smbase::UniquePtr<RFA_Msg_FileStatusReply> &reply = replyOrError.left();
-    if (reply) {
-      return reply->m_success &&
-             reply->m_fileKind == SMFileUtil::FK_REGULAR;
-    }
-    else {
-      // If the user cancels, we will say the file does not exist.
-      return false;
-    }
-  }
-  else {
-    TRACE("RFA_SyncMultiClient",
-      "hfExists(" << harn << "): " << replyOrError.right());
-
-    // On error, just say the file does not exist.
-    return false;
-  }
-}
-
-
 void RFA_SyncMultiClient::on_rfaReplyAvailable(RequestID requestID) NOEXCEPT
 {
   if (requestID == m_requestID) {

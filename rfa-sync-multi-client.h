@@ -7,32 +7,28 @@
 #define EDITOR_RFA_SYNC_MULTI_CLIENT_H
 
 // editor
-#include "host-and-resource-name.h"    // HostAndResourceName
-#include "host-name.h"                 // HostName
-#include "ihfexists.h"                 // IHFExists
-#include "reply-ptr-opt.h"             // ReplyPtrOpt, ReplyPtrOptOrError
-#include "rfa-async-multi-client.h"    // RFA_AbstractAsyncMultiClient
-#include "rfa-msg.h"                   // RFA_Message
+#include "host-and-resource-name.h"              // HostAndResourceName
+#include "host-name.h"                           // HostName
+#include "reply-ptr-opt.h"                       // ReplyPtrOpt, ReplyPtrOptOrError
+#include "rfa-abstract-sync-multi-client.h"      // RFA_AbstractSyncMultiClient
+#include "rfa-async-multi-client.h"              // RFA_AbstractAsyncMultiClient
+#include "rfa-msg.h"                             // RFA_Message
 
 // smqtutil
-#include "smqtutil/sync-wait-fwd.h"    // SynchronousWaiter [f]
+#include "smqtutil/sync-wait-fwd.h"              // SynchronousWaiter [f]
 
 // smbase
-#include "smbase/sm-unique-ptr.h"      // smbase::UniquePtr
+#include "smbase/sm-unique-ptr.h"                // smbase::UniquePtr
 
 // Qt
 #include <QObject>
 
-// libc++
-#include <type_traits>                 // std::is_base_of_v
-#include <utility>                     // std::move
 
-
-// Like RFA_AsyncMultiClient, but with a synchronous interface and an
-// implementation that (via SynchronousWaiter) can be hooked up to a GUI
-// to allow the user to cancel requests.
+// Implementation of `RFA_AbstractSyncMultiClient` on top of
+// `RFA_AbstractSyncMultiClient` that (via `SynchronousWaiter`) can be
+// hooked up to a GUI to allow the user to cancel requests.
 class RFA_SyncMultiClient : public QObject,
-                            public IHFExists {
+                            public RFA_AbstractSyncMultiClient {
   Q_OBJECT
   NO_OBJECT_COPIES(RFA_SyncMultiClient);
 
@@ -68,23 +64,12 @@ public:      // instance methods
   virtual ~RFA_SyncMultiClient() override;
 
   // Issue 'request' and wait for the reply.
-  ReplyPtrOptOrError<RFA_Message>
-  issueRequestSynchronously(
+  virtual ReplyPtrOptOrError<RFA_Message> issueRequestSynchronously(
     HostName const &hostName,
-    smbase::UniquePtr<RFA_Message> request);
-
-  // Issue 'request' synchronously, expecting to get 'REPLY_TYPE'.
-  template <class REPLY_TYPE>
-  ReplyPtrOptOrError<REPLY_TYPE>
-  issueTypedRequestSynchronously(
-    HostName const &hostName,
-    smbase::UniquePtr<RFA_Message> request);
+    smbase::UniquePtr<RFA_Message> request) override;
 
   // Pop up a modal error dialog, returning when it is dismissed.
   void complain(string message);
-
-  // IHFExists methods.
-  virtual bool hfExists(HostAndResourceName const &harn) override;
 
 protected Q_SLOTS:
   // Handlers for RFA_AbstractAsyncMultiClient.
@@ -93,48 +78,10 @@ protected Q_SLOTS:
 };
 
 
-template <class REPLY_TYPE>
-ReplyPtrOptOrError<REPLY_TYPE>
-RFA_SyncMultiClient::issueTypedRequestSynchronously(
-  HostName const &hostName,
-  smbase::UniquePtr<RFA_Message> request)
-{
-  // Issue the request using the generic interface.
-  ReplyPtrOptOrError<RFA_Message> replyOrError =
-    issueRequestSynchronously(hostName, std::move(request));
-
-  if (replyOrError.isRight()) {
-    // Relay the error message.
-    return ReplyPtrOptOrError<REPLY_TYPE>(replyOrError.rightC());
-  }
-
-  xassert(replyOrError.isLeft());
-  ReplyPtrOpt<RFA_Message> &reply = replyOrError.left();
-
-  if (!reply.hasValue()) {
-    // Relay the absent value.
-    return ReplyPtrOptOrError<REPLY_TYPE>();
-  }
-
-  if (REPLY_TYPE *r = dynamic_cast<REPLY_TYPE*>(reply.get())) {
-    // Move the pointer from `genericReply` to a `ReplyPtrOptOrError`
-    // with a more specific message type.  This discards the return
-    // value from `release()` because it has the generic type, while `r`
-    // has the specific type.
-    (void)reply.release();
-    return ReplyPtrOptOrError<REPLY_TYPE>(r);
-  }
-
-  else {
-    return ReplyPtrOptOrError<REPLY_TYPE>(stringb(
-      "Server responded with incorrect message type: " <<
-      toString(reply->messageType())));
-  }
-}
-
-
 // Read the contents of `fname`, waiting for the reply and blocking user
 // input during the wait (depending on what `waiter` does).
+//
+// TODO: Make this a method of `RFA_AbstractSyncMultiClient`.
 ReplyPtrOptOrError<RFA_Msg_ReadFileReply>
 readFileSynchronously(
   RFA_AbstractAsyncMultiClient *rfaAMClient,
@@ -143,6 +90,8 @@ readFileSynchronously(
 
 
 // Get timestamp, etc., for 'fname'.
+//
+// TODO: Make this a method of `RFA_AbstractSyncMultiClient`.
 ReplyPtrOptOrError<RFA_Msg_FileStatusReply>
 getFileStatusSynchronously(
   RFA_AbstractAsyncMultiClient *rfaAMClient,
