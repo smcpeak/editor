@@ -78,25 +78,4 @@ protected Q_SLOTS:
 };
 
 
-// Read the contents of `fname`, waiting for the reply and blocking user
-// input during the wait (depending on what `waiter` does).
-//
-// TODO: Make this a method of `RFA_AbstractSyncMultiClient`.
-ReplyPtrOptOrError<RFA_Msg_ReadFileReply>
-readFileSynchronously(
-  RFA_AbstractAsyncMultiClient *rfaAMClient,
-  SynchronousWaiter &waiter,
-  HostAndResourceName const &harn);
-
-
-// Get timestamp, etc., for 'fname'.
-//
-// TODO: Make this a method of `RFA_AbstractSyncMultiClient`.
-ReplyPtrOptOrError<RFA_Msg_FileStatusReply>
-getFileStatusSynchronously(
-  RFA_AbstractAsyncMultiClient *rfaAMClient,
-  SynchronousWaiter &waiter,
-  HostAndResourceName const &harn);
-
-
 #endif // EDITOR_RFA_SYNC_MULTI_CLIENT_H

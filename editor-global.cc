@@ -28,7 +28,7 @@
 #include "open-files-dialog.h"                   // OpenFilesDialog
 #include "process-watcher.h"                     // ProcessWatcher
 #include "recent-items-list.h"                   // RecentItemsList
-#include "rfa-sync-multi-client.h"               // readFileSynchronously, ReplyPtrOptOrError
+#include "rfa-sync-multi-client.h"               // RFA_SyncMultiClient, ReplyPtrOptOrError
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics (implicit)
 #include "textinput.h"                           // TextInputDialog
 #include "uri-util.h"                            // getFileURIPath
@@ -668,8 +668,9 @@ bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
 {
   if (doc->hasFilename()) {
     GUISynchronousWaiter waiter(parentWidget);
+    RFA_SyncMultiClient rfaSMClient(&m_rfaAMClient, waiter);
     ReplyPtrOptOrError<RFA_Msg_ReadFileReply> replyOrError(
-      readFileSynchronously(&m_rfaAMClient, waiter, doc->harn()));
+      rfaSMClient.readFileSynchronously(doc->harn()));
 
     if (FailReasonOpt errorMsg =
           replyOrError.getEitherErrorMessage()) {

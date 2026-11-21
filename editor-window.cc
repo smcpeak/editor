@@ -23,7 +23,7 @@
 #include "macro-creator-dialog.h"                // MacroCreatorDialog
 #include "macro-run-dialog.h"                    // MacroRunDialog
 #include "pixmaps.h"                             // g_editorPixmaps
-#include "rfa-sync-multi-client.h"               // RFA_SyncMultiClient, readFileSynchronously, ReplyPtrOpt
+#include "rfa-sync-multi-client.h"               // RFA_SyncMultiClient, ReplyPtrOpt
 #include "sar-panel.h"                           // SearchAndReplacePanel
 #include "status-bar.h"                          // StatusBarDisplay
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
@@ -858,8 +858,9 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
   // `EditorGlobal::reloadDocumentFile`.  Factor that, ideally putting
   // the shared logic in a module that can be unit tested.
   GUISynchronousWaiter waiter(this);
+  RFA_SyncMultiClient rfaSMClient(rfaAMClient(), waiter);
   ReplyPtrOptOrError<RFA_Msg_ReadFileReply> replyOrError(
-    readFileSynchronously(rfaAMClient(), waiter, harn));
+    rfaSMClient.readFileSynchronously(harn));
 
   if (replyOrError.isRight()) {
     this->complain(replyOrError.right());
@@ -934,8 +935,9 @@ bool EditorWindow::checkFileExistenceSynchronously(
   HostAndResourceName const &harn)
 {
   GUISynchronousWaiter waiter(this);
+  RFA_SyncMultiClient rfaSMClient(rfaAMClient(), waiter);
   ReplyPtrOptOrError<RFA_Msg_FileStatusReply> replyOrError(
-    getFileStatusSynchronously(rfaAMClient(), waiter, harn));
+    rfaSMClient.getFileStatusSynchronously(harn));
 
   if (replyOrError.isRight()) {
     return false;
@@ -1158,8 +1160,9 @@ bool EditorWindow::reloadCurrentDocumentIfChanged()
   if (doc->hasFilename() && !doc->unsavedChanges()) {
     // Query the file modification time.
     GUISynchronousWaiter waiter(this);
+    RFA_SyncMultiClient rfaSMClient(rfaAMClient(), waiter);
     ReplyPtrOptOrError<RFA_Msg_FileStatusReply> replyOrError(
-      getFileStatusSynchronously(rfaAMClient(), waiter, doc->harn()));
+      rfaSMClient.getFileStatusSynchronously(doc->harn()));
 
     if (replyOrError.isRight()) {
       complain(replyOrError.right());

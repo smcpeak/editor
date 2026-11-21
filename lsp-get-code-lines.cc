@@ -8,7 +8,7 @@
 #include "lsp-client.h"                          // LSPClientDocumentState
 #include "reply-ptr-opt.h"                       // ReplyPtrOptOrError, ReplyPtrOpt
 #include "rfa-async-multi-client.h"              // RFA_AbstractAsyncMultiClient
-#include "rfa-sync-multi-client.h"               // readFileSynchronously
+#include "rfa-sync-multi-client.h"               // RFA_SyncMultiClient
 #include "td-core.h"                             // TextDocumentCore
 
 #include "smqtutil/sync-wait.h"                  // SynchronousWaiter
@@ -104,8 +104,9 @@ std::optional<std::vector<std::string>> lspGetCodeLinesFunction(
     // TODO: This queries one file at a time.  I want to batch all of
     // the requests into a single message.
     TRACE2("lspGetCodeLines: querying: " << toGDValue(harn));
+    RFA_SyncMultiClient rfaSMClient(&rfaAMClient, waiter);
     ReplyPtrOptOrError replyOrError(
-      readFileSynchronously(&rfaAMClient, waiter, harn));
+      rfaSMClient.readFileSynchronously(harn));
 
     if (FailReasonOpt errorMsg =
           replyOrError.getEitherErrorMessage()) {

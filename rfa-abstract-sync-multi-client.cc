@@ -8,6 +8,7 @@
 #include "rfa-msg.h"                             // RFA_Msg_FileStatus{Request, Reply}
 
 // smbase
+#include "smbase/htt.h"                          // HTT_TASK
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-trace.h"                     // INIT_TRACE, TRACE
 #include "smbase/sm-unique-ptr.h"                // smbase::UniquePtr
@@ -53,6 +54,32 @@ bool RFA_AbstractSyncMultiClient::hfExists(HostAndResourceName const &harn)
     // On error, just say the file does not exist.
     return false;
   }
+}
+
+
+ReplyPtrOptOrError<RFA_Msg_ReadFileReply>
+RFA_AbstractSyncMultiClient::readFileSynchronously(
+  HostAndResourceName const &harn)
+{
+  HTT_TASK("readFileSynchronously");
+
+  smbase::UniquePtr<RFA_Msg_ReadFileRequest> req(new RFA_Msg_ReadFileRequest);
+  req->m_path = harn.resourceName();
+
+  return issueTypedRequestSynchronously<RFA_Msg_ReadFileReply>(
+    harn.hostName(), std::move(req));
+}
+
+
+ReplyPtrOptOrError<RFA_Msg_FileStatusReply>
+RFA_AbstractSyncMultiClient::getFileStatusSynchronously(
+  HostAndResourceName const &harn)
+{
+  smbase::UniquePtr<RFA_Msg_FileStatusRequest> req(new RFA_Msg_FileStatusRequest);
+  req->m_path = harn.resourceName();
+
+  return issueTypedRequestSynchronously<RFA_Msg_FileStatusReply>(
+    harn.hostName(), std::move(req));
 }
 
 

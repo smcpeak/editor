@@ -137,36 +137,4 @@ void RFA_SyncMultiClient::on_rfaFailed(
 }
 
 
-ReplyPtrOptOrError<RFA_Msg_ReadFileReply>
-readFileSynchronously(
-  RFA_AbstractAsyncMultiClient *rfaAMClient,
-  SynchronousWaiter &waiter,
-  HostAndResourceName const &harn)
-{
-  HTT_TASK("readFileSynchronously");
-
-  smbase::UniquePtr<RFA_Msg_ReadFileRequest> req(new RFA_Msg_ReadFileRequest);
-  req->m_path = harn.resourceName();
-
-  RFA_SyncMultiClient rfaSMClient(rfaAMClient, waiter);
-  return rfaSMClient.issueTypedRequestSynchronously<RFA_Msg_ReadFileReply>(
-    harn.hostName(), std::move(req));
-}
-
-
-ReplyPtrOptOrError<RFA_Msg_FileStatusReply>
-getFileStatusSynchronously(
-  RFA_AbstractAsyncMultiClient *rfaAMClient,
-  SynchronousWaiter &waiter,
-  HostAndResourceName const &harn)
-{
-  smbase::UniquePtr<RFA_Msg_FileStatusRequest> req(new RFA_Msg_FileStatusRequest);
-  req->m_path = harn.resourceName();
-
-  RFA_SyncMultiClient rfaSMClient(rfaAMClient, waiter);
-  return rfaSMClient.issueTypedRequestSynchronously<RFA_Msg_FileStatusReply>(
-    harn.hostName(), std::move(req));
-}
-
-
 // EOF

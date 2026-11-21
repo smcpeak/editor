@@ -11,7 +11,7 @@
 #include "host-name-fwd.h"                       // HostName [f]
 #include "ihfexists.h"                           // IHFExists
 #include "reply-ptr-opt.h"                       // ReplyPtrOptOrError
-#include "rfa-msg.h"                             // RFA_Message
+#include "rfa-msg.h"                             // RFA_Message, RFA_Msg_ReadFileReply
 
 // smbase
 #include "smbase/sm-unique-ptr.h"                // smbase::UniquePtr
@@ -23,12 +23,12 @@
 
 
 /*
-  This declares the `issueRequestSynchronously` interface, defines the
-  typed wrapper on top of it, and defines some other convenience methods
-  that encapsulate the use of RFA messages.
+  This declares the `issueRequestSynchronously` interface and defines
+  the typed wrapper on top of it.
 
-  This interface thus provides a sort of distributed file system, albeit
-  with resources explicitly tied to specific hosts.
+  It also defines some methods that encapsulate the creation of RFA
+  messages.  This interface thus provides a sort of distributed file
+  system, albeit with resources explicitly tied to specific hosts.
 
   This module does not depend on anything in Qt.
 */
@@ -52,6 +52,17 @@ public:      // methods
 
   // IHFExists methods.
   virtual bool hfExists(HostAndResourceName const &harn) override;
+
+  // ---- Methods that encapsulate request creation ----
+  // Read the contents of `harn`.
+  ReplyPtrOptOrError<RFA_Msg_ReadFileReply>
+  readFileSynchronously(
+    HostAndResourceName const &harn);
+
+  // Get timestamp, etc., for 'harn'.
+  ReplyPtrOptOrError<RFA_Msg_FileStatusReply>
+  getFileStatusSynchronously(
+    HostAndResourceName const &harn);
 };
 
 
