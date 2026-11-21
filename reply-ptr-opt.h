@@ -14,9 +14,9 @@
 
 // smbase
 #include "smbase/either.h"             // smbase::Either
+#include "smbase/sm-unique-ptr.h"      // smbase::UniquePtr
 
 // libc++
-#include <memory>                      // std::unique_ptr
 #include <string>                      // std::string
 #include <type_traits>                 // std::is_base_of_v
 #include <utility>                     // std::move
@@ -36,19 +36,18 @@
     3. Null pointer: user canceled the wait, or there was an error but
        it has been handled.
 
-  Structurally, this is identical to `std::unique_ptr<REPLY_TYPE>`, but
-  I use a distinct class name to convey the particular semantics related
-  to IPC replies, especially the existence and meaning of nullptr.
-
-  TODO: Replace `std::unique_ptr` with my `smbase::UniquePtr`.
+  Structurally, this is identical to `smbase::UniquePtr<REPLY_TYPE>`,
+  but I use a distinct class name to convey the particular semantics
+  related to IPC replies, especially the existence and meaning of
+  nullptr.
 */
 template <typename REPLY_TYPE>
-class ReplyPtrOpt : public std::unique_ptr<REPLY_TYPE> {
+class ReplyPtrOpt : public smbase::UniquePtr<REPLY_TYPE> {
   // Ensure this class is only used for its intended purpose.
   static_assert(std::is_base_of_v<RFA_Message, REPLY_TYPE>);
 
 public:      // types
-  using Base = std::unique_ptr<REPLY_TYPE>;
+  using Base = smbase::UniquePtr<REPLY_TYPE>;
 
 public:      // methods
   ~ReplyPtrOpt()
@@ -143,7 +142,7 @@ public:      // methods
       return this->right();
     }
     else {
-      std::unique_ptr<REPLY_TYPE> const &reply = this->left();
+      smbase::UniquePtr<REPLY_TYPE> const &reply = this->left();
       if (reply && !reply->m_success) {
         return stringb(
           reply->m_failureReasonString <<

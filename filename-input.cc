@@ -1,32 +1,33 @@
 // filename-input.cc
 // code for filename-input.h
 
-#include "filename-input.h"            // this module
+#include "filename-input.h"                      // this module
 
 // editor
-#include "fail-reason-opt.h"           // FailReasonOpt
-#include "reply-ptr-opt.h"             // ReplyPtrOptOrError
-#include "rfa-sync-multi-client.h"     // RFA_SyncMultiClient
+#include "fail-reason-opt.h"                     // FailReasonOpt
+#include "reply-ptr-opt.h"                       // ReplyPtrOptOrError
+#include "rfa-sync-multi-client.h"               // RFA_SyncMultiClient
 
 // smqtutil
-#include "smqtutil/qstringb.h"         // qstringb
-#include "smqtutil/qtguiutil.h"        // messageBox
-#include "smqtutil/qtutil.h"           // toString(QString)
-#include "smqtutil/sm-line-edit.h"     // SMLineEdit
-#include "smqtutil/sync-wait.h"        // GUISynchronousWaiter
+#include "smqtutil/qstringb.h"                   // qstringb
+#include "smqtutil/qtguiutil.h"                  // messageBox
+#include "smqtutil/qtutil.h"                     // toString(QString)
+#include "smqtutil/sm-line-edit.h"               // SMLineEdit
+#include "smqtutil/sync-wait.h"                  // GUISynchronousWaiter
 
 // smbase
-#include "smbase/gdvalue.h"            // gdv::GDValue
-#include "smbase/save-restore.h"       // SetRestore
-#include "smbase/sm-file-util.h"       // SMFileUtil
-#include "smbase/string-util.h"        // beginsWith
-#include "smbase/strutil.h"            // dirname, compareStringPtrs
-#include "smbase/trace.h"              // TRACE
-#include "smbase/vector-util.h"        // vecFindIndex
+#include "smbase/gdvalue.h"                      // gdv::GDValue
+#include "smbase/save-restore.h"                 // SetRestore
+#include "smbase/sm-file-util.h"                 // SMFileUtil
+#include "smbase/sm-unique-ptr-std-conv.h"       // smbase::UniquePtr <-> std::unique_ptr
+#include "smbase/string-util.h"                  // beginsWith
+#include "smbase/strutil.h"                      // dirname, compareStringPtrs
+#include "smbase/trace.h"                        // TRACE
+#include "smbase/vector-util.h"                  // vecFindIndex
 
 // libc++
-#include <algorithm>                   // std::min
-#include <optional>                    // std::optional
+#include <algorithm>                             // std::min
+#include <optional>                              // std::optional
 
 // Qt
 #include <QComboBox>

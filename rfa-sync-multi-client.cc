@@ -1,24 +1,25 @@
 // rfa-sync-multi-client.cc
 // Code for rfa-sync-multi-client.h.
 
-#include "rfa-sync-multi-client.h"     // this module
+#include "rfa-sync-multi-client.h"               // this module
 
 // editor
-#include "waiting-counter.h"           // IncDecWaitingCounter
+#include "waiting-counter.h"                     // IncDecWaitingCounter
 
 // smqtutil
-#include "smqtutil/qstringb.h"         // qstringb
-#include "smqtutil/qtguiutil.h"        // messageBox
-#include "smqtutil/sync-wait.h"        // SynchronousWaiter
+#include "smqtutil/qstringb.h"                   // qstringb
+#include "smqtutil/qtguiutil.h"                  // messageBox
+#include "smqtutil/sync-wait.h"                  // SynchronousWaiter
 
 // smbase
-#include "smbase/htt.h"                // HTT_TASK
-#include "smbase/sm-macros.h"          // IMEMBFP, USED_FOR_DEBUGGING
-#include "smbase/trace.h"              // TRACE
-#include "smbase/xassert.h"            // xassert
+#include "smbase/htt.h"                          // HTT_TASK
+#include "smbase/sm-macros.h"                    // IMEMBFP, USED_FOR_DEBUGGING
+#include "smbase/sm-unique-ptr-std-conv.h"       // smbase::UniquePtr <-> std::unique_ptr
+#include "smbase/trace.h"                        // TRACE
+#include "smbase/xassert.h"                      // xassert
 
 // libc++
-#include <utility>                     // std::move
+#include <utility>                               // std::move
 
 
 RFA_SyncMultiClient::RFA_SyncMultiClient(
@@ -50,7 +51,7 @@ RFA_SyncMultiClient::~RFA_SyncMultiClient()
 ReplyPtrOptOrError<RFA_Message>
 RFA_SyncMultiClient::issueRequestSynchronously(
   HostName const &hostName,
-  std::unique_ptr<RFA_Message> request)
+  smbase::UniquePtr<RFA_Message> request)
 {
   xassert(!m_requestID);
 
@@ -119,7 +120,7 @@ RFA_SyncMultiClient::issueRequestSynchronously(
 
 bool RFA_SyncMultiClient::hfExists(HostAndResourceName const &harn)
 {
-  std::unique_ptr<RFA_Msg_FileStatusRequest> req(new RFA_Msg_FileStatusRequest);
+  smbase::UniquePtr<RFA_Msg_FileStatusRequest> req(new RFA_Msg_FileStatusRequest);
   req->m_path = harn.resourceName();
 
   auto replyOrError(
@@ -127,7 +128,7 @@ bool RFA_SyncMultiClient::hfExists(HostAndResourceName const &harn)
       harn.hostName(), std::move(req)));
 
   if (replyOrError.isLeft()) {
-    std::unique_ptr<RFA_Msg_FileStatusReply> &reply = replyOrError.left();
+    smbase::UniquePtr<RFA_Msg_FileStatusReply> &reply = replyOrError.left();
     if (reply) {
       return reply->m_success &&
              reply->m_fileKind == SMFileUtil::FK_REGULAR;
@@ -174,7 +175,7 @@ readFileSynchronously(
 {
   HTT_TASK("readFileSynchronously");
 
-  std::unique_ptr<RFA_Msg_ReadFileRequest> req(new RFA_Msg_ReadFileRequest);
+  smbase::UniquePtr<RFA_Msg_ReadFileRequest> req(new RFA_Msg_ReadFileRequest);
   req->m_path = harn.resourceName();
 
   RFA_SyncMultiClient rfaSMClient(rfaAMClient, waiter);
@@ -189,7 +190,7 @@ getFileStatusSynchronously(
   SynchronousWaiter &waiter,
   HostAndResourceName const &harn)
 {
-  std::unique_ptr<RFA_Msg_FileStatusRequest> req(new RFA_Msg_FileStatusRequest);
+  smbase::UniquePtr<RFA_Msg_FileStatusRequest> req(new RFA_Msg_FileStatusRequest);
   req->m_path = harn.resourceName();
 
   RFA_SyncMultiClient rfaSMClient(rfaAMClient, waiter);

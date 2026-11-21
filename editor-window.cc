@@ -52,12 +52,13 @@
 #include "smbase/objcount.h"                     // CHECK_OBJECT_COUNT
 #include "smbase/portable-error-code.h"          // smbase::PortableErrorCode
 #include "smbase/sm-file-util.h"                 // SMFileUtil
+#include "smbase/sm-macros.h"                    // ASSERT_TABLESIZE
 #include "smbase/sm-test.h"                      // PVAL
+#include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
+#include "smbase/sm-unique-ptr-std-conv.h"       // smbase::UniquePtr <-> std::unique_ptr
 #include "smbase/string-util.h"                  // endsWith, vectorOfUCharToString
 #include "smbase/stringb.h"                      // stringbc
 #include "smbase/strutil.h"                      // dirname
-#include "smbase/sm-macros.h"                    // ASSERT_TABLESIZE
-#include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
 #include "smbase/xassert.h"                      // xassert
 
 // Qt

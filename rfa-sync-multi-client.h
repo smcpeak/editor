@@ -17,6 +17,9 @@
 // smqtutil
 #include "smqtutil/sync-wait-fwd.h"    // SynchronousWaiter [f]
 
+// smbase
+#include "smbase/sm-unique-ptr.h"      // smbase::UniquePtr
+
 // Qt
 #include <QObject>
 
@@ -68,14 +71,14 @@ public:      // instance methods
   ReplyPtrOptOrError<RFA_Message>
   issueRequestSynchronously(
     HostName const &hostName,
-    std::unique_ptr<RFA_Message> request);
+    smbase::UniquePtr<RFA_Message> request);
 
   // Issue 'request' synchronously, expecting to get 'REPLY_TYPE'.
   template <class REPLY_TYPE>
   ReplyPtrOptOrError<REPLY_TYPE>
   issueTypedRequestSynchronously(
     HostName const &hostName,
-    std::unique_ptr<RFA_Message> request);
+    smbase::UniquePtr<RFA_Message> request);
 
   // Pop up a modal error dialog, returning when it is dismissed.
   void complain(string message);
@@ -94,7 +97,7 @@ template <class REPLY_TYPE>
 ReplyPtrOptOrError<REPLY_TYPE>
 RFA_SyncMultiClient::issueTypedRequestSynchronously(
   HostName const &hostName,
-  std::unique_ptr<RFA_Message> request)
+  smbase::UniquePtr<RFA_Message> request)
 {
   // Issue the request using the generic interface.
   ReplyPtrOptOrError<RFA_Message> replyOrError =
