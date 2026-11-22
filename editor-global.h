@@ -324,6 +324,10 @@ public:       // funcs
   // exists.
   NamedTextDocument * NULLABLE findUntitledUnmodifiedDocument();
 
+  // Delete such a document if one exists.  (If there are multiple, this
+  // only deletes one of them.)
+  void deleteUntitledUnmodifiedDocument();
+
   // Get or create a read-only document called `title` with `contents`.
   NamedTextDocument *getOrCreateGeneratedDocument(
     std::string const &title,

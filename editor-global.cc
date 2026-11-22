@@ -809,6 +809,20 @@ EditorGlobal::findUntitledUnmodifiedDocument()
 }
 
 
+/* This is sort of a weird mechanism, deleting these files one at a time
+   when a new file is loaded.  In practice, this happens just once,
+   right at the start of the editor process lifetime, so there's not
+   much point in improving it.
+*/
+void EditorGlobal::deleteUntitledUnmodifiedDocument()
+{
+  if (RCSerfOpt<NamedTextDocument> untitled =
+        this->findUntitledUnmodifiedDocument()) {
+    this->deleteDocumentFile(untitled.release());
+  }
+}
+
+
 NamedTextDocument *EditorGlobal::getOrCreateGeneratedDocument(
   std::string const &title,
   std::string const &contents,

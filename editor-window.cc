@@ -869,16 +869,9 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
 
   this->setDocumentFile(doc);
 
-  // TODO: This should be encapsulated inside EditorGlobal and done in
-  // `loadFileContents`.
-  //
-  // is there an untitled, empty file hanging around?
-  if (RCSerfOpt<NamedTextDocument> untitled =
-        this->m_editorGlobal->findUntitledUnmodifiedDocument()) {
-
-    // remove the untitled file now
-    m_editorGlobal->deleteDocumentFile(untitled.release());
-  }
+  // Now that we have switched to the new document, delete the untitled
+  // placeholder we might have been using.
+  m_editorGlobal->deleteUntitledUnmodifiedDocument();
 }
 
 
