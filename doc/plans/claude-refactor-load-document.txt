@@ -1,0 +1,335 @@
+claude-refactor-load-document.txt
+Plan to factor the shared document-loading logic
+2026-11-21
+
+Written by Claude Code.
+
+
+Background
+==========
+
+Two functions read a file over RFA and put its contents into a
+NamedTextDocument:
+
+  EditorWindow::openOrSwitchToFile(harn)        editor-window.cc:833
+  EditorGlobal::reloadDocumentFile(widget, doc) editor-global.cc:667
+
+openOrSwitchToFile has this TODO before its loading code:
+
+  // TODO: This duplicates logic that is in
+  // `EditorGlobal::reloadDocumentFile`.  Factor that, ideally putting
+  // the shared logic in a module that can be unit tested.
+
+Both functions do the same core sequence:
+
+  1. Make an RFA_GUISyncMultiClient on top of a widget and the shared
+     RFA_AsyncMultiClient.
+  2. Call readFileSynchronously(harn).  This waits, possibly showing a
+     cancelable progress dialog.
+  3. Sort the result into: communication error, canceled, failure
+     reply, or success.
+  4. On success, call
+     doc->replaceFileAndStats(contents, modTime, readOnly).
+
+They differ in how they handle the results:
+
+  Result              openOrSwitchToFile            reloadDocumentFile
+  ------------------  ----------------------------  ----------------------------
+  comm error          complain(msg), return         messageBox("Error"), false
+  canceled            return                        return false
+  PEC_FILE_NOT_FOUND  keep the new, empty document  error box (via
+                      ("new file")                  getEitherErrorMessage)
+  other failure       complain("reason (code N)"),  error box, same text,
+                      delete the new document       return false
+  success             replaceFileAndStats           replaceFileAndStats inside
+                                                    SET_RESTORE(EditorWidget::
+                                                    s_ignoreTextDocument-
+                                                    NotificationsGlobally),
+                                                    then notifyMetadataChange()
+
+Both produce the error text in the same format, "<reason> (code <N>)".
+reloadDocumentFile gets it from ReplyPtrOptOrError::getEitherErrorMessage,
+and openOrSwitchToFile builds the same string by hand.
+
+Everything else in the two functions is specific to the caller and
+stays where it is:
+
+  * openOrSwitchToFile: switching to an already-open document, creating
+    and naming the new NamedTextDocument, useDefaultHighlighter,
+    replacing an untitled unmodified document, and
+    trackNewDocumentFile / setDocumentFile.
+  * reloadDocumentFile: the hasFilename() guard, the widget
+    notification suppression, and notifyMetadataChange().
+
+
+Goal
+====
+
+Move steps 3 and 4 (sorting the result and applying it to the document)
+into a new module that does not depend on Qt and is unit tested
+directly.  Make both callers use it, and remove the TODO.
+
+Step 2, the read itself, stays in the callers.  The wait in step 2 runs
+a nested event loop, and the reload path needs to choose which code runs
+inside the notification-suppression guard.  Today only
+replaceFileAndStats is inside it, and the wait must not be.  Otherwise
+every widget would ignore every document notification for as long as
+the progress dialog is up, including changes to unrelated documents
+made by LSP replies during the wait.
+
+
+Design
+======
+
+New module: load-document (load-document.h, load-document.cc,
+load-document-fwd.h, load-document-test.cc).
+
+It depends on named-td, reply-ptr-opt and rfa-msg, all of which are free
+of Qt.
+
+  // Possible outcomes of applying a read-file result to a document.
+  enum LoadDocumentOutcome : int {
+    // The read succeeded and the document's contents, timestamp, and
+    // read-only flag were replaced.
+    LDO_LOADED,
+
+    // The server reported that the file does not exist.  The document
+    // is unchanged.
+    LDO_NOT_FOUND,
+
+    // The user canceled the wait.  The document is unchanged.
+    LDO_CANCELED,
+
+    // A communication error or a failure reply other than "not
+    // found".  The document is unchanged.
+    LDO_ERROR,
+
+    NUM_LOAD_DOCUMENT_OUTCOMES
+  };
+
+  // Return "LDO_LOADED", etc.
+  char const *toString(LoadDocumentOutcome ldo);
+
+  // Return a symbol named as `toString`.
+  gdv::GDValue toGDValue(LoadDocumentOutcome ldo);
+
+  /* Given the result of reading `doc`'s file, update `doc` if the read
+     succeeded, and report what happened.
+
+     For LDO_NOT_FOUND and LDO_ERROR, set `errorMsg` to a message
+     suitable for showing to the user, in the existing
+     "<reason> (code <N>)" format (or the communication error text).
+     Otherwise, leave `errorMsg` unchanged.
+
+     This does not call `doc.notifyMetadataChange()`; callers decide
+     whether that is needed.
+  */
+  LoadDocumentOutcome loadDocumentFromReadReply(
+    NamedTextDocument &doc,
+    ReplyPtrOptOrError<RFA_Msg_ReadFileReply> const &replyOrError,
+    std::string /*OUT*/ &errorMsg);
+
+Notes on the design:
+
+  * NOT_FOUND is a separate outcome because the two callers want
+    opposite behavior for it.  Filling in `errorMsg` for NOT_FOUND as
+    well lets the reload caller treat it like LDO_ERROR without
+    building its own message.
+
+  * The function takes the result rather than an
+    RFA_AbstractSyncMultiClient, so the tests need no client, mock or
+    event loop.  They build ReplyPtrOptOrError values directly.  A
+    convenience wrapper that also does the read is easy to add later,
+    but neither caller can use one: open has nothing it needs to do
+    between the read and the apply, but reload does (see the guard and
+    the stale-pointer issue below).
+
+  * Using a separate enum rather than overloading FailReasonOpt follows
+    the existing EditSafetyProblem pattern in named-td.h (enum plus
+    DEFINE_ENUMERATION_TO_STRING_OR and toGDValue), which works with
+    EXPECT_EQ_GDVSER in tests.
+
+  * An alternative is to make this a NamedTextDocument method.  That
+    would give named-td a dependency on rfa-msg and reply-ptr-opt for
+    one function, so I prefer the separate module.
+
+
+Caller changes
+==============
+
+openOrSwitchToFile (editor-window.cc):
+
+  RFA_GUISyncMultiClient rfaSMClient(this, rfaAMClient());
+  ReplyPtrOptOrError<RFA_Msg_ReadFileReply> replyOrError(
+    rfaSMClient.readFileSynchronously(harn));
+
+  std::unique_ptr<NamedTextDocument> file(new NamedTextDocument());
+  file->setDocumentName(docName);
+  file->m_title = m_editorGlobal->uniqueTitleFor(docName);
+
+  std::string errorMsg;
+  switch (loadDocumentFromReadReply(*file, replyOrError, errorMsg)) {
+    case LDO_LOADED:
+    case LDO_NOT_FOUND:          // New file: keep the empty document.
+      break;
+
+    case LDO_CANCELED:
+      return;
+
+    case LDO_ERROR:
+      this->complain(errorMsg);
+      return;
+  }
+
+  ... rest unchanged, with `file.release()` where ownership passes to
+  trackNewDocumentFile.
+
+  Using unique_ptr also removes the explicit `delete file` on the error
+  path.
+
+reloadDocumentFile (editor-global.cc):
+
+  ... read as now ...
+
+  std::string errorMsg;
+  LoadDocumentOutcome ldo;
+  {
+    SET_RESTORE(EditorWidget::s_ignoreTextDocumentNotificationsGlobally,
+      true);
+    ldo = loadDocumentFromReadReply(*doc, replyOrError, errorMsg);
+  }
+
+  switch (ldo) {
+    case LDO_LOADED:
+      doc->notifyMetadataChange();
+      return true;
+
+    case LDO_CANCELED:
+      return false;
+
+    case LDO_NOT_FOUND:
+    case LDO_ERROR:
+      messageBox(parentWidget, "Error", toQString(errorMsg));
+      return false;
+  }
+
+  This replaces the xassert(rfr->m_success) as well.  Errors that do
+  not change the document now pass through the guard too, which is
+  harmless because nothing is notified in those cases.
+
+Other code to update:
+
+  * named-td-test.cc:86 has a comment saying the code after it is
+    "what `EditorWindow::openOrSwitchToFile` and
+    `EditorGlobal::reloadDocumentFile` do after reading a file".  Point
+    it at loadDocumentFromReadReply instead.
+  * Remove the TODO from openOrSwitchToFile.
+  * Makefile: add load-document.o to EDITOR_OBJS and
+    load-document-test.o to UNIT_TESTS_OBJS.
+  * unit-tests.h / unit-tests.cc: declare test_load_document and add
+    RUN_TEST(load_document) after named_td.
+
+
+Tests (load-document-test.cc)
+=============================
+
+Each test builds a NamedTextDocument with a filename and an initial
+state, calls loadDocumentFromReadReply, and checks the outcome, the
+message, and the document state (contents, m_lastFileTimestamp,
+isReadOnly(), m_modifiedOnDisk, unsavedChanges()).
+
+  * Success: the contents, timestamp, and read-only flag are replaced.
+    m_modifiedOnDisk is cleared, history is cleared, there are no
+    unsaved changes, and errorMsg is untouched.  Cover read-only true
+    and false.
+  * Success on a document that had unsaved edits and
+    m_modifiedOnDisk set: both are cleared (the reload case).
+  * PEC_FILE_NOT_FOUND failure reply: LDO_NOT_FOUND, the document is
+    unchanged, and errorMsg is set to "<reason> (code ...)".
+  * Another failure code, such as PEC_ACCESS_DENIED: LDO_ERROR, the
+    document is unchanged, and the message is set.
+  * PEC_PATH_NOT_FOUND (the directory does not exist): LDO_ERROR, not
+    LDO_NOT_FOUND, which preserves the current behavior of opening a
+    file in a missing directory.
+  * Communication error (right alternative): LDO_ERROR, and the
+    message equals the error text.
+  * Canceled (absent reply): LDO_CANCELED, the document is unchanged,
+    and errorMsg is untouched.
+  * An observer attached to the document sees exactly one
+    observeTotalChange on success and none otherwise, as testReadFile
+    in named-td-test checks today.
+  * toString / toGDValue for every enumerator.
+
+The GUI glue (dialogs, the guard, notifyMetadataChange) is not unit
+tested, as now.  The existing event-replay tests that open and reload
+files exercise it.
+
+
+Steps
+=====
+
+Each is one commit that builds and passes `make check`.
+
+  1. Add the load-document module and its tests, unused.
+  2. Switch openOrSwitchToFile to it.  Remove the TODO.
+  3. Switch reloadDocumentFile to it.  Update the named-td-test
+     comment.
+
+Steps 2 and 3 can be combined if you prefer one commit for the switch.
+
+
+Related problems noticed (out of scope, but worth deciding)
+===========================================================
+
+The read in step 2 runs a nested event loop while the progress dialog
+is up, so other code can run in the middle of both functions.  Neither
+function re-checks its assumptions after the wait:
+
+  A. openOrSwitchToFile checks getFileWithName(docName) *before* the
+     read.  If the same file is opened in another window during the
+     wait, this creates a second document with the same name, which
+     violates the uniqueness of document names within
+     NamedTextDocumentList.  addDocument does not check for this; it
+     only xasserts that the same pointer is not added twice.  Fix:
+     repeat the getFileWithName check after the read, and switch to
+     that document if one now exists.
+
+  B. reloadDocumentFile uses `doc` after the wait.  If the document is
+     closed during the wait, that is a use-after-free.
+     OpenFilesDialog::on_reloadAll is more exposed, because it loops
+     over m_filteredDocuments with a wait per document.  By contrast,
+     EditorWindow::reloadCurrentDocumentIfChanged already re-checks
+     with stillCurrentDocument(doc).  Fix: have reloadDocumentFile
+     check m_documentList.hasDocument(doc) after the read and return
+     false if it is gone.  Holding an RCSerf<NamedTextDocument> across
+     the wait would at least turn a silent use-after-free into an
+     assertion failure, since TextDocument is a SerfRefCount.
+
+Both fixes fit naturally into steps 2 and 3, because they go exactly
+between the read and the loadDocumentFromReadReply call.  If you would
+rather keep this refactoring purely behavior-preserving, they can be
+separate commits afterward.
+
+
+Open questions
+==============
+
+  * Module and function names.  "load-document" matches this plan's
+    filename.  Alternatives are "named-td-load" (which groups it with
+    the other named-td modules) or "apply-read-reply" (which describes
+    the function more literally).
+
+  * Should NOT_FOUND on reload stay an error?  Today the "File not
+    found" box comes from getEitherErrorMessage, and this plan
+    preserves that.  Another choice would be to keep the in-memory
+    contents and set m_modifiedOnDisk, but that is a behavior change
+    and does not belong in this refactoring.
+
+  * Should PEC_PATH_NOT_FOUND also count as LDO_NOT_FOUND?  Today,
+    opening a file whose directory does not exist fails with an error,
+    and this plan keeps that.  Treating it as a new file would let you
+    start editing it, but saving would then fail unless the directory
+    is created first.
+
+
+EOF
