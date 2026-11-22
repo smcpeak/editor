@@ -6,14 +6,13 @@
 // editor
 #include "fail-reason-opt.h"                     // FailReasonOpt
 #include "reply-ptr-opt.h"                       // ReplyPtrOptOrError
-#include "rfa-sync-multi-client.h"               // RFA_SyncMultiClient
+#include "rfa-gui-sync-multi-client.h"           // RFA_GUISyncMultiClient
 
 // smqtutil
 #include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtguiutil.h"                  // messageBox
 #include "smqtutil/qtutil.h"                     // toString(QString)
 #include "smqtutil/sm-line-edit.h"               // SMLineEdit
-#include "smqtutil/sync-wait.h"                  // GUISynchronousWaiter
 
 // smbase
 #include "smbase/gdvalue.h"                      // gdv::GDValue
@@ -700,8 +699,7 @@ void FilenameInputDialog::on_makeDirectory() NOEXCEPT
 
   TRACE("FilenameInputDialog",
     "Making directory: " << doubleQuote(filename));
-  GUISynchronousWaiter waiter(this);
-  RFA_SyncMultiClient rfaSMClient(m_rfaAMClient, waiter);
+  RFA_GUISyncMultiClient rfaSMClient(this, m_rfaAMClient);
 
   auto req = std::make_unique<RFA_Msg_MakeDirectoryRequest>();
   req->m_path = filename;

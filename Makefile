@@ -587,6 +587,7 @@ EDITOR_OBJS += open-files-dialog.moc.o
 EDITOR_OBJS += process-watcher.o
 EDITOR_OBJS += process-watcher.moc.o
 EDITOR_OBJS += resources.qrc.gen.o
+EDITOR_OBJS += rfa-gui-sync-multi-client.o
 EDITOR_OBJS += sar-panel.o
 EDITOR_OBJS += sar-panel.moc.o
 EDITOR_OBJS += status-bar.o

@@ -29,7 +29,7 @@
 #include "lsp-version-number.h"                  // LSP_VersionNumber
 #include "nearby-file.h"                         // getNearbyFilename
 #include "range-text-repl.h"                     // RangeTextReplacement
-#include "rfa-sync-multi-client.h"               // RFA_SyncMultiClient
+#include "rfa-gui-sync-multi-client.h"           // RFA_GUISyncMultiClient
 #include "styledb.h"                             // StyleDB, TextCategoryAndStyle
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
 #include "tdd-proposed-fix.h"                    // TDD_ProposedFix
@@ -634,13 +634,11 @@ void EditorWidget::openDiagnosticOrFileAtCursor(
   // used files considered first.
   editorGlobal()->getUniqueDocumentDirectories(prefixes);
 
-  GUISynchronousWaiter waiter(this);
-  RFA_SyncMultiClient rfaSMClient(rfaAMClient(), waiter);
-
   // Convert to model coordinates in order to get a byte index into
   // `lineText`.
   TextMCoord cursorMC = m_editor->toMCoord(cursorLC);
 
+  RFA_GUISyncMultiClient rfaSMClient(this, rfaAMClient());
   std::optional<HostFile_OptLineByte> hostFileAndLine =
     getNearbyFilename(rfaSMClient, prefixes,
                       lineText, cursorMC.m_byteIndex);
@@ -3712,9 +3710,7 @@ bool EditorWidget::eventFilter(QObject *watched, QEvent *event) NOEXCEPT
 
 bool EditorWidget::editSafetyCheck()
 {
-  // TODO: Encapsulate this sequence of two lines.
-  GUISynchronousWaiter waiter(this);
-  RFA_SyncMultiClient rfaSMClient(rfaAMClient(), waiter);
+  RFA_GUISyncMultiClient rfaSMClient(this, rfaAMClient());
 
   EditSafetyProblem esp = getDocument()->checkEditSafety(rfaSMClient);
   if (esp == ESP_READ_ONLY) {

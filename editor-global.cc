@@ -28,7 +28,8 @@
 #include "open-files-dialog.h"                   // OpenFilesDialog
 #include "process-watcher.h"                     // ProcessWatcher
 #include "recent-items-list.h"                   // RecentItemsList
-#include "rfa-sync-multi-client.h"               // RFA_SyncMultiClient, ReplyPtrOptOrError
+#include "reply-ptr-opt.h"                       // ReplyPtrOptOrError
+#include "rfa-gui-sync-multi-client.h"           // RFA_GUISyncMultiClient
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics (implicit)
 #include "textinput.h"                           // TextInputDialog
 #include "uri-util.h"                            // getFileURIPath
@@ -39,7 +40,6 @@
 #include "smqtutil/qtguiutil.h"                  // showRaiseAndActivateWindow, messageBox
 #include "smqtutil/qtutil.h"                     // toQString, installSMQtUtilMessageHandler
 #include "smqtutil/silent-mbox-filter.h"         // SilentMessageBoxFilter
-#include "smqtutil/sync-wait.h"                  // GUISynchronousWaiter
 #include "smqtutil/timer-event-loop.h"           // sleepWhilePumpingEvents
 
 // smbase
@@ -668,8 +668,7 @@ bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
                                       NamedTextDocument *doc)
 {
   if (doc->hasFilename()) {
-    GUISynchronousWaiter waiter(parentWidget);
-    RFA_SyncMultiClient rfaSMClient(&m_rfaAMClient, waiter);
+    RFA_GUISyncMultiClient rfaSMClient(parentWidget, &m_rfaAMClient);
     ReplyPtrOptOrError<RFA_Msg_ReadFileReply> replyOrError(
       rfaSMClient.readFileSynchronously(doc->harn()));
 

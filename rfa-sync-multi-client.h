@@ -25,7 +25,7 @@
 
 
 // Implementation of `RFA_AbstractSyncMultiClient` on top of
-// `RFA_AbstractSyncMultiClient` that (via `SynchronousWaiter`) can be
+// `RFA_AbstractAsyncMultiClient` that (via `SynchronousWaiter`) can be
 // hooked up to a GUI to allow the user to cancel requests.
 class RFA_SyncMultiClient : public QObject,
                             public RFA_AbstractSyncMultiClient {

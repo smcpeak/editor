@@ -23,7 +23,8 @@
 #include "macro-creator-dialog.h"                // MacroCreatorDialog
 #include "macro-run-dialog.h"                    // MacroRunDialog
 #include "pixmaps.h"                             // g_editorPixmaps
-#include "rfa-sync-multi-client.h"               // RFA_SyncMultiClient, ReplyPtrOpt
+#include "reply-ptr-opt.h"                       // ReplyPtrOpt
+#include "rfa-gui-sync-multi-client.h"           // RFA_GUISyncMultiClient
 #include "sar-panel.h"                           // SearchAndReplacePanel
 #include "status-bar.h"                          // StatusBarDisplay
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
@@ -37,7 +38,6 @@
 #include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtguiutil.h"                  // CursorSetRestore, setTrueFrameGeometry
 #include "smqtutil/qtutil.h"                     // toQString
-#include "smqtutil/sync-wait.h"                  // GUISynchronousWaiter
 
 // smbase
 #include "smbase/chained-cond.h"                 // cc::z_le_lt
@@ -857,8 +857,7 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
   // TODO: This duplicates logic that is in
   // `EditorGlobal::reloadDocumentFile`.  Factor that, ideally putting
   // the shared logic in a module that can be unit tested.
-  GUISynchronousWaiter waiter(this);
-  RFA_SyncMultiClient rfaSMClient(rfaAMClient(), waiter);
+  RFA_GUISyncMultiClient rfaSMClient(this, rfaAMClient());
   ReplyPtrOptOrError<RFA_Msg_ReadFileReply> replyOrError(
     rfaSMClient.readFileSynchronously(harn));
 
@@ -915,8 +914,7 @@ template <class REPLY_TYPE>
 ReplyPtrOpt<REPLY_TYPE> EditorWindow::rfaQuerySynchronously(
   HostName const &hostName, std::unique_ptr<RFA_Message> request)
 {
-  GUISynchronousWaiter waiter(this);
-  RFA_SyncMultiClient rfaSMClient(rfaAMClient(), waiter);
+  RFA_GUISyncMultiClient rfaSMClient(this, rfaAMClient());
   ReplyPtrOptOrError<REPLY_TYPE> replyOrError(
     rfaSMClient.issueTypedRequestSynchronously<REPLY_TYPE>(
       hostName, std::move(request)));
@@ -934,8 +932,7 @@ ReplyPtrOpt<REPLY_TYPE> EditorWindow::rfaQuerySynchronously(
 bool EditorWindow::checkFileExistenceSynchronously(
   HostAndResourceName const &harn)
 {
-  GUISynchronousWaiter waiter(this);
-  RFA_SyncMultiClient rfaSMClient(rfaAMClient(), waiter);
+  RFA_GUISyncMultiClient rfaSMClient(this, rfaAMClient());
   ReplyPtrOptOrError<RFA_Msg_FileStatusReply> replyOrError(
     rfaSMClient.getFileStatusSynchronously(harn));
 
@@ -1159,8 +1156,7 @@ bool EditorWindow::reloadCurrentDocumentIfChanged()
 
   if (doc->hasFilename() && !doc->unsavedChanges()) {
     // Query the file modification time.
-    GUISynchronousWaiter waiter(this);
-    RFA_SyncMultiClient rfaSMClient(rfaAMClient(), waiter);
+    RFA_GUISyncMultiClient rfaSMClient(this, rfaAMClient());
     ReplyPtrOptOrError<RFA_Msg_FileStatusReply> replyOrError(
       rfaSMClient.getFileStatusSynchronously(doc->harn()));
 
