@@ -25,13 +25,13 @@
     },
     {
       "loc": {
-        "x": 170,
+        "x": 200,
         "y": 380
       },
-      "name": "nearby-file (IHFExists)",
+      "name": "host-file-probe",
       "size": {
         "h": 20,
-        "w": 140
+        "w": 110
       }
     },
     {
