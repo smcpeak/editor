@@ -263,8 +263,7 @@ EditSafetyProblem NamedTextDocument::checkEditSafety(
     return ESP_MODIFIED_ON_DISK;
   }
 
-  if (std::optional<FileTimestamp> modTime =
-        probe.hfModTime(harn())) {
+  if (std::optional<FileTimestamp> modTime = probe.hfModTime(harn())) {
     if (*modTime != m_lastFileTimestamp) {
       TRACE1_GDVN_EXPRS("checkEditSafety: modified file",
         harn(),
