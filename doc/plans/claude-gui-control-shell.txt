@@ -91,6 +91,10 @@ ControlServer (new module control-server.{h,cc}, a QObject):
   * Commands are executed one at a time.  If a request arrives while a
     previous one is still waiting for quiescence, it waits its turn.
   * The server runs until the app exits, or until a Quit() command.
+  * On startup, the server prints one line to stdout, such as
+      control server listening on NAME, pid N
+    so the agent learns the process ID even if no command ever
+    succeeds.
 
 Executing a command:
 
@@ -186,6 +190,11 @@ New commands
   * Quit(): close the application cleanly, running the normal
     shutdown checks (object counts and so on).
 
+  * Ping(): return the editor's process ID (QCoreApplication::
+    applicationPid()) and the server name.  This confirms the server is
+    responsive and tells the agent which process to kill if needed (see
+    "Process lifecycle and cleanup").
+
 Optional:
 
   * Session logging: -controlServerLog=FILE appends each successful
@@ -216,6 +225,53 @@ If offscreen proves unworkable, the shell is still useful on the normal
 platform, but the agent should use it only when asked.
 
 
+Process lifecycle and cleanup
+=============================
+
+The agent starts the editor as a background task, and the editor must
+not be left running if Quit() fails (the server hangs, the app
+deadlocks, or a modal dialog blocks shutdown).
+
+On 2026-11-22 the agent tested, in this environment, what it can do,
+using a stand-in native Windows program (PING.EXE -n 120) launched as
+a background task from the Cygwin bash tool:
+
+  * Detecting that it is still running:
+    - The Claude Code harness notifies the agent when a background
+      task exits.
+    - Cygwin `ps -W` lists native Windows processes with their Windows
+      PIDs, and showed the stand-in process.
+
+  * Killing it, both of which worked:
+    - The harness's task-stop tool, given the background task ID,
+      killed the native process along with its shell.
+    - `taskkill /F /PID <winpid>` killed it by Windows PID without
+      using the harness.  This is the fallback when the task ID is not
+      available, such as after a context reset, or when the editor was
+      started some other way.
+
+That test used a console program, not a GUI one.  Step 2 should repeat
+it with editor.exe.
+
+Rules for the agent, which should go into CLAUDE.md along with the
+other guidance in step 5:
+
+  * Kill by PID, never by image name.  The user may have their own
+    editor.exe instances running, and `taskkill /IM editor.exe` would
+    kill those too.  The PID comes from the startup line or from
+    Ping().
+
+  * Kill the whole process tree.  The editor starts child processes
+    (editor-fs-server.exe, clangd, lsp-test-server.py), which may
+    survive if only the editor is killed.  Use
+    `taskkill /F /T /PID <winpid>`, then confirm with `ps -W` that
+    nothing remains.
+
+  * Prefer Quit(), because a forced kill skips the normal shutdown
+    checks (object counts and so on).  If Quit() hangs, kill the
+    process, and report the hang, since it is a bug in its own right.
+
+
 Steps
 =====
 
@@ -226,8 +282,11 @@ Each step is a commit that builds and passes `make check`.
 
   2. Add ControlServer, -controlServer, and editor-ctl.py, running
      commands through the executor with Ok/Error replies after
-     quiescence.  Verify by hand: open a modal dialog, then drive it;
-     and try QT_QPA_PLATFORM=offscreen.
+     quiescence, plus Ping(), Quit(), and the startup PID line.
+     Verify by hand: open a modal dialog, then drive it; try
+     QT_QPA_PLATFORM=offscreen; and confirm that the agent can detect
+     and kill a running editor.exe, including its child processes, as
+     described in "Process lifecycle and cleanup".
 
   3. Add DumpTree and Screenshot.
 
@@ -240,6 +299,7 @@ Each step is a commit that builds and passes `make check`.
      may use the shell (for example, "only with
      QT_QPA_PLATFORM=offscreen" or "only when asked").  CLAUDE.md
      currently says the agent should not run GUI tests unless directed.
+     Also add the cleanup rules from "Process lifecycle and cleanup".
 
   6. (Optional) Session logging.
 
