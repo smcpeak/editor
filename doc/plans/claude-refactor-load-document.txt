@@ -5,6 +5,18 @@ Plan to factor the shared document-loading logic
 Written by Claude Code.
 
 
+smcpeak after-action analysis
+=============================
+
+This plan unfortunately missed the mark by a wide margin.  Claude
+focused on factoring the wrong things.  I think it was pulled off course
+primarily by my suggestion to factor and unit test, which in this case
+isn't practical (given the factoring I wanted).  I ended up doing the
+factoring myself in a completely different way.
+
+That said, the two bugs it identified along the way were quite valuable.
+
+
 Background
 ==========
 

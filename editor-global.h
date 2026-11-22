@@ -273,7 +273,7 @@ public:       // funcs
 
   // Non-const version.
   NamedTextDocument * NULLABLE
-  getFileWithName(DocumentName &docName);
+  getFileWithName(DocumentName const &docName);
 
   // Return true if any file document has the given name.
   bool hasFileWithName(DocumentName const &docName) const;
@@ -305,6 +305,19 @@ public:       // funcs
   // dialog may appear on top of 'parentWindow'.
   bool reloadDocumentFile(QWidget *parentWidget,
                           NamedTextDocument *f);
+
+  /* Load the contents of `docName`, showing a progress dialog when
+     needed on top of `parentWidget`.  If `fileWasOriginallyOpen`, we
+     are reloading an open file, otherwise opening a new file.
+
+     Return nullptr on cancelation or error (after reporting it),
+     otherwise a non-owning pointer to the document object containing
+     the loaded contents (which is new if `!fileWasOriginallyOpen`).
+  */
+  NamedTextDocument *loadFileContents(
+    QWidget *parentWidget,
+    DocumentName const &docName,
+    bool fileWasOriginallyOpen);
 
   // ------------------------ Special documents ------------------------
   // Find a document that is untitled and has no modifications if one

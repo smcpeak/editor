@@ -832,6 +832,8 @@ void EditorWindow::fileInspectAtCursorOtherWindow() NOEXCEPT
 }
 
 
+// The reason this function accepts a HARN and not a `DocumentName` is
+// the former represents the subset of documents that can be "opened".
 void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
 {
   HTT_TASK("EditorWindow::openOrSwitchToFile");
@@ -848,81 +850,33 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
   docName.setFilenameHarn(harn);
 
   // If this file is already open, switch to it.
-  if (NamedTextDocument *file =
+  if (NamedTextDocument *doc =
         m_editorGlobal->getFileWithName(docName)) {
-    this->setDocumentFile(file);
+    this->setDocumentFile(doc);
     return;
   }
 
-  // True to inject an indefinite wait when reading the file for
-  // testing purposes.
-  static bool showCompletionDialog =
-    envAsBool("OPEN_OR_SWITCH_SHOW_COMPLETION_DIALOG");
+  RCSerfOpt<NamedTextDocument> doc =
+    m_editorGlobal->loadFileContents(this, docName, false /*wasOpen*/);
+  if (!doc) {
+    // Cancelation or already-reported error.
+    return;
+  }
 
-  // Load the file contents.
+  // TODO: This does not belong here!  The highlighter is part of the
+  // global state, not window- or widget-specific state.
+  this->useDefaultHighlighter(doc);
+
+  this->setDocumentFile(doc);
+
+  // TODO: This should be encapsulated inside EditorGlobal and done in
+  // `loadFileContents`.
   //
-  // TODO: This duplicates logic that is in
-  // `EditorGlobal::reloadDocumentFile`.  Factor that, ideally putting
-  // the shared logic in a module that can be unit tested.
-  RFA_GUISyncMultiClient rfaSMClient(this, rfaAMClient());
-  rfaSMClient.m_showCompletionDialog = showCompletionDialog;
-  ReplyPtrOptOrError<RFA_Msg_ReadFileReply> replyOrError(
-    rfaSMClient.readFileSynchronously(harn));
-
-  // Check again.  Although unlikely, while we waited, the user could
-  // have initiated another file-open operation on the same file.
-  if (NamedTextDocument *file =
-        m_editorGlobal->getFileWithName(docName)) {
-    // Ignore `replyOrError`.  Reading a file does not cause any changes
-    // we would have to undo, we don't need the contents, and any errors
-    // are irrelevant since they don't stop the app from satisfying any
-    // request from the user.
-    this->setDocumentFile(file);
-    return;
-  }
-
-  if (replyOrError.isRight()) {
-    this->complain(replyOrError.right());
-    return;
-  }
-
-  ReplyPtrOpt<RFA_Msg_ReadFileReply> &rfr = replyOrError.left();
-  if (rfr.wasCanceled()) {
-    return;
-  }
-
-  smbase::UniquePtr<NamedTextDocument> file(new NamedTextDocument());
-  file->setDocumentName(docName);
-  file->m_title = m_editorGlobal->uniqueTitleFor(docName);
-
-  if (rfr->m_success) {
-    file->replaceFileAndStats(rfr->m_contents,
-                              rfr->m_fileModificationTime,
-                              rfr->m_readOnly);
-  }
-  else {
-    if (rfr->m_failureReasonCode == PortableErrorCode::PEC_FILE_NOT_FOUND) {
-      // Just have the file open with its name set but no content.
-    }
-    else {
-      this->complain(stringbc(
-        rfr->m_failureReasonString <<
-        " (code " << rfr->m_failureReasonCode << ")"));
-      return;
-    }
-  }
-
-  this->useDefaultHighlighter(file.get());
-
   // is there an untitled, empty file hanging around?
-  RCSerf<NamedTextDocument> untitled =
-    this->m_editorGlobal->findUntitledUnmodifiedDocument();
+  if (RCSerfOpt<NamedTextDocument> untitled =
+        this->m_editorGlobal->findUntitledUnmodifiedDocument()) {
 
-  // now that we've opened the file, set the editor widget to edit it
-  setDocumentFile(m_editorGlobal->trackNewDocumentFile(std::move(file)));
-
-  // remove the untitled file now, if it exists
-  if (untitled) {
+    // remove the untitled file now
     m_editorGlobal->deleteDocumentFile(untitled.release());
   }
 }

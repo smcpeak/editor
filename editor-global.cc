@@ -622,7 +622,7 @@ EditorGlobal::getFileWithNameC(DocumentName const &docName) const
 
 
 NamedTextDocument * NULLABLE
-EditorGlobal::getFileWithName(DocumentName &docName)
+EditorGlobal::getFileWithName(DocumentName const &docName)
 {
   return const_cast<NamedTextDocument *>(getFileWithNameC(docName));
 }
@@ -667,69 +667,137 @@ void EditorGlobal::makeDocumentTopmost(NamedTextDocument *f)
 }
 
 
-bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
-                                      NamedTextDocument *origDoc)
+// Return the value of `ptr` after nullifying it so it cannot be used
+// afterward.
+//
+// TODO: Find a better home for this.
+template <typename T>
+static T *releaseRawPtr(T *&ptr)
 {
-  // Ensure any use-after-free will be caught.
-  RCSerfOpt<NamedTextDocument> doc(origDoc);
+  T *ret = ptr;
+  ptr = nullptr;
+  return ret;
+}
 
+
+bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
+                                      NamedTextDocument *doc)
+{
   if (doc->hasFilename()) {
-    // Make the use-after-free potential easy to exercise.
-    static bool showCompletionDialog =
-      envAsBool("RELOAD_DOCUMENT_FILE_SHOW_COMPLETION_DIALOG");
+    // Load it, waiting for the result.
+    loadFileContents(parentWidget,
+      releaseRawPtr(doc)->documentName(), true /*wasOpen*/);
 
-    // Save the document name to look it up again later.
-    DocumentName docName = doc->documentName();
-
-    // Nullify `doc` since it could be deallocated during the wait.
-    doc = nullptr;
-
-    // Read the current contents from the disk.
-    RFA_GUISyncMultiClient rfaSMClient(parentWidget, &m_rfaAMClient);
-    rfaSMClient.m_showCompletionDialog = showCompletionDialog;
-    ReplyPtrOptOrError<RFA_Msg_ReadFileReply> replyOrError(
-      rfaSMClient.readFileSynchronously(docName.harn()));
-
-    // Re-acquire the document object.
-    doc = getFileWithName(docName);
-    if (!doc) {
-      // The file was closed while we were trying to read it.  That
-      // makes whatever happened during the read irrelevant.
-      return false;
-    }
-
-    if (FailReasonOpt errorMsg =
-          replyOrError.getEitherErrorMessage()) {
-      messageBox(parentWidget, "Error", toQString(*errorMsg));
-      return false;
-    }
-
-    ReplyPtrOpt<RFA_Msg_ReadFileReply> &rfr = replyOrError.left();
-    if (rfr.wasCanceled()) {
-      return false;
-    }
-
-    // The error case should have been handled above.
-    xassert(rfr->m_success);
-
-    {
-      // Have widgets ignore the notifications arising from the refresh
-      // so their cursor position is not affected.
-      SET_RESTORE(EditorWidget::s_ignoreTextDocumentNotificationsGlobally,
-        true);
-
-      doc->replaceFileAndStats(rfr->m_contents,
-                               rfr->m_fileModificationTime,
-                               rfr->m_readOnly);
-    }
-
-    // Among other things, we want to let the LSP status indicator
-    // update itself to show that the file contents have changed since
-    // the last LSP diagnostics were received.
-    doc->notifyMetadataChange();
+    // Note: `doc` is nullptr here because the original object might
+    // have been deallocated.
   }
 
   return true;
+}
+
+
+NamedTextDocument *EditorGlobal::loadFileContents(
+  QWidget *parentWidget,
+  DocumentName const &docName,
+  bool fileWasOriginallyOpen)
+{
+  // Make it easy to exercise the use-after-free potential arising when
+  // changing the set of documents during the wait.
+  static bool showCompletionDialog =
+    envAsBool("LOAD_FILE_SHOW_COMPLETION_DIALOG");
+
+  // Read the current contents from the disk.
+  RFA_GUISyncMultiClient rfaSMClient(parentWidget, &m_rfaAMClient);
+  rfaSMClient.m_showCompletionDialog = showCompletionDialog;
+  ReplyPtrOptOrError<RFA_Msg_ReadFileReply> replyOrError(
+    rfaSMClient.readFileSynchronously(docName.harn()));
+
+  // Now that the wait is over, do we have an open document with the
+  // given name?
+  RCSerfOpt<NamedTextDocument> doc = this->getFileWithName(docName);
+
+  // See if its open state changed during the wait.
+  if (fileWasOriginallyOpen) {
+    if (!doc) {
+      // The file was originally open, but has been closed while we were
+      // trying to read it.  That makes whatever happened during the read
+      // irrelevant.
+      return nullptr;
+    }
+  }
+  else {
+    if (doc) {
+      // The file was originally *not* open, but now it is!  Discard the
+      // results of the read, but return the document pointer so the
+      // caller can switch to showing it.
+      return doc;
+    }
+  }
+
+  // Comm error?  Report and bail.
+  if (replyOrError.isRight()) {
+    messageBox(parentWidget,
+      "Communication error while loading file",
+      toQString(replyOrError.right()));
+    return nullptr;
+  }
+
+  // Canceled?  Bail.
+  ReplyPtrOpt<RFA_Msg_ReadFileReply> &rfr = replyOrError.left();
+  if (rfr.wasCanceled()) {
+    return nullptr;
+  }
+
+  // If we were trying to open a new file, but it does not exist, we
+  // will create an empty (but named) document object.  This is my
+  // usual procedure for making a new flie.
+  bool createAsEmpty =
+    !fileWasOriginallyOpen &&
+    !rfr->m_success &&
+    rfr->m_failureReasonCode == PortableErrorCode::PEC_FILE_NOT_FOUND;
+
+  // Server error?
+  if (!createAsEmpty && !rfr->m_success) {
+    messageBox(parentWidget,
+      "Error loading file",
+      qstringb(
+        rfr->m_failureReasonString <<
+        " (code " << rfr->m_failureReasonCode << ")"));
+    return nullptr;
+  }
+
+  if (!fileWasOriginallyOpen) {
+    // Create a new document object.
+    UniquePtr<NamedTextDocument> newDoc(new NamedTextDocument());
+    newDoc->setDocumentName(docName);
+    newDoc->m_title = this->uniqueTitleFor(docName);
+
+    // Transfer ownership into the document list, but then get back a
+    // non-owning pointer.
+    doc = this->trackNewDocumentFile(std::move(newDoc));
+  }
+
+  // Either we originally had a document, or we just made one.
+  xassert(doc);
+
+  if (rfr->m_success) {
+    // Have widgets ignore the notifications arising from the refresh
+    // so their cursor position is not affected.
+    SET_RESTORE(EditorWidget::s_ignoreTextDocumentNotificationsGlobally,
+      true);
+
+    // Populate the document with what we read from disk.
+    doc->replaceFileAndStats(rfr->m_contents,
+                             rfr->m_fileModificationTime,
+                             rfr->m_readOnly);
+  }
+
+  // Among other things, we want to let the LSP status indicator
+  // update itself to show that the file contents have changed since
+  // the last LSP diagnostics were received.
+  doc->notifyMetadataChange();
+
+  return doc;
 }
 
 
