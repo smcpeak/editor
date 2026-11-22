@@ -5,10 +5,11 @@
 
 #include "named-td-list.h"             // module to test
 
+#include "smbase/exc.h"                // smbase::XAssert
 #include "smbase/sm-file-util.h"       // SMFileUtil
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
 #include "smbase/sm-override.h"        // OVERRIDE
-#include "smbase/sm-test.h"            // EXPECT_EQ
+#include "smbase/sm-test.h"            // EXPECT_EQ, EXPECT_EXN
 #include "smbase/strutil.h"            // dirname
 
 #include <cstddef>                     // std::size_t
@@ -434,6 +435,39 @@ static void testGetUniqueDirectories()
 }
 
 
+// Adding a document whose name is already in the list fails an
+// assertion, leaving the list and the document unchanged.
+static void testAddDuplicateName()
+{
+  NamedTextDocumentList dlist;
+  TestObserver observer(&dlist);
+  dlist.addObserver(&observer);
+
+  DocumentName docName =
+    DocumentName::fromFilename(HostName::asLocal(), "/a/dup.txt");
+  NamedTextDocument *file1 = add(dlist, docName);
+  observer.expectOnly(NF_ADDED, file1);
+  int const numDocs = dlist.numDocuments();
+
+  NamedTextDocument *file2 = new NamedTextDocument;
+  file2->setDocumentName(docName);
+  EXPECT_EXN(dlist.addDocument(file2), smbase::XAssert);
+
+  // Nothing changed, and observers were not notified.
+  EXPECT_EQ(dlist.numDocuments(), numDocs);
+  xassert(!dlist.hasDocument(file2));
+  xassert(dlist.findDocumentByName(docName) == file1);
+  xassert(file2->m_title.empty());
+  observer.expectEmpty();
+  dlist.selfCheck();
+
+  // The caller still owns `file2`.
+  delete file2;
+
+  dlist.removeObserver(&observer);
+}
+
+
 // Called from unit-tests.cc.
 void test_named_td_list(CmdlineArgsSpan args)
 {
@@ -443,6 +477,7 @@ void test_named_td_list(CmdlineArgsSpan args)
   testSaveAs();
   testColon3();
   testGetUniqueDirectories();
+  testAddDuplicateName();
 
   xassert(NamedTextDocument::s_objectCount == 0);
   xassert(TextDocument::s_objectCount == 0);

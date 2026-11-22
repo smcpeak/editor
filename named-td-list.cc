@@ -106,6 +106,11 @@ void NamedTextDocumentList::addDocument(NamedTextDocument *file)
   xassert(!file->documentName().empty());
   xassert(!this->hasDocument(file));
 
+  // Enforce name uniqueness here rather than relying on `selfCheck`,
+  // which would detect the problem only after the list had been
+  // modified (and observers notified).
+  xassert(this->findDocumentByName(file->documentName()) == nullptr);
+
   // Assign title if necessary.
   if (file->m_title.empty() || this->findDocumentByTitle(file->m_title)) {
     file->m_title = this->computeUniqueTitle(file->documentName());
