@@ -87,7 +87,7 @@
 #include <iostream>                              // std::endl
 #include <optional>                              // std::optional
 #include <string>                                // std::string
-#include <utility>                               // std::move
+#include <utility>                               // std::{exchange, move}
 
 // libc
 #include <stdlib.h>                              // atoi
@@ -668,29 +668,18 @@ void EditorGlobal::makeDocumentTopmost(NamedTextDocument *f)
 }
 
 
-// Return the value of `ptr` after nullifying it so it cannot be used
-// afterward.
-//
-// TODO: Find a better home for this.
-template <typename T>
-static T *releaseRawPtr(T *&ptr)
-{
-  T *ret = ptr;
-  ptr = nullptr;
-  return ret;
-}
-
-
 bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
                                       NamedTextDocument *doc)
 {
   if (doc->hasFilename()) {
     // Load it, waiting for the result.
-    loadFileContents(parentWidget,
-      releaseRawPtr(doc)->documentName(), true /*wasOpen*/);
+    return nullptr !=
+      loadFileContents(parentWidget,
+        // Nullify `doc` as we use it because its referent might be
+        // deallocated during the wait.
+        std::exchange(doc, nullptr)->documentName(),
 
-    // Note: `doc` is nullptr here because the original object might
-    // have been deallocated.
+        true /*wasOpen*/);
   }
 
   return true;
