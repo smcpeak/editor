@@ -869,6 +869,18 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
   ReplyPtrOptOrError<RFA_Msg_ReadFileReply> replyOrError(
     rfaSMClient.readFileSynchronously(harn));
 
+  // Check again.  Although unlikely, while we waited, the user could
+  // have initiated another file-open operation on the same file.
+  if (NamedTextDocument *file =
+        m_editorGlobal->getFileWithName(docName)) {
+    // Ignore `replyOrError`.  Reading a file does not cause any changes
+    // we would have to undo, we don't need the contents, and any errors
+    // are irrelevant since they don't stop the app from satisfying any
+    // request from the user.
+    this->setDocumentFile(file);
+    return;
+  }
+
   if (replyOrError.isRight()) {
     this->complain(replyOrError.right());
     return;
