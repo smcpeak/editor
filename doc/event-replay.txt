@@ -3,19 +3,25 @@ event-replay.txt
 
 This document explains how the event replay system works.
 
-TODO: The following paragraph, describing the syntax, is out of date.
-
 Event replay executes events, and checks application state, based on
-instructions in a text file.  The format is one action or check per line
-(other than blank or comments).  The "-record" switch can create a
-sequence of input events to start with.  Checks are then inserted
-manually.  Example (from test/read-only1.ev):
+instructions in an "events" file.  The conventional extension is ".ev".
 
-  # Verify we can make a change and undo it.
-  KeyPress "window1.editorFrame.m_editorWidget" "Key_X" "x"
-  CheckLabel "window1.m_statusArea.m_filename" "untitled.txt *"
-  Shortcut "window1.m_menuBar.editMenu.editUndo" "Alt+Backspace"
-  CheckLabel "window1.m_statusArea.m_filename" "untitled.txt"
+The syntax of an events file uses GDVN (see smbase/gdvalue-design.txt).
+It has an outer map with keys `args` and `cmds`.  The former specifies
+the command line arguments for that test (usually the name of a file to
+open).  The latter is a sequence of tagged tuples where the tag is the
+name of an event elements provide its details.
+
+The "-record" command line switch can create a sequence of input events
+to start with.  Checks are then inserted manually.
+
+Example (from test/read-only1.ev):
+
+  // Verify we can make a change and undo it.
+  KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_X" "x")
+  CheckLabel("window1.m_statusArea.m_filename" "untitled.txt *")
+  Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
+  CheckLabel("window1.m_statusArea.m_filename" "untitled.txt")
 
 Event actions are replayed by posting them to the Qt event queue,
 usually with the receiver object indicated by a QObject name path.
@@ -105,6 +111,22 @@ that is finished and the app returns to quiescence, 'aboutToBlock' will
 again be invoked, repeating the cycle.
 
 When the test is done, we simply disconnect 'aboutToBlock'.
+
+
+g_waitingCounter
+----------------
+
+The above isn't quite sufficient to detect quiescence when an operation
+has to wait for interprocess communication and pumps the event queue
+while waiting (e.g., RFA_AsyncMultiClient).  In that case, the event
+queue entirely drains and we block, but event replay should not continue
+because we expect the other process to respond fairly quickly, thus
+delivering new events to process.
+
+The solution is the global `g_waitingCounter` declared in
+`waiting-counter.h`, and usually manipulated with the
+`IncDecWaitingCounter` class.  When that counter is non-zero, quiescence
+events are ignored rather than triggering the next replay event.
 
 
 EOF
