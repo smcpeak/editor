@@ -17,8 +17,10 @@
 #include "smbase/gdvalue.h"                      // gdv::fromGDVN
 #include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-test.h"                      // EXPECT_EQ, EXPECT_{TRUE,FALSE}
+#include "smbase/sm-unique-ptr.h"                // smbase::UniquePtr
 
 #include <functional>                            // std::function
+#include <utility>                               // std::move
 
 using namespace gdv;
 using namespace smbase;
@@ -60,13 +62,14 @@ void test_basics()
   EXPECT_FALSE(lcm.useRealServer());
 
   // Make a document.
-  NamedTextDocument *ntd1 = new NamedTextDocument;
+  smbase::UniquePtr<NamedTextDocument> ntd1Owner(new NamedTextDocument);
+  NamedTextDocument *ntd1 = ntd1Owner.get();
   ntd1->setDocumentName(DocumentName::fromLocalFilename(
     normalizeLSPPath("foo.cc")));
   char const *ntd1Contents = "one\ntwo\n";
   ntd1->replaceWholeFileString(ntd1Contents);
   ntd1->setDocumentType(detectDocumentType(ntd1->documentName()));
-  documentList.addDocument(ntd1);      // Ownership transfer.
+  documentList.addDocument(std::move(ntd1Owner));
   EXPECT_TRUE(ntd1->isCompatibleWithLSP());
   EXPECT_FALSE(ntd1->getNumDiagnostics().has_value());
 

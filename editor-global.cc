@@ -63,6 +63,7 @@
 #include "smbase/sm-env.h"                       // smbase::{getXDGConfigHome, getXDGStateHome, envAsIntOr, envAsBool}
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-test.h"                      // PVAL
+#include "smbase/sm-unique-ptr.h"                // smbase::UniquePtr
 #include "smbase/string-util.h"                  // beginsWith, shellDoubleQuoteCommand, removeSuffix
 #include "smbase/stringb.h"                      // stringb
 #include "smbase/strtokp.h"                      // StrtokParse
@@ -638,9 +639,10 @@ bool EditorGlobal::hasFileWithTitle(std::string const &title) const
 }
 
 
-void EditorGlobal::trackNewDocumentFile(NamedTextDocument *f)
+void EditorGlobal::trackNewDocumentFile(
+  smbase::UniquePtr<NamedTextDocument> f)
 {
-  m_documentList.addDocument(f);
+  m_documentList.addDocument(std::move(f));
 }
 
 
@@ -726,14 +728,15 @@ NamedTextDocument *EditorGlobal::getOrCreateGeneratedDocument(
 
   NamedTextDocument *doc = m_documentList.findDocumentByName(docName);
   if (!doc) {
-    doc = new NamedTextDocument();
-    doc->setDocumentName(docName);
-    doc->m_title = uniqueTitleFor(docName);
-    doc->appendString(contents);
-    doc->noUnsavedChanges();
-    doc->setReadOnly(true);
-    doc->setDocumentType(documentType);
-    trackNewDocumentFile(doc);
+    smbase::UniquePtr<NamedTextDocument> newDoc(new NamedTextDocument());
+    newDoc->setDocumentName(docName);
+    newDoc->m_title = uniqueTitleFor(docName);
+    newDoc->appendString(contents);
+    newDoc->noUnsavedChanges();
+    newDoc->setReadOnly(true);
+    newDoc->setDocumentType(documentType);
+    doc = newDoc.get();
+    trackNewDocumentFile(std::move(newDoc));
   }
   else {
     doc->replaceWholeFileString(contents);
@@ -857,11 +860,12 @@ NamedTextDocument *EditorGlobal::getCommandOutputDocument(
   if (!fileDoc) {
     // Nothing with this name, let's use it to make a new one.
     TRACE1("getCommandOutputDocument: making new document: " << docName);
-    NamedTextDocument *newDoc = new NamedTextDocument();
+    smbase::UniquePtr<NamedTextDocument> newDoc(new NamedTextDocument());
     newDoc->setDocumentName(docName);
     newDoc->m_title = uniqueTitleFor(docName);
-    trackNewDocumentFile(newDoc);
-    return newDoc;
+    NamedTextDocument *ret = newDoc.get();
+    trackNewDocumentFile(std::move(newDoc));
+    return ret;
   }
   else {
     TRACE1("getCommandOutputDocument: reusing existing document: " << docName);

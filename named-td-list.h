@@ -15,6 +15,7 @@
 #include "smbase/refct-serf.h"         // SerfRefCount
 #include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
+#include "smbase/sm-unique-ptr-fwd.h"  // smbase::UniquePtr [n]
 #include "smbase/sobjlist.h"           // SObjList
 #include "smbase/std-set-fwd.h"        // stdfwd::set [n]
 #include "smbase/std-string-fwd.h"     // std::string [n]
@@ -88,7 +89,7 @@ public:      // funcs
   // unique name.  This routine will modify its title, if necessary, to
   // ensure it is unique too.  The document is added to the end of the
   // list, and 'this' takes ownership of it.
-  void addDocument(NamedTextDocument *doc);
+  void addDocument(smbase::UniquePtr<NamedTextDocument> doc);
 
   // Remove the given document from the collection and notify all
   // observers.  This does *not* deallocate 'doc'!  Instead, ownership

@@ -9,6 +9,7 @@
 #include "smbase/container-util.h"     // smbase::insertUnique
 #include "smbase/save-restore.h"       // SetRestore
 #include "smbase/sm-file-util.h"       // SMFileUtil
+#include "smbase/sm-unique-ptr.h"      // smbase::UniquePtr
 #include "smbase/stringset.h"          // StringSet
 #include "smbase/strtokp.h"            // StrtokParse
 #include "smbase/strutil.h"            // dirname
@@ -18,6 +19,7 @@
 // libc++
 #include <set>                         // std::set
 #include <string>                      // std::string
+#include <utility>                     // std::move
 #include <vector>                      // std::vector
 
 using namespace smbase;
@@ -101,11 +103,12 @@ int NamedTextDocumentList::getDocumentIndex(NamedTextDocument const *file) const
 }
 
 
-void NamedTextDocumentList::addDocument(NamedTextDocument *file)
+void NamedTextDocumentList::addDocument(
+  UniquePtr<NamedTextDocument> file)
 {
   TRACE("named-td-list", "addFile: " << file->documentName());
   xassertPrecondition(!file->documentName().empty());
-  xassertPrecondition(!this->hasDocument(file));
+  xassertPrecondition(!this->hasDocument(file.get()));
   xassertPrecondition(this->findDocumentByName(file->documentName()) == nullptr);
 
   // Assign title if necessary.
@@ -113,9 +116,10 @@ void NamedTextDocumentList::addDocument(NamedTextDocument *file)
     file->m_title = this->computeUniqueTitle(file->documentName());
   }
 
-  m_documents.append(file);
+  NamedTextDocument *doc = file.release();
+  m_documents.append(doc);
 
-  this->notifyAdded(file);
+  this->notifyAdded(doc);
   SELF_CHECK();
 }
 
@@ -171,12 +175,13 @@ NamedTextDocument *NamedTextDocumentList::createUntitledDocument(
   }
 
   TRACE("named-td-list", "createUntitledDocument: " << docName);
-  NamedTextDocument *doc = new NamedTextDocument();
+  UniquePtr<NamedTextDocument> doc(new NamedTextDocument());
   doc->setDocumentName(docName);
   doc->m_title = this->computeUniqueTitle(docName);
-  this->addDocument(doc);
 
-  return doc;
+  NamedTextDocument *ret = doc.get();
+  this->addDocument(std::move(doc));
+  return ret;
 }
 
 

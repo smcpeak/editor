@@ -57,6 +57,7 @@
 #include "smbase/sm-test.h"                      // PVAL
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
 #include "smbase/sm-unique-ptr-std-conv.h"       // smbase::UniquePtr <-> std::unique_ptr
+#include "smbase/sm-unique-ptr.h"                // smbase::UniquePtr
 #include "smbase/string-util.h"                  // endsWith, vectorOfUCharToString
 #include "smbase/stringb.h"                      // stringbc
 #include "smbase/strutil.h"                      // dirname
@@ -878,7 +879,7 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
     return;
   }
 
-  NamedTextDocument *file = new NamedTextDocument();
+  smbase::UniquePtr<NamedTextDocument> file(new NamedTextDocument());
   file->setDocumentName(docName);
   file->m_title = m_editorGlobal->uniqueTitleFor(docName);
 
@@ -895,20 +896,20 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
       this->complain(stringbc(
         rfr->m_failureReasonString <<
         " (code " << rfr->m_failureReasonCode << ")"));
-      delete file;
       return;
     }
   }
 
-  this->useDefaultHighlighter(file);
+  this->useDefaultHighlighter(file.get());
 
   // is there an untitled, empty file hanging around?
   RCSerf<NamedTextDocument> untitled =
     this->m_editorGlobal->findUntitledUnmodifiedDocument();
 
   // now that we've opened the file, set the editor widget to edit it
-  m_editorGlobal->trackNewDocumentFile(file);
-  setDocumentFile(file);
+  NamedTextDocument *fileRaw = file.get();
+  m_editorGlobal->trackNewDocumentFile(std::move(file));
+  setDocumentFile(fileRaw);
 
   // remove the untitled file now, if it exists
   if (untitled) {

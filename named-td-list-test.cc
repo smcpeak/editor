@@ -10,9 +10,11 @@
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
 #include "smbase/sm-override.h"        // OVERRIDE
 #include "smbase/sm-test.h"            // EXPECT_EQ, EXPECT_EXN
+#include "smbase/sm-unique-ptr.h"      // smbase::UniquePtr
 #include "smbase/strutil.h"            // dirname
 
 #include <cstddef>                     // std::size_t
+#include <utility>                     // std::move
 #include <vector>                      // std::vector
 
 #include <stdarg.h>                    // va_start, etc.
@@ -108,10 +110,11 @@ void TestObserver::expect(NotifyFunction nfunc, NamedTextDocument *file)
 static NamedTextDocument *add(NamedTextDocumentList &dlist,
                               DocumentName const &docName)
 {
-  NamedTextDocument *file = new NamedTextDocument;
+  UniquePtr<NamedTextDocument> file(new NamedTextDocument);
   file->setDocumentName(docName);
-  dlist.addDocument(file);
-  return file;
+  NamedTextDocument *ret = file.get();
+  dlist.addDocument(std::move(file));
+  return ret;
 }
 
 
@@ -451,20 +454,21 @@ static void testAddDuplicateName()
   observer.expectOnly(NF_ADDED, file1);
   int const numDocs = dlist.numDocuments();
 
-  NamedTextDocument *file2 = new NamedTextDocument;
+  int const numObjects = NamedTextDocument::s_objectCount;
+
+  UniquePtr<NamedTextDocument> file2(new NamedTextDocument);
   file2->setDocumentName(docName);
-  EXPECT_EXN(dlist.addDocument(file2), XAssert);
+  EXPECT_EQ(NamedTextDocument::s_objectCount, numObjects+1);
+  EXPECT_EXN(dlist.addDocument(std::move(file2)), XAssert);
+
+  // The rejected document was deallocated.
+  EXPECT_EQ(NamedTextDocument::s_objectCount, numObjects);
 
   // Nothing changed, and observers were not notified.
   EXPECT_EQ(dlist.numDocuments(), numDocs);
-  xassert(!dlist.hasDocument(file2));
   xassert(dlist.findDocumentByName(docName) == file1);
-  xassert(file2->m_title.empty());
   observer.expectEmpty();
   dlist.selfCheck();
-
-  // The caller still owns `file2`.
-  delete file2;
 
   dlist.removeObserver(&observer);
 }

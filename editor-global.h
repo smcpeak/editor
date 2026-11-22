@@ -44,6 +44,7 @@
 #include "smbase/refct-serf.h"                   // SerfRefCount, RCSerf, RCSerfOpt, NNRCSerf
 #include "smbase/sm-macros.h"                    // NULLABLE
 #include "smbase/sm-override.h"                  // OVERRIDE
+#include "smbase/sm-unique-ptr-fwd.h"            // smbase::UniquePtr [n]
 #include "smbase/std-optional-fwd.h"             // std::optional [n]
 #include "smbase/std-string-fwd.h"               // std::string [n]
 
@@ -281,7 +282,7 @@ public:       // funcs
   bool hasFileWithTitle(std::string const &title) const;
 
   // Add 'f' to the set of file documents.
-  void trackNewDocumentFile(NamedTextDocument *f);
+  void trackNewDocumentFile(smbase::UniquePtr<NamedTextDocument> f);
 
   // Remove 'f' from the set of file documents and deallocate it.  This
   // will tell all of the editor widgets to forget about it first so
