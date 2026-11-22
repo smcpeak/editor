@@ -56,7 +56,7 @@ public:      // methods
   /*
     If we can locate `harn` as a regular file and get its modification
     time, that is returned as Unix time.  Otherwise (file missing, wrong
-    kind, comms error, etc.) return nullptr.
+    kind, comms error, etc.) return nullopt.
   */
   virtual std::optional<FileTimestamp> hfModTime(
     HostAndResourceName const &harn) = 0;
