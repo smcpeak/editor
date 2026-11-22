@@ -907,9 +907,7 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
     this->m_editorGlobal->findUntitledUnmodifiedDocument();
 
   // now that we've opened the file, set the editor widget to edit it
-  NamedTextDocument *fileRaw = file.get();
-  m_editorGlobal->trackNewDocumentFile(std::move(file));
-  setDocumentFile(fileRaw);
+  setDocumentFile(m_editorGlobal->trackNewDocumentFile(std::move(file)));
 
   // remove the untitled file now, if it exists
   if (untitled) {

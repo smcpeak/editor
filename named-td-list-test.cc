@@ -112,9 +112,7 @@ static NamedTextDocument *add(NamedTextDocumentList &dlist,
 {
   UniquePtr<NamedTextDocument> file(new NamedTextDocument);
   file->setDocumentName(docName);
-  NamedTextDocument *ret = file.get();
-  dlist.addDocument(std::move(file));
-  return ret;
+  return dlist.addDocument(std::move(file));
 }
 
 

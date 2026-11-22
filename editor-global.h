@@ -281,8 +281,9 @@ public:       // funcs
   // Return true if any file document has the given title.
   bool hasFileWithTitle(std::string const &title) const;
 
-  // Add 'f' to the set of file documents.
-  void trackNewDocumentFile(smbase::UniquePtr<NamedTextDocument> f);
+  // Add 'f' to the set of file documents.  Returns the added document.
+  NamedTextDocument *trackNewDocumentFile(
+    smbase::UniquePtr<NamedTextDocument> f);
 
   // Remove 'f' from the set of file documents and deallocate it.  This
   // will tell all of the editor widgets to forget about it first so

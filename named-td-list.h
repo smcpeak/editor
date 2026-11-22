@@ -88,8 +88,8 @@ public:      // funcs
   // Add the given document to our collection.  It must already have a
   // unique name.  This routine will modify its title, if necessary, to
   // ensure it is unique too.  The document is added to the end of the
-  // list, and 'this' takes ownership of it.
-  void addDocument(smbase::UniquePtr<NamedTextDocument> doc);
+  // list, and 'this' takes ownership of it.  Returns the added document.
+  NamedTextDocument *addDocument(smbase::UniquePtr<NamedTextDocument> doc);
 
   // Remove the given document from the collection and notify all
   // observers.  This does *not* deallocate 'doc'!  Instead, ownership

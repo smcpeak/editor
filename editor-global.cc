@@ -639,10 +639,10 @@ bool EditorGlobal::hasFileWithTitle(std::string const &title) const
 }
 
 
-void EditorGlobal::trackNewDocumentFile(
+NamedTextDocument *EditorGlobal::trackNewDocumentFile(
   smbase::UniquePtr<NamedTextDocument> f)
 {
-  m_documentList.addDocument(std::move(f));
+  return m_documentList.addDocument(std::move(f));
 }
 
 
@@ -735,8 +735,7 @@ NamedTextDocument *EditorGlobal::getOrCreateGeneratedDocument(
     newDoc->noUnsavedChanges();
     newDoc->setReadOnly(true);
     newDoc->setDocumentType(documentType);
-    doc = newDoc.get();
-    trackNewDocumentFile(std::move(newDoc));
+    doc = trackNewDocumentFile(std::move(newDoc));
   }
   else {
     doc->replaceWholeFileString(contents);
@@ -863,9 +862,7 @@ NamedTextDocument *EditorGlobal::getCommandOutputDocument(
     smbase::UniquePtr<NamedTextDocument> newDoc(new NamedTextDocument());
     newDoc->setDocumentName(docName);
     newDoc->m_title = uniqueTitleFor(docName);
-    NamedTextDocument *ret = newDoc.get();
-    trackNewDocumentFile(std::move(newDoc));
-    return ret;
+    return trackNewDocumentFile(std::move(newDoc));
   }
   else {
     TRACE1("getCommandOutputDocument: reusing existing document: " << docName);

@@ -103,7 +103,7 @@ int NamedTextDocumentList::getDocumentIndex(NamedTextDocument const *file) const
 }
 
 
-void NamedTextDocumentList::addDocument(
+NamedTextDocument *NamedTextDocumentList::addDocument(
   UniquePtr<NamedTextDocument> file)
 {
   TRACE("named-td-list", "addFile: " << file->documentName());
@@ -121,6 +121,8 @@ void NamedTextDocumentList::addDocument(
 
   this->notifyAdded(doc);
   SELF_CHECK();
+
+  return doc;
 }
 
 
@@ -179,9 +181,7 @@ NamedTextDocument *NamedTextDocumentList::createUntitledDocument(
   doc->setDocumentName(docName);
   doc->m_title = this->computeUniqueTitle(docName);
 
-  NamedTextDocument *ret = doc.get();
-  this->addDocument(std::move(doc));
-  return ret;
+  return this->addDocument(std::move(doc));
 }
 
 
