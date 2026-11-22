@@ -51,6 +51,7 @@
 #include "smbase/nonport.h"                      // fileOrDirectoryExists
 #include "smbase/objcount.h"                     // CHECK_OBJECT_COUNT
 #include "smbase/portable-error-code.h"          // smbase::PortableErrorCode
+#include "smbase/sm-env.h"                       // smbase::envAsBool
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-macros.h"                    // ASSERT_TABLESIZE
 #include "smbase/sm-test.h"                      // PVAL
@@ -852,12 +853,18 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
     return;
   }
 
+  // True to inject an indefinite wait when reading the file for
+  // testing purposes.
+  static bool showCompletionDialog =
+    envAsBool("OPEN_OR_SWITCH_SHOW_COMPLETION_DIALOG");
+
   // Load the file contents.
   //
   // TODO: This duplicates logic that is in
   // `EditorGlobal::reloadDocumentFile`.  Factor that, ideally putting
   // the shared logic in a module that can be unit tested.
   RFA_GUISyncMultiClient rfaSMClient(this, rfaAMClient());
+  rfaSMClient.m_showCompletionDialog = showCompletionDialog;
   ReplyPtrOptOrError<RFA_Msg_ReadFileReply> replyOrError(
     rfaSMClient.readFileSynchronously(harn));
 
