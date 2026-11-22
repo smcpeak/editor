@@ -668,18 +668,35 @@ void EditorGlobal::makeDocumentTopmost(NamedTextDocument *f)
 
 
 bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
-                                      NamedTextDocument *doc)
+                                      NamedTextDocument *origDoc)
 {
+  // Ensure any use-after-free will be caught.
+  RCSerfOpt<NamedTextDocument> doc(origDoc);
+
   if (doc->hasFilename()) {
-    // Expose the use-after-free.
-    RCSerf<NamedTextDocument> docSerf(doc);
+    // Make the use-after-free potential easy to exercise.
     static bool showCompletionDialog =
       envAsBool("RELOAD_DOCUMENT_FILE_SHOW_COMPLETION_DIALOG");
 
+    // Save the document name to look it up again later.
+    DocumentName docName = doc->documentName();
+
+    // Nullify `doc` since it could be deallocated during the wait.
+    doc = nullptr;
+
+    // Read the current contents from the disk.
     RFA_GUISyncMultiClient rfaSMClient(parentWidget, &m_rfaAMClient);
     rfaSMClient.m_showCompletionDialog = showCompletionDialog;
     ReplyPtrOptOrError<RFA_Msg_ReadFileReply> replyOrError(
-      rfaSMClient.readFileSynchronously(doc->harn()));
+      rfaSMClient.readFileSynchronously(docName.harn()));
+
+    // Re-acquire the document object.
+    doc = getFileWithName(docName);
+    if (!doc) {
+      // The file was closed while we were trying to read it.  That
+      // makes whatever happened during the read irrelevant.
+      return false;
+    }
 
     if (FailReasonOpt errorMsg =
           replyOrError.getEitherErrorMessage()) {
