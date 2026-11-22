@@ -58,6 +58,7 @@
 #include "smbase/gdvalue.h"                      // gdv::toGDValue
 #include "smbase/htt.h"                          // HTT_TASK, HTT_Singleton
 #include "smbase/objcount.h"                     // CheckObjectCount
+#include "smbase/refct-serf.h"                   // RCSerf
 #include "smbase/save-restore.h"                 // SET_RESTORE, SetRestore
 #include "smbase/set-util.h"                     // smbase::{setInsertUnique, setContains}
 #include "smbase/sm-env.h"                       // smbase::{getXDGConfigHome, getXDGStateHome, envAsIntOr, envAsBool}
@@ -670,7 +671,13 @@ bool EditorGlobal::reloadDocumentFile(QWidget *parentWidget,
                                       NamedTextDocument *doc)
 {
   if (doc->hasFilename()) {
+    // Expose the use-after-free.
+    RCSerf<NamedTextDocument> docSerf(doc);
+    static bool showCompletionDialog =
+      envAsBool("RELOAD_DOCUMENT_FILE_SHOW_COMPLETION_DIALOG");
+
     RFA_GUISyncMultiClient rfaSMClient(parentWidget, &m_rfaAMClient);
+    rfaSMClient.m_showCompletionDialog = showCompletionDialog;
     ReplyPtrOptOrError<RFA_Msg_ReadFileReply> replyOrError(
       rfaSMClient.readFileSynchronously(doc->harn()));
 
