@@ -1,0 +1,300 @@
+claude-gui-control-shell.txt
+Plan for an interactive GUI control shell built on event replay
+2026-11-22
+
+Written by Claude Code.
+
+
+Motivation
+==========
+
+The goal is to let an agent (Claude Code) or a person drive a running
+editor interactively: inspect the UI state (based on the Qt object
+hierarchy), inject inputs such as keystrokes and clicks, and see the
+results.  The immediate use is trying out a new dialog during
+development without writing a complete .ev script blind first.
+
+The event replay system (event-replay.{h,cc}, doc/event-replay.txt)
+already has most of the pieces:
+
+  * A command language: GDVN tagged tuples such as
+    KeyPress("window1.editorFrame.m_editorWidget" "Key_X" "x"),
+    dispatched by EventReplay::replayCall.
+  * Addressing of widgets by QObject name path (getObjectFromPath).
+  * Input synthesis: KeyPress, FocusKeySequence, Shortcut,
+    TriggerAction, ClickButton, mouse events, ResizeEvent, and so on.
+  * State checks: CheckLabel, CheckLineEditText, CheckFocusWidget,
+    CheckQuery (via EventReplayQueryable), CheckImage, and so on.
+  * Synchronization: after each command, the next is not run until the
+    application reaches quiescence (QuiescenceEvent posted from
+    slot_aboutToBlock).
+
+What is missing is a way to feed commands to a running editor one at a
+time from outside, and to get results back rather than only pass/fail.
+
+
+Constraints from how the agent works
+====================================
+
+Claude Code runs each shell command as a separate process that must
+finish before it sees the output.  It can start a long-running
+background process, but it cannot write to that process's stdin in
+later commands.  Therefore:
+
+  * The editor must accept commands over some IPC channel that a
+    separate, short-lived client process can connect to.
+  * Each client invocation should send one command (or a short batch),
+    wait for the reply, print it, and exit.
+  * Replies should be deterministic: they should describe the state
+    after the application has settled, so the agent needs no sleeps or
+    retries.
+
+The agent can read PNG files and view them as images, so screenshots
+are a useful output, not only text.
+
+
+Design
+======
+
+Overview
+--------
+
+  $ ./editor.exe -controlServer=editor-ctl &        # once, in background
+  $ ./editor-ctl.py 'KeyPress("window1.editorFrame.m_editorWidget" "Key_X" "x")'
+  ok
+  $ ./editor-ctl.py 'QueryLabel("window1.m_statusArea.m_filename")'
+  "untitled.txt *"
+  $ ./editor-ctl.py 'Screenshot("window1" "out/shot.png")'
+  ok
+
+Server side (editor)
+--------------------
+
+New command line option, "-controlServer=NAME".  When present, the
+editor starts normally (it may also be given files to open) and
+additionally creates a ControlServer object.
+
+ControlServer (new module control-server.{h,cc}, a QObject):
+
+  * Listens on a QLocalServer named NAME.  On Windows that is a named
+    pipe; on Linux a Unix domain socket.  This has no network exposure,
+    unlike a TCP port.  (QLocalServer is in QtNetwork, which the editor
+    does not link today; see "Open questions".)
+  * Protocol: the client sends one GDVN value (a command, or a sequence
+    of commands), preceded by its length in bytes as a decimal number
+    and a newline.  The server replies with one GDVN value in the same
+    framing and closes the connection.  One connection per request
+    keeps both sides simple.
+  * Reply format, a tagged tuple:
+      Ok(<result>)            result is `null` for actions
+      Error("<message>")      the exception text from the command
+  * Commands are executed one at a time.  If a request arrives while a
+    previous one is still waiting for quiescence, it waits its turn.
+  * The server runs until the app exits, or until a Quit() command.
+
+Executing a command:
+
+  1. Parse the GDVN.  A syntax error produces Error(...).
+  2. Run it through the same dispatcher used by event replay (see
+     "Refactoring EventReplay" below), catching any exception and
+     turning it into Error(...).  An error does not end the session.
+  3. Wait for quiescence using the existing QuiescenceEvent /
+     aboutToBlock mechanism, then send the reply.  For an action, the
+     reply therefore means "the action was delivered and the app has
+     settled".  For a query, the value is computed after the preceding
+     action settled, which is automatic since commands are serialized.
+
+Modal dialogs: QDialog::exec() runs a nested event loop.  Socket
+notifications, posted events, and aboutToBlock all still work inside
+it, so a command that opens a modal dialog gets its reply once the
+dialog is up and idle, and later commands can drive the dialog.  This
+needs to be verified early (step 2 below), since it is the main
+reason for the shell.
+
+Client side
+-----------
+
+editor-ctl.py, a small Python 3 script (Python is already a build
+dependency).  It connects to the named pipe / socket, sends its
+argument (or stdin if the argument is "-"), prints the reply, and exits
+with status 0 for Ok, 1 for Error, and 2 for a connection failure.
+
+If talking to a Windows named pipe from Cygwin Python proves awkward,
+the fallback is a tiny C++ client built with QtNetwork
+(QLocalSocket), editor-ctl.exe.
+
+Refactoring EventReplay
+-----------------------
+
+Today EventReplay owns both the command dispatcher and the test driver
+(the command sequence, the event loop, pass/fail).  Split it:
+
+  * EventReplayExecutor (or keep the name EventReplay for the executor
+    and add a new class for the driver): replayCall and the helpers it
+    uses, the queued FocusKeySequence characters, and the quiescence
+    detection.  It executes one command and signals when the app is
+    quiescent afterward.
+  * The .ev test driver: iterates over m_testCommands, calls the
+    executor, and stops at the first failure, as now.
+  * ControlServer: another client of the executor.
+
+FocusKeySequence queues characters that are replayed one per
+quiescence cycle.  The executor must report completion only after the
+queue drains, for both clients.
+
+The existing .ev tests are the regression suite for this refactoring:
+`make check` must pass before anything else is added.
+
+Queries
+-------
+
+The Check* commands compare against an expected value and throw on a
+mismatch.  Interactively, the agent mostly wants the value.  For each
+check that compares one value, add a Query* that returns it as a
+GDValue, and re-implement the check as query-plus-compare:
+
+  CheckLabel(path expect)          -> QueryLabel(path)
+  CheckLineEditText(path expect)   -> QueryLineEditText(path)
+  CheckFocusWidget(expect)         -> QueryFocusWidget()
+  CheckQuery(path state expect)    -> Query(path state)
+  CheckTableWidgetContents(...)    -> QueryTableWidgetContents(path)
+  ... and so on.
+
+This can be done gradually; the checks still work in the shell (they
+return Ok(null) or Error), so only the most useful queries are needed
+at first.
+
+New commands
+------------
+
+  * DumpTree(path [options]): return the QObject subtree rooted at
+    `path` as GDVN.  For each object: objectName, class name, and the
+    path to use in other commands.  For widgets also: visible, enabled,
+    hasFocus, geometry, and, where meaningful, text (QLabel,
+    QAbstractButton, QLineEdit), current item (combo boxes, lists), and
+    window title.  Options limit the depth and omit invisible or
+    unnamed objects.  An empty path means all top-level widgets.  This
+    replaces guessing paths from the source code.  The existing
+    DumpObjectTree prints Qt's text dump to stderr, which the client
+    would not see.
+
+  * Screenshot(path filename): QWidget::grab() on the widget, saved as
+    a PNG.  This lets the agent see layout and rendering problems that
+    a tree dump cannot show.  It is similar to what CheckImage and
+    eventReplayImage already do.
+
+  * Quit(): close the application cleanly, running the normal
+    shutdown checks (object counts and so on).
+
+Optional:
+
+  * Session logging: -controlServerLog=FILE appends each successful
+    action, and each query as the corresponding Check* with the
+    observed value, in .ev syntax.  A useful session can then be edited
+    into a regression test.  Given that most features should be tested
+    with unit tests instead, this is a convenience, not a goal.
+
+
+Running without visible windows
+===============================
+
+Driving the real "windows" platform plugin pops windows up on the
+user's desktop, can steal focus while they work, and runs into the
+focus races that the retry.sh wrappers work around.
+
+The local Qt build includes qoffscreen.dll, so
+QT_QPA_PLATFORM=offscreen may allow running with no visible windows,
+while QWidget::grab() still renders.  This has not been tried with the
+editor.  Focus and window activation may behave differently on the
+offscreen platform (for example, QApplication::focusWidget and
+ActivateWindow), so some commands may need adjusting there.  Try it
+early (step 2), because if it works it removes both the intrusiveness
+and most of the flakiness, and makes it reasonable for an agent to use
+the shell without supervision.
+
+If offscreen proves unworkable, the shell is still useful on the normal
+platform, but the agent should use it only when asked.
+
+
+Steps
+=====
+
+Each step is a commit that builds and passes `make check`.
+
+  1. Refactor EventReplay into an executor and the .ev driver, with no
+     behavior change.
+
+  2. Add ControlServer, -controlServer, and editor-ctl.py, running
+     commands through the executor with Ok/Error replies after
+     quiescence.  Verify by hand: open a modal dialog, then drive it;
+     and try QT_QPA_PLATFORM=offscreen.
+
+  3. Add DumpTree and Screenshot.
+
+  4. Add Query* commands, starting with QueryLabel, QueryLineEditText,
+     QueryFocusWidget, QueryFocusWindowTitle, and Query, re-expressing
+     the corresponding Check* in terms of them.
+
+  5. Update doc/event-replay.txt to describe the shell and the new
+     commands, and add a paragraph to CLAUDE.md saying when the agent
+     may use the shell (for example, "only with
+     QT_QPA_PLATFORM=offscreen" or "only when asked").  CLAUDE.md
+     currently says the agent should not run GUI tests unless directed.
+
+  6. (Optional) Session logging.
+
+Testing:
+
+  * The protocol framing and reply formatting can be unit tested
+    without a GUI if they are factored as pure functions (GDValue in,
+    bytes out and back).
+  * An automated end-to-end test would start the editor with
+    -controlServer, run a few editor-ctl.py commands, and Quit().  It
+    pops up a window unless offscreen works, so it belongs with the GUI
+    tests in `make check`, not in the `make` default target.
+
+
+Alternatives considered
+=======================
+
+  * Desktop "computer use" (screenshots plus synthetic mouse and
+    keyboard at the OS level): available only in the Claude desktop
+    app, not the CLI; slower; and less precise than addressing widgets
+    by object path.  It also cannot read object names or widget state.
+
+  * Reading commands from a file that the editor polls: simpler to
+    build than a socket, but replies need a second file, and
+    synchronization by polling is clumsy.  A reasonable fallback if
+    QtNetwork is unwanted.
+
+  * Existing tools: GammaRay (inspection, GUI-oriented), Squish
+    (commercial automation), QtTest (in-process, compiled tests).  None
+    is designed to be driven by one-shot shell commands, and none
+    reuses the existing .ev vocabulary.
+
+
+Open questions
+==============
+
+  * QtNetwork dependency.  QLocalServer/QLocalSocket live in QtNetwork,
+    which the editor does not currently link (it uses Widgets, Gui,
+    Core).  Options: link QtNetwork (only the control server uses it);
+    use the file-polling alternative; or use the native named pipe API
+    directly with a QWinEventNotifier / QSocketNotifier.  Linking
+    QtNetwork is the simplest.
+
+  * Security.  A local socket or named pipe is reachable by other
+    processes of the same user.  Since the server is only created with
+    an explicit option, this seems acceptable.  A random token passed
+    via an environment variable could be added if desired.
+
+  * Which binary.  Building the server into editor.exe means the shell
+    works with the real application.  The alternative is a separate
+    test build, which seems unnecessary given that it is off by
+    default.
+
+  * Whether to keep a single name, EventReplay, for the executor, and
+    name the .ev driver something like EventReplayTest.
+
+
+EOF
