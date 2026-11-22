@@ -59,42 +59,116 @@ Design
 Overview
 --------
 
-  $ ./editor.exe -controlServer=editor-ctl &        # once, in background
-  $ ./editor-ctl.py 'KeyPress("window1.editorFrame.m_editorWidget" "Key_X" "x")'
-  ok
-  $ ./editor-ctl.py 'QueryLabel("window1.m_statusArea.m_filename")'
-  "untitled.txt *"
-  $ ./editor-ctl.py 'Screenshot("window1" "out/shot.png")'
-  ok
+  $ ./editor.exe -controlServer=out/ctl.gdvn &      # once, in background
+  $ ./editor-ctl.py out/ctl.gdvn 'KeyPress("window1.editorFrame.m_editorWidget" "Key_X" "x")'
+  Ok(null)
+  $ ./editor-ctl.py out/ctl.gdvn 'QueryLabel("window1.m_statusArea.m_filename")'
+  Ok("untitled.txt *")
+  $ ./editor-ctl.py out/ctl.gdvn 'Screenshot("window1" "out/shot.png")'
+  Ok(null)
+
+The argument to -controlServer names an "access file" that the editor
+writes when the server starts.  It holds what a client needs to connect
+and authenticate (see "Transport and authentication").
 
 Server side (editor)
 --------------------
 
-New command line option, "-controlServer=NAME".  When present, the
+New command line option, "-controlServer=FILE".  When present, the
 editor starts normally (it may also be given files to open) and
-additionally creates a ControlServer object.
+additionally creates a ControlServer object, which writes the access
+file FILE.
 
 ControlServer (new module control-server.{h,cc}, a QObject):
 
-  * Listens on a QLocalServer named NAME.  On Windows that is a named
-    pipe; on Linux a Unix domain socket.  This has no network exposure,
-    unlike a TCP port.  (QLocalServer is in QtNetwork, which the editor
-    does not link today; see "Open questions".)
-  * Protocol: the client sends one GDVN value (a command, or a sequence
-    of commands), preceded by its length in bytes as a decimal number
-    and a newline.  The server replies with one GDVN value in the same
-    framing and closes the connection.  One connection per request
-    keeps both sides simple.
+  * Listens on a QTcpServer bound to 127.0.0.1 with port 0, so the OS
+    picks a free port, and writes the access file (see "Transport and
+    authentication").  QTcpServer is in QtNetwork, which the editor
+    does not link today; the local Qt build includes it
+    (libQt5Network.a, Qt5Network.dll).
+  * Protocol: the client sends one GDVN value, preceded by its length
+    in bytes as a decimal number and a newline.  The value is a map:
+      {key:"<access key>" cmd:<command or sequence of commands>}
+    The server replies with one GDVN value in the same framing and
+    closes the connection.  One connection per request keeps both
+    sides simple.
   * Reply format, a tagged tuple:
       Ok(<result>)            result is `null` for actions
       Error("<message>")      the exception text from the command
+  * A request whose key is missing or wrong gets Error("access denied")
+    and no command is executed.  Requests that are malformed (bad
+    length, oversized, not GDVN) are rejected the same way, and the
+    connection is closed.  The server never executes anything before
+    the key has been checked.
   * Commands are executed one at a time.  If a request arrives while a
     previous one is still waiting for quiescence, it waits its turn.
   * The server runs until the app exits, or until a Quit() command.
   * On startup, the server prints one line to stdout, such as
-      control server listening on NAME, pid N
+      control server listening on 127.0.0.1:PORT, pid N
     so the agent learns the process ID even if no command ever
     succeeds.
+
+Transport and authentication
+----------------------------
+
+TCP on the loopback interface is used rather than local sockets
+(QLocalServer).  On Windows, QLocalServer uses named pipes, which:
+
+  * can be reachable from other machines over SMB (\\host\pipe\NAME)
+    unless the server rejects remote clients, which depends on flags
+    and Windows security settings that are hard to audit;
+  * rely on Windows ACLs for access control, which are hard to reason
+    about; and
+  * would mean Windows and Linux use different IPC mechanisms (named
+    pipes vs. Unix domain sockets).
+
+With TCP, both platforms use the same mechanism, and access control is
+the application's own key check, which is easy to understand and test.
+
+Binding to 127.0.0.1 keeps other machines out.  It does not keep out
+other local processes, including those of other users on a shared
+machine, so every request must carry the access key.
+
+The access file, written by the server at startup:
+
+  {
+    port: 54321
+    key: "3f9c...e1"            // 32 random bytes, hex-encoded
+    pid: 12345
+  }
+
+  * The key comes from a cryptographically secure generator,
+    QRandomGenerator::system() (Qt 5.10+), and is new on every run.
+  * The file is written to a temporary name in the same directory,
+    then renamed, so a client never reads a partial file.
+  * On Linux the file is created with mode 0600.  On Windows it gets
+    the default ACLs of its directory, which normally means it is
+    readable only by the user (and administrators).  So the key is
+    protected by ordinary file permissions, the same trust boundary as
+    the user's other files.
+  * The server deletes the file on a clean exit.  If the editor is
+    killed, the file remains, but the connection is refused, so a
+    stale file fails safely.  The server overwrites an existing file
+    at startup.
+  * Including `pid` gives the agent the process ID for cleanup (see
+    "Process lifecycle and cleanup") without a separate step.
+
+The server compares keys in constant time.  That is cheap to do, even
+though timing attacks over loopback are unlikely to matter.
+
+Remote use: the design makes it easy to drive the editor from another
+machine later, but the key and all traffic are sent unencrypted.
+Rather than binding a non-loopback address, the recommended approach
+is an SSH tunnel (`ssh -L PORT:127.0.0.1:PORT host`) with the access
+file copied over, which keeps the server loopback-only and gets
+encryption from SSH.  Binding other addresses directly would need TLS
+(QSslSocket) first.
+
+Browsers: a web page can make a browser connect to a port on
+localhost.  The required key, plus a framing that is not HTTP, prevent
+such a request from executing anything.  As a further guard, the server
+can reject any request whose first bytes look like an HTTP request
+line.
 
 Executing a command:
 
@@ -119,13 +193,26 @@ Client side
 -----------
 
 editor-ctl.py, a small Python 3 script (Python is already a build
-dependency).  It connects to the named pipe / socket, sends its
-argument (or stdin if the argument is "-"), prints the reply, and exits
-with status 0 for Ok, 1 for Error, and 2 for a connection failure.
+dependency):
 
-If talking to a Windows named pipe from Cygwin Python proves awkward,
-the fallback is a tiny C++ client built with QtNetwork
-(QLocalSocket), editor-ctl.exe.
+  editor-ctl.py ACCESS-FILE COMMAND     (or "-" to read COMMAND from stdin)
+
+It reads the port and key from ACCESS-FILE, connects to
+127.0.0.1:PORT, sends the framed {key cmd} map, prints the reply, and
+exits with status 0 for Ok, 1 for Error, and 2 for a connection
+failure or a missing or unreadable access file.
+
+There is currently no GDVN parser in Python.  The client needs to read
+the access file, and only needs to tell Ok from Error in the reply (it
+prints the reply text as-is).  So a small parser for the subset used
+in the access file (a map whose values are integers and strings) is
+enough, and the reply's tag can be found by looking at its first
+token.  Alternatively, the access file could also be written in JSON
+next to the GDVN version, but a second format adds little.
+
+The fallback, if a Python client becomes cumbersome, is a small C++
+client, editor-ctl.exe, using smbase's GDValue parser and either
+QtNetwork (QTcpSocket) or plain sockets.
 
 Refactoring EventReplay
 -----------------------
@@ -191,7 +278,7 @@ New commands
     shutdown checks (object counts and so on).
 
   * Ping(): return the editor's process ID (QCoreApplication::
-    applicationPid()) and the server name.  This confirms the server is
+    applicationPid()) and the listening port.  This confirms the server is
     responsive and tells the agent which process to kill if needed (see
     "Process lifecycle and cleanup").
 
@@ -258,8 +345,8 @@ other guidance in step 5:
 
   * Kill by PID, never by image name.  The user may have their own
     editor.exe instances running, and `taskkill /IM editor.exe` would
-    kill those too.  The PID comes from the startup line or from
-    Ping().
+    kill those too.  The PID comes from the access file, the startup
+    line, or Ping().
 
   * Kill the whole process tree.  The editor starts child processes
     (editor-fs-server.exe, clangd, lsp-test-server.py), which may
@@ -282,8 +369,8 @@ Each step is a commit that builds and passes `make check`.
 
   2. Add ControlServer, -controlServer, and editor-ctl.py, running
      commands through the executor with Ok/Error replies after
-     quiescence, plus Ping(), Quit(), and the startup PID line.
-     Verify by hand: open a modal dialog, then drive it; try
+     quiescence, plus the access file, key checking, Ping(), Quit(),
+     and the startup PID line.  Verify by hand: open a modal dialog, then drive it; try
      QT_QPA_PLATFORM=offscreen; and confirm that the agent can detect
      and kill a running editor.exe, including its child processes, as
      described in "Process lifecycle and cleanup".
@@ -305,9 +392,11 @@ Each step is a commit that builds and passes `make check`.
 
 Testing:
 
-  * The protocol framing and reply formatting can be unit tested
-    without a GUI if they are factored as pure functions (GDValue in,
-    bytes out and back).
+  * The protocol framing, request validation (including rejecting a
+    missing or wrong key, oversized lengths, and HTTP-looking input),
+    reply formatting, and access-file writing and reading can be unit
+    tested without a GUI if they are factored as pure functions
+    (GDValue in, bytes out and back).
   * An automated end-to-end test would start the editor with
     -controlServer, run a few editor-ctl.py commands, and Quit().  It
     pops up a window unless offscreen works, so it belongs with the GUI
@@ -321,6 +410,10 @@ Alternatives considered
     keyboard at the OS level): available only in the Claude desktop
     app, not the CLI; slower; and less precise than addressing widgets
     by object path.  It also cannot read object names or widget state.
+
+  * Local sockets (QLocalServer): named pipes on Windows, Unix domain
+    sockets on Linux.  Rejected for the reasons in "Transport and
+    authentication".
 
   * Reading commands from a file that the editor polls: simpler to
     build than a socket, but replies need a second file, and
@@ -336,17 +429,18 @@ Alternatives considered
 Open questions
 ==============
 
-  * QtNetwork dependency.  QLocalServer/QLocalSocket live in QtNetwork,
-    which the editor does not currently link (it uses Widgets, Gui,
-    Core).  Options: link QtNetwork (only the control server uses it);
-    use the file-polling alternative; or use the native named pipe API
-    directly with a QWinEventNotifier / QSocketNotifier.  Linking
-    QtNetwork is the simplest.
+  * QtNetwork dependency.  QTcpServer lives in QtNetwork, which the
+    editor does not currently link (it uses Widgets, Gui, Core).
+    Options: link QtNetwork (only the control server uses it); use
+    plain BSD/Winsock sockets with a QSocketNotifier; or use the
+    file-polling alternative.  Linking QtNetwork is the simplest.
 
-  * Security.  A local socket or named pipe is reachable by other
-    processes of the same user.  Since the server is only created with
-    an explicit option, this seems acceptable.  A random token passed
-    via an environment variable could be added if desired.
+  * Key handling.  Anyone who can read the access file can control the
+    editor, which is the intended trust boundary (the user's own file
+    permissions).  If the access file is put somewhere shared, such as
+    a world-readable directory on Linux, that boundary is lost; the
+    0600 mode guards against that on Linux, and on Windows the
+    directory's ACLs are relied on.
 
   * Which binary.  Building the server into editor.exe means the shell
     works with the real application.  The alternative is a separate
