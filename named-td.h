@@ -12,7 +12,7 @@
 #include "fail-reason-opt.h"           // FailReasonOpt
 #include "file-mod-time.h"             // FileTimestamp
 #include "hilite.h"                    // Highlighter
-#include "ihfexists-fwd.h"             // IHFExists [f]
+#include "host-file-probe-fwd.h"       // HostFileProbe [f]
 #include "td-diagnostics.h"            // TextDocumentDiagnostics::DocEntry
 #include "td-obs-recorder.h"           // TextDocumentObservationRecorder
 #include "td.h"                        // TextDocument
@@ -223,7 +223,7 @@ public:      // funcs
   // The user is about to change the file.  Report on whether and why we
   // should prompt before allowing it.  Additionally, if we discover
   // that the document was modified, set `m_modifiedOnDisk`.
-  EditSafetyProblem checkEditSafety(IHFExists &hfExists);
+  EditSafetyProblem checkEditSafety(HostFileProbe &probe);
 
   // ------------------------- file contents ---------------------------
   // Discard existing contents and set them based on the given info.

@@ -8,7 +8,7 @@
 #include "byte-index-fwd.h"                      // ByteIndex [f]
 #include "host-and-resource-name-fwd.h"          // HostAndResourceName [f]
 #include "host-file-olb-fwd.h"                   // HostFile_OptLineByte [f]
-#include "ihfexists-fwd.h"                       // IHFExists [f]
+#include "host-file-probe-fwd.h"                 // HostFileProbe [f]
 
 // smbase
 #include "smbase/std-optional-fwd.h"             // std::optional [f]
@@ -42,7 +42,7 @@
    prefixes are provided, this returns `nullopt`.
 */
 std::optional<HostFile_OptLineByte> getNearbyFilename(
-  IHFExists &ihfExists,
+  HostFileProbe &probe,
   stdfwd::vector<HostAndResourceName> const &candidatePrefixes,
   std::string const &haystack,
   ByteIndex charOffset);

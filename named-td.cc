@@ -6,7 +6,7 @@
 // editor
 #include "doc-type-hilite.h"           // makeHighlighterForLanguage
 #include "fail-reason-opt.h"           // FailReasonOpt
-#include "ihfexists.h"                 // IHFExists
+#include "host-file-probe.h"           // HostFileProbe
 #include "lsp-conv.h"                  // convertLSPDiagsToTDD
 #include "lsp-data.h"                  // LSP_PublishDiagnosticsParams
 #include "td-diagnostics.h"            // TextDocumentDiagnostics
@@ -246,7 +246,7 @@ string NamedTextDocument::fileStatusString() const
 
 
 EditSafetyProblem NamedTextDocument::checkEditSafety(
-  IHFExists &hfExists)
+  HostFileProbe &probe)
 {
   if (isReadOnly()) {
     return ESP_READ_ONLY;
@@ -264,7 +264,7 @@ EditSafetyProblem NamedTextDocument::checkEditSafety(
   }
 
   if (std::optional<FileTimestamp> modTime =
-        hfExists.hfModTime(harn())) {
+        probe.hfModTime(harn())) {
     if (*modTime != m_lastFileTimestamp) {
       TRACE1_GDVN_EXPRS("checkEditSafety: modified file",
         harn(),

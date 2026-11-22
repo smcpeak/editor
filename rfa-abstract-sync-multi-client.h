@@ -8,8 +8,8 @@
 
 // editor
 #include "host-and-resource-name-fwd.h"          // HostAndResourceName [f]
+#include "host-file-probe.h"                     // HostFileProbe
 #include "host-name-fwd.h"                       // HostName [f]
-#include "ihfexists.h"                           // IHFExists
 #include "reply-ptr-opt.h"                       // ReplyPtrOptOrError
 #include "rfa-msg.h"                             // RFA_Message, RFA_Msg_ReadFileReply
 
@@ -33,7 +33,7 @@
 
   This module does not depend on anything in Qt.
 */
-class RFA_AbstractSyncMultiClient : public IHFExists {
+class RFA_AbstractSyncMultiClient : public HostFileProbe {
 public:      // methods
   virtual ~RFA_AbstractSyncMultiClient();
 
@@ -51,7 +51,7 @@ public:      // methods
     HostName const &hostName,
     smbase::UniquePtr<RFA_Message> request);
 
-  // IHFExists methods.
+  // HostFileProbe methods.
   virtual std::optional<FileTimestamp> hfModTime(
     HostAndResourceName const &harn) override;
 

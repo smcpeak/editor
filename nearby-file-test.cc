@@ -8,7 +8,7 @@
 #include "host-and-resource-name.h"    // HostAndResourceName
 #include "host-file-olb.h"             // HostFile_OptLineByte
 #include "line-number.h"               // LineNumber
-#include "mock-hfexists.h"             // IHFExists, MockHFExists
+#include "mock-host-file-probe.h"      // HostFileProbe, MockHostFileProbe
 
 // smbase
 #include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional) for EXPECT_EQ_GDVSER
@@ -68,13 +68,13 @@ static void checkActualLine(
 
 
 static void expectIGNF(
-  IHFExists &hfe,
+  HostFileProbe &probe,
   std::vector<HostAndResourceName> const &candidatePrefixes,
   std::string const &haystack,
   int charOffset,
   HostAndResourceName const &expectHARN)
 {
-  std::optional<HostFile_OptLineByte> actual = getNearbyFilename(hfe,
+  std::optional<HostFile_OptLineByte> actual = getNearbyFilename(probe,
     candidatePrefixes, haystack, ByteIndex(charOffset));
   checkActualHarn(actual, expectHARN);
   checkActualLine(actual, std::nullopt);
@@ -82,7 +82,7 @@ static void expectIGNF(
 
 
 static void expectLocalIGNF(
-  IHFExists &hfe,
+  HostFileProbe &probe,
   std::vector<HostAndResourceName> const &candidatePrefixes,
   std::string const &haystack,
   int charOffset,
@@ -90,14 +90,14 @@ static void expectLocalIGNF(
 {
   HostAndResourceName expectHARN(
     HostAndResourceName::localFile(expectLocalFile));
-  expectIGNF(hfe, candidatePrefixes,
+  expectIGNF(probe, candidatePrefixes,
              haystack, charOffset,
              expectHARN);
 }
 
 
 // Insert some entries for testing.
-static void populate(MockHFExists &hfe)
+static void populate(MockHostFileProbe &probe)
 {
   // Some local paths.
   static char const * const localPaths[] = {
@@ -107,7 +107,7 @@ static void populate(MockHFExists &hfe)
     "/smbase/sm-test.h",
   };
   for (auto s : localPaths) {
-    hfe.add(HostAndResourceName::localFile(s));
+    probe.add(HostAndResourceName::localFile(s));
   }
 
   // Also some remote paths.
@@ -117,53 +117,53 @@ static void populate(MockHFExists &hfe)
   };
   HostName remoteHost(HostName::asSSH("host"));
   for (auto s : remotePaths) {
-    hfe.add(HostAndResourceName(remoteHost, s));
+    probe.add(HostAndResourceName(remoteHost, s));
   }
 }
 
 
 static void test1()
 {
-  MockHFExists hfe;
-  populate(hfe);
+  MockHostFileProbe probe;
+  populate(probe);
 
   std::vector<HostAndResourceName> prefixes;
 
   // No prefixes.
-  expectLocalIGNF(hfe, prefixes, "anything", 0, "");
+  expectLocalIGNF(probe, prefixes, "anything", 0, "");
 
   prefixes.push_back(HostAndResourceName::localFile("/home"));
-  expectLocalIGNF(hfe, prefixes, "foo.txt", 0, "/home/foo.txt");
-  expectLocalIGNF(hfe, prefixes, "foo.txt", 6, "/home/foo.txt");
-  expectLocalIGNF(hfe, prefixes, "foo.txt", 7, "/home/foo.txt");
+  expectLocalIGNF(probe, prefixes, "foo.txt", 0, "/home/foo.txt");
+  expectLocalIGNF(probe, prefixes, "foo.txt", 6, "/home/foo.txt");
+  expectLocalIGNF(probe, prefixes, "foo.txt", 7, "/home/foo.txt");
 
   // Empty input line.
-  expectLocalIGNF(hfe, prefixes, "", 0, "");
+  expectLocalIGNF(probe, prefixes, "", 0, "");
 
   // Offset out of bounds.
-  expectLocalIGNF(hfe, prefixes, "foo.txt", 8, "");
+  expectLocalIGNF(probe, prefixes, "foo.txt", 8, "");
 
   // No absolute search path yet, but this is the result when nothing
   // found and the start string is absolute, so it's hard to see the
   // effect...
-  expectLocalIGNF(hfe, prefixes, "/home/foo.txt", 3, "/home/foo.txt");
+  expectLocalIGNF(probe, prefixes, "/home/foo.txt", 3, "/home/foo.txt");
 
   // Now it will work.
   prefixes.push_back(HostAndResourceName::localFile(""));
-  expectLocalIGNF(hfe, prefixes, "/home/foo.txt", 3, "/home/foo.txt");
+  expectLocalIGNF(probe, prefixes, "/home/foo.txt", 3, "/home/foo.txt");
 
   // Prefix priority.
-  expectLocalIGNF(hfe, prefixes, "bar.txt", 0, "/home/bar.txt");       // not found
+  expectLocalIGNF(probe, prefixes, "bar.txt", 0, "/home/bar.txt");       // not found
   prefixes.push_back(HostAndResourceName::localFile("/home/user"));
-  expectLocalIGNF(hfe, prefixes, "foo.txt", 0, "/home/foo.txt");       // still
-  expectLocalIGNF(hfe, prefixes, "bar.txt", 0, "/home/user/bar.txt");  // now found
+  expectLocalIGNF(probe, prefixes, "foo.txt", 0, "/home/foo.txt");       // still
+  expectLocalIGNF(probe, prefixes, "bar.txt", 0, "/home/user/bar.txt");  // now found
 
   // Range of file name characters.  None exist, that's fine.
-  expectLocalIGNF(hfe, prefixes, "ab cd ef", 3,
+  expectLocalIGNF(probe, prefixes, "ab cd ef", 3,
                   "/home/cd");
-  expectLocalIGNF(hfe, prefixes, "ab cd ef", 4,
+  expectLocalIGNF(probe, prefixes, "ab cd ef", 4,
                   "/home/cd");
-  expectLocalIGNF(hfe, prefixes, "ab cd ef", 5,
+  expectLocalIGNF(probe, prefixes, "ab cd ef", 5,
                   "/home/cd");
 
   // Test inclusion.
@@ -171,40 +171,40 @@ static void test1()
   // 2022-08-19: I do not recall what this was testing!  I think it has
   // to do with ignoring instances where the cursor is on consecutive
   // punctuation characters.
-  expectLocalIGNF(hfe, prefixes, "ab cAZaz90_d ef", 7,
+  expectLocalIGNF(probe, prefixes, "ab cAZaz90_d ef", 7,
                   "/home/cAZaz90_d");
-  expectLocalIGNF(hfe, prefixes, "ab z/y\\-__cAZaz90_d ef", 8, "");
-  expectLocalIGNF(hfe, prefixes, "ab z/y\\-__cAZaz90_d ef", 11,
+  expectLocalIGNF(probe, prefixes, "ab z/y\\-__cAZaz90_d ef", 8, "");
+  expectLocalIGNF(probe, prefixes, "ab z/y\\-__cAZaz90_d ef", 11,
                   "/home/z/y/-__cAZaz90_d");
 
   // Test exclusion.
-  expectLocalIGNF(hfe, prefixes, "ab \"cd\" ef", 5,
+  expectLocalIGNF(probe, prefixes, "ab \"cd\" ef", 5,
                   "/home/cd");
-  expectLocalIGNF(hfe, prefixes, "ab <cd> ef", 5,
+  expectLocalIGNF(probe, prefixes, "ab <cd> ef", 5,
                   "/home/cd");
-  expectLocalIGNF(hfe, prefixes, "ab 'cd' ef", 5,
+  expectLocalIGNF(probe, prefixes, "ab 'cd' ef", 5,
                   "/home/cd");
 
   // Test that we ignore starting on "//".
-  expectLocalIGNF(hfe, prefixes, "// blah", 0, "");
-  expectLocalIGNF(hfe, prefixes, "//blah", 0, "");
-  expectLocalIGNF(hfe, prefixes, "/blah", 0, "/blah");
+  expectLocalIGNF(probe, prefixes, "// blah", 0, "");
+  expectLocalIGNF(probe, prefixes, "//blah", 0, "");
+  expectLocalIGNF(probe, prefixes, "/blah", 0, "/blah");
 
   // Ignore trailing punctuation.
-  expectLocalIGNF(hfe, prefixes, "foo.txt.", 0, "/home/foo.txt");
-  expectLocalIGNF(hfe, prefixes, "foo.txt.", 6, "/home/foo.txt");
+  expectLocalIGNF(probe, prefixes, "foo.txt.", 0, "/home/foo.txt");
+  expectLocalIGNF(probe, prefixes, "foo.txt.", 6, "/home/foo.txt");
 
   // Test dropping dots.
-  expectLocalIGNF(hfe, prefixes, "./foo.txt", 1, "/home/foo.txt");
-  expectLocalIGNF(hfe, prefixes, "./a/../foo.txt", 1, "/home/foo.txt");
+  expectLocalIGNF(probe, prefixes, "./foo.txt", 1, "/home/foo.txt");
+  expectLocalIGNF(probe, prefixes, "./a/../foo.txt", 1, "/home/foo.txt");
 
   // Test that we drop dots even when we cannot confirm the file exists.
-  expectLocalIGNF(hfe, prefixes, "./a/../goo.txt", 1, "/home/goo.txt");
+  expectLocalIGNF(probe, prefixes, "./a/../goo.txt", 1, "/home/goo.txt");
 }
 
 
 static void expectIGNFL(
-  IHFExists &hfe,
+  HostFileProbe &probe,
   std::vector<HostAndResourceName> const &candidatePrefixes,
   std::string const &haystack,
   int charOffset,
@@ -213,7 +213,7 @@ static void expectIGNFL(
 {
   TEST_FUNC_EXPRS(candidatePrefixes, haystack, charOffset);
 
-  std::optional<HostFile_OptLineByte> actual = getNearbyFilename(hfe,
+  std::optional<HostFile_OptLineByte> actual = getNearbyFilename(probe,
     candidatePrefixes, haystack, ByteIndex(charOffset));
   checkActualHarn(actual, expectHARN);
 
@@ -228,7 +228,7 @@ static void expectIGNFL(
 
 
 static void expectLocalIGNFL(
-  IHFExists &hfe,
+  HostFileProbe &probe,
   std::vector<HostAndResourceName> const &candidatePrefixes,
   std::string const &haystack,
   int charOffset,
@@ -237,14 +237,14 @@ static void expectLocalIGNFL(
 {
   HostAndResourceName expectHARN(
     HostAndResourceName::localFile(expectName));
-  expectIGNFL(hfe, candidatePrefixes,
+  expectIGNFL(probe, candidatePrefixes,
               haystack, charOffset,
               expectHARN, expectLine);
 }
 
 
 static void expectRemoteIGNFL(
-  IHFExists &hfe,
+  HostFileProbe &probe,
   std::vector<HostAndResourceName> const &candidatePrefixes,
   std::string const &haystack,
   int charOffset,
@@ -253,7 +253,7 @@ static void expectRemoteIGNFL(
   int expectLine)
 {
   HostAndResourceName expectHARN(expectHostName, expectName);
-  expectIGNFL(hfe, candidatePrefixes,
+  expectIGNFL(probe, candidatePrefixes,
               haystack, charOffset,
               expectHARN, expectLine);
 }
@@ -261,60 +261,60 @@ static void expectRemoteIGNFL(
 
 static void testLineNumbers()
 {
-  MockHFExists hfe;
-  populate(hfe);
+  MockHostFileProbe probe;
+  populate(probe);
 
   std::vector<HostAndResourceName> prefixes;
 
   // No prefixes.
-  expectLocalIGNFL(hfe, prefixes, "anything:1", 0, "", 0);
+  expectLocalIGNFL(probe, prefixes, "anything:1", 0, "", 0);
 
   // Limits on where the search can begin.
   prefixes.push_back(HostAndResourceName::localFile("/home"));
-  expectLocalIGNFL(hfe, prefixes, "foo.txt:3", 0, "/home/foo.txt", 3);
-  expectLocalIGNFL(hfe, prefixes, "foo.txt:3", 6, "/home/foo.txt", 3);
-  expectLocalIGNFL(hfe, prefixes, "foo.txt:3", 7, "/home/foo.txt", 3);
-  expectLocalIGNFL(hfe, prefixes, "foo.txt:3", 8, "", 0);
-  expectLocalIGNFL(hfe, prefixes, "foo.txt:3", 9, "", 0);
-  expectLocalIGNFL(hfe, prefixes, "foo.txt:3", 10, "", 0);
+  expectLocalIGNFL(probe, prefixes, "foo.txt:3", 0, "/home/foo.txt", 3);
+  expectLocalIGNFL(probe, prefixes, "foo.txt:3", 6, "/home/foo.txt", 3);
+  expectLocalIGNFL(probe, prefixes, "foo.txt:3", 7, "/home/foo.txt", 3);
+  expectLocalIGNFL(probe, prefixes, "foo.txt:3", 8, "", 0);
+  expectLocalIGNFL(probe, prefixes, "foo.txt:3", 9, "", 0);
+  expectLocalIGNFL(probe, prefixes, "foo.txt:3", 10, "", 0);
 
   // Maximum of 9 digits.
-  expectLocalIGNFL(hfe, prefixes, "foo.txt:123456789", 0, "/home/foo.txt", 123456789);
-  expectLocalIGNFL(hfe, prefixes, "foo.txt:1234567890", 0, "/home/foo.txt", 0);
+  expectLocalIGNFL(probe, prefixes, "foo.txt:123456789", 0, "/home/foo.txt", 123456789);
+  expectLocalIGNFL(probe, prefixes, "foo.txt:1234567890", 0, "/home/foo.txt", 0);
 
   // Line number can't run straight into letters.
-  expectLocalIGNFL(hfe, prefixes, "foo.txt:3a", 0, "/home/foo.txt", 0);
-  expectLocalIGNFL(hfe, prefixes, "foo.txt:3 a", 0, "/home/foo.txt", 3);
+  expectLocalIGNFL(probe, prefixes, "foo.txt:3a", 0, "/home/foo.txt", 0);
+  expectLocalIGNFL(probe, prefixes, "foo.txt:3 a", 0, "/home/foo.txt", 3);
 
   // Report best match even for non-existent, including line number.
-  expectLocalIGNFL(hfe, prefixes, "baz.txt:3: something", 0, "/home/baz.txt", 3);
+  expectLocalIGNFL(probe, prefixes, "baz.txt:3: something", 0, "/home/baz.txt", 3);
 
   // Find a file starting with "./".
-  expectLocalIGNFL(hfe, prefixes, "./foo.txt:3", 0, "/home/foo.txt", 3);
+  expectLocalIGNFL(probe, prefixes, "./foo.txt:3", 0, "/home/foo.txt", 3);
 
   // And "../".
-  expectLocalIGNFL(hfe, prefixes, "../smbase/sm-test.h:3", 0, "/smbase/sm-test.h", 3);
+  expectLocalIGNFL(probe, prefixes, "../smbase/sm-test.h:3", 0, "/smbase/sm-test.h", 3);
 }
 
 
 static void testRemoteFiles()
 {
-  MockHFExists hfe;
-  populate(hfe);
+  MockHostFileProbe probe;
+  populate(probe);
 
   std::vector<HostAndResourceName> prefixes;
   prefixes.push_back(HostAndResourceName::localFile("/home"));
 
   // Look for a file that exists remotely but isn't in 'prefixes' yet.
   // The returned name in this case is due to the fallback behavior.
-  expectLocalIGNFL(hfe, prefixes, "file1.txt:3", 0, "/home/file1.txt", 3);
+  expectLocalIGNFL(probe, prefixes, "file1.txt:3", 0, "/home/file1.txt", 3);
 
   // Now add the remote prefix.
   HostName host(HostName::asSSH("host"));
   prefixes.push_back(HostAndResourceName(host, "/mnt"));
 
   // Should find the file.
-  expectRemoteIGNFL(hfe, prefixes, "file1.txt:3", 0, host, "/mnt/file1.txt", 3);
+  expectRemoteIGNFL(probe, prefixes, "file1.txt:3", 0, host, "/mnt/file1.txt", 3);
 }
 
 

@@ -18,11 +18,11 @@ RFA-related modules with no Qt dependence:
     RFA_SyncLocalClient, which performs the RFA file system access locally
     as part of the RFA server process.
 
-  ihfexists
+  host-file-probe
 
-    Defines IHFExists, a synchronous Qt-free interface to a subset of
+    Defines HostFileProbe, a synchronous Qt-free interface to a subset of
     RFA capability.  Implemented by RFA_SyncMultiClient for production
-    use, and MockHFExists for testing.
+    use, and MockHostFileProbe for testing.
 
 RFA-related modules that use Qt core (QObject) but no GUI depedence:
 

@@ -1,25 +1,25 @@
-// mock-hfexists.h
-// `MockHFExists` class.
+// mock-host-file-probe.h
+// `MockHostFileProbe` class.
 
 // See license.txt for copyright and terms of use.
 
-#ifndef EDITOR_MOCK_HFEXISTS_H
-#define EDITOR_MOCK_HFEXISTS_H
+#ifndef EDITOR_MOCK_HOST_FILE_PROBE_H
+#define EDITOR_MOCK_HOST_FILE_PROBE_H
 
 // editor
 #include "file-mod-time.h"             // FileTimestamp
-#include "ihfexists.h"                 // IHFExists
 #include "host-and-resource-name.h"    // HostAndResourceName
+#include "host-file-probe.h"           // HostFileProbe
 
 // smbase
 #include "smbase/std-optional-fwd.h"   // std::optional [f]
 
 // libc++
-#include <map>                         // std::set
+#include <map>                         // std::map
 
 
 // Class that recognizes a fixed set of host+file pairs.
-class MockHFExists : public IHFExists {
+class MockHostFileProbe : public HostFileProbe {
 public:      // data
   // Map from recognized names to timestamps.
   std::map<HostAndResourceName, FileTimestamp> m_existingHARNs;
@@ -36,10 +36,10 @@ public:      // methods
   // Change an existing timestamp.
   void setTS(HostAndResourceName const &harn, FileTimestamp ts);
 
-  // IHFExists methods
+  // HostFileProbe methods
   virtual std::optional<FileTimestamp> hfModTime(
     HostAndResourceName const &harn) override;
 };
 
 
-#endif // EDITOR_MOCK_HFEXISTS_H
+#endif // EDITOR_MOCK_HOST_FILE_PROBE_H

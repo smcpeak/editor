@@ -1,12 +1,12 @@
-// ihfexists.h
-// `IHFExists` interface.
+// host-file-probe.h
+// `HostFileProbe` interface.
 
 // See license.txt for copyright and terms of use.
 
-#ifndef EDITOR_IHFEXISTS_H
-#define EDITOR_IHFEXISTS_H
+#ifndef EDITOR_HOST_FILE_PROBE_H
+#define EDITOR_HOST_FILE_PROBE_H
 
-#include "ihfexists-fwd.h"                       // fwds for this module
+#include "host-file-probe-fwd.h"                 // fwds for this module
 
 // editor
 #include "file-mod-time.h"                       // FileTimestamp
@@ -29,21 +29,13 @@
   Furthermore, the methods of this class don't return error indications
   because they are used in contexts where we don't want to report them
   anyway.  Error conditions are folded into the return values in a way
-  documented with each method.
-
-  TODO: Rename this to ... what?
-
-    This allows access to a very simplified distributed file system.
-
-    It is used for "discretionary" checks, where errors can be safely
-    folded into non-error cases.
-
-    The only true virtual method is the mod time query, so could this
-    class be named for its limited scope of getting file status info?
+  documented with each method.  Consequently, this interface is meant
+  for "discretionary" checks, where errors can be safely folded into
+  non-error cases.
 */
-class IHFExists {
+class HostFileProbe {
 public:      // methods
-  virtual ~IHFExists();
+  virtual ~HostFileProbe();
 
   /*
     True if `harn` can be confirmed to exist as a regular file.  A false
@@ -63,4 +55,4 @@ public:      // methods
 };
 
 
-#endif // EDITOR_IHFEXISTS_H
+#endif // EDITOR_HOST_FILE_PROBE_H

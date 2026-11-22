@@ -8,7 +8,7 @@
 #include "byte-index.h"                // ByteIndex, at
 #include "host-and-resource-name.h"    // HostAndResourceName
 #include "host-file-olb.h"             // HostFile_OptLineByte
-#include "ihfexists.h"                 // IHFExists
+#include "host-file-probe.h"           // HostFileProbe
 #include "line-number.h"               // LineNumber
 #include "wrapped-integer-inl.h"       // WrappedInteger::operator++ defn
 
@@ -238,7 +238,7 @@ static HostFile_OptLineByte joinHFL(
 
 // Ensures: If `return.has_value()` then `return->hasFilename()`.
 static std::optional<HostFile_OptLineByte> innerGetNearbyFilename(
-  IHFExists &ihfExists,
+  HostFileProbe &probe,
   std::vector<HostAndResourceName> const &candidatePrefixes,
   string const &haystack,
   ByteIndex charOffset)
@@ -263,7 +263,7 @@ static std::optional<HostFile_OptLineByte> innerGetNearbyFilename(
         candidatePrefixes.at(prefix),
         candidateSuffixes.at(suffix)));
 
-      if (ihfExists.hfExists(candidate.getHarn())) {
+      if (probe.hfExists(candidate.getHarn())) {
         return candidate;
       }
     }
@@ -275,13 +275,13 @@ static std::optional<HostFile_OptLineByte> innerGetNearbyFilename(
 
 
 std::optional<HostFile_OptLineByte> getNearbyFilename(
-  IHFExists &ihfExists,
+  HostFileProbe &probe,
   std::vector<HostAndResourceName> const &candidatePrefixes,
   std::string const &haystack,
   ByteIndex charOffset)
 {
   std::optional<HostFile_OptLineByte> ret = innerGetNearbyFilename(
-    ihfExists,
+    probe,
     candidatePrefixes,
     haystack,
     charOffset);
