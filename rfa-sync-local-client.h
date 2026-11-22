@@ -17,8 +17,9 @@
 //
 // This class synchronously turns requests into replies.
 //
-// TODO: Have this implement RFA_AbstractSyncMultiClient once that
-// exists.
+// This could be changed to implement RFA_AbstractSyncMultiClient, but
+// doing so is not especially compelling right now.
+//
 class RFA_SyncLocalClient {
 public:      // methods
   RFA_Msg_FileStatusReply    queryPath    (RFA_Msg_FileStatusRequest    const &req);
