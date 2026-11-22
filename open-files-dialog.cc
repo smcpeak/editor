@@ -162,7 +162,7 @@ void OpenFilesDialog::computeFilteredDocuments()
   string filter = toString(m_filterLineEdit->text());
 
   for (int r=0; r < editorGlobal()->numDocuments(); r++) {
-    NamedTextDocument *doc = editorGlobal()->getDocumentByIndex(r);
+    RCSerf<NamedTextDocument> doc = editorGlobal()->getDocumentByIndex(r);
 
     if (hasSubstring_insens_ascii(
           doc->nameWithStatusIndicators(), filter)) {
@@ -181,7 +181,7 @@ void OpenFilesDialog::repopulateTable()
 
   // Populate the rows.
   for (int r=0; r < (int)m_filteredDocuments.size(); ++r) {
-    NamedTextDocument const * const doc = m_filteredDocuments.at(r);
+    RCSerf<NamedTextDocument const> const doc = m_filteredDocuments.at(r);
 
     // Remove the row label.  (The default, a NULL item, renders as a
     // row number, which isn't useful here.)  I think this transfers
@@ -261,11 +261,11 @@ NamedTextDocument *OpenFilesDialog::runDialog(QWidget *callerWindow)
   // pointers in data structures.
   m_filteredDocuments.clear();
 
-  return m_chosenDocument;
+  return m_chosenDocument.release();
 }
 
 
-static string filenamePathBase(NamedTextDocument const *doc)
+static string filenamePathBase(RCSerf<NamedTextDocument const> doc)
 {
   if (doc->hasFilename()) {
     SMFileUtil sfu;
@@ -297,7 +297,7 @@ GDValue OpenFilesDialog::eventReplayQuery(string const &state)
     QModelIndex idx = m_tableWidget->currentIndex();
     if (idx.isValid() && !idx.parent().isValid()) {
       int r = idx.row();
-      if (NamedTextDocument *doc = getDocAtIf(r)) {
+      if (RCSerf<NamedTextDocument> doc = getDocAtIf(r)) {
         return filenamePathBase(doc);
       }
     }
@@ -307,7 +307,7 @@ GDValue OpenFilesDialog::eventReplayQuery(string const &state)
   else if (state == "allDocumentsFilenamePathBase") {
     std::ostringstream sb;
     for (int r=0; r < m_tableWidget->rowCount(); r++) {
-      NamedTextDocument *doc = m_filteredDocuments.at(r);
+      RCSerf<NamedTextDocument> doc = m_filteredDocuments.at(r);
       sb << filenamePathBase(doc) << '\n';
     }
     return sb.str();
@@ -351,7 +351,7 @@ void OpenFilesDialog::on_closeSelected() NOEXCEPT
 
   // Get the set of documents to close in a first pass so we have them
   // all before doing anything that might jeopardize the indexes.
-  ArrayStack<NamedTextDocument*> docsToClose;
+  ArrayStack<RCSerf<NamedTextDocument>> docsToClose;
   bool someHaveUnsavedChanges = false;
   {
     QModelIndexList selectedRows = selectionModel->selectedRows();
@@ -364,7 +364,7 @@ void OpenFilesDialog::on_closeSelected() NOEXCEPT
 
       if (index.isValid() && !index.parent().isValid()) {
         int r = index.row();
-        if (NamedTextDocument *doc = getDocAtIf(r)) {
+        if (RCSerf<NamedTextDocument> doc = getDocAtIf(r)) {
           TRACE("OpenFilesDialog", "  toClose: " << doc->documentName());
           docsToClose.push(doc);
           if (doc->unsavedChanges()) {
@@ -402,11 +402,15 @@ void OpenFilesDialog::on_closeSelected() NOEXCEPT
     }
   }
 
+  // Clear the filtered list so none of its pointers dangle as a result
+  // of closing files.  It will be repopulated afterward.
+  m_filteredDocuments.clear();
+
   // Close the files.
   for (int i=0; i < docsToClose.length(); i++) {
-    NamedTextDocument *doc = docsToClose[i];
+    RCSerf<NamedTextDocument> &doc = docsToClose[i];
     TRACE("OpenFilesDialog", "  removeFile: " << doc->documentName());
-    editorGlobal()->deleteDocumentFile(doc);
+    editorGlobal()->deleteDocumentFile(doc.release());
   }
 
   // Refresh table contents.
@@ -429,7 +433,7 @@ void OpenFilesDialog::on_reloadAll() NOEXCEPT
   int successCount = 0;
   int failureCount = 0;
 
-  for (NamedTextDocument *doc : m_filteredDocuments) {
+  for (RCSerf<NamedTextDocument> doc : m_filteredDocuments) {
     if (editorGlobal()->reloadDocumentFile(this, doc)) {
       successCount++;
     }
@@ -523,7 +527,7 @@ void OpenFilesDialog::accept() NOEXCEPT
   QModelIndex idx = m_tableWidget->currentIndex();
   if (idx.isValid() && !idx.parent().isValid()) {
     int r = idx.row();
-    if (NamedTextDocument *doc = getDocAtIf(r)) {
+    if (RCSerf<NamedTextDocument> doc = getDocAtIf(r)) {
       TRACE("OpenFilesDialog", "accept: chosen: " << doc->documentName());
       m_chosenDocument = doc;
 

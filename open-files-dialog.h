@@ -13,7 +13,7 @@
 
 #include "smqtutil/sm-table-widget-fwd.h"        // SMTableWidget
 
-#include "smbase/refct-serf.h"                   // RCSerf
+#include "smbase/refct-serf.h"                   // RCSerf, NNRCSerf, RCSerfOpt
 #include "smbase/sm-iostream.h"                  // ostream
 #include "smbase/sm-noexcept.h"                  // NOEXCEPT
 
@@ -45,12 +45,12 @@ private:     // instance data
   //
   // The elements are pointers to the documents owned by EditorGlobal,
   // and the order is the same as in the EditorGlobal, modulo filtering.
-  std::vector<NamedTextDocument *> m_filteredDocuments;
+  std::vector<NNRCSerf<NamedTextDocument>> m_filteredDocuments;
 
   // Set to `nullptr` when the dialog starts, it is set to a non-null
   // value indicating which document has been chosen when one is.  If
   // the user cancels, it will remain `nullptr`.
-  NamedTextDocument * NULLABLE m_chosenDocument;
+  RCSerfOpt<NamedTextDocument> m_chosenDocument;
 
   // The main 2D grid control.  It is owned by this dialog, but the Qt
   // infrastructure automatically deallocates it.
