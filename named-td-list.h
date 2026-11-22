@@ -31,10 +31,6 @@
 // for manipulating and querying it, per the requirements of a
 // multi-document interactive text editor.
 //
-// Invariant: Every document in the list has a non-empty
-// `documentName()`, and no two documents have the same name.
-// `selfCheck` verifies this, and `addDocument` refuses to add a document
-// whose name is already present.
 class NamedTextDocumentList : public SerfRefCount {
   // Sensible copying of lists is possible but non-trivial.
   NO_OBJECT_COPIES(NamedTextDocumentList);
@@ -92,13 +88,6 @@ public:      // funcs
   // unique name.  This routine will modify its title, if necessary, to
   // ensure it is unique too.  The document is added to the end of the
   // list, and 'this' takes ownership of it.
-  //
-  // Requires: !doc->documentName().empty()
-  // Requires: !hasDocument(doc)
-  // Requires: findDocumentByName(doc->documentName()) == nullptr
-  //
-  // If a requirement is violated, this throws XAssert without modifying
-  // `doc` or the list, and ownership of `doc` stays with the caller.
   void addDocument(NamedTextDocument *doc);
 
   // Remove the given document from the collection and notify all

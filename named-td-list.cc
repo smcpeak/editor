@@ -13,6 +13,7 @@
 #include "smbase/strtokp.h"            // StrtokParse
 #include "smbase/strutil.h"            // dirname
 #include "smbase/trace.h"              // TRACE
+#include "smbase/xassert.h"            // xassert, xassertPrecondition
 
 // libc++
 #include <set>                         // std::set
@@ -103,13 +104,9 @@ int NamedTextDocumentList::getDocumentIndex(NamedTextDocument const *file) const
 void NamedTextDocumentList::addDocument(NamedTextDocument *file)
 {
   TRACE("named-td-list", "addFile: " << file->documentName());
-  xassert(!file->documentName().empty());
-  xassert(!this->hasDocument(file));
-
-  // Enforce name uniqueness here rather than relying on `selfCheck`,
-  // which would detect the problem only after the list had been
-  // modified (and observers notified).
-  xassert(this->findDocumentByName(file->documentName()) == nullptr);
+  xassertPrecondition(!file->documentName().empty());
+  xassertPrecondition(!this->hasDocument(file));
+  xassertPrecondition(this->findDocumentByName(file->documentName()) == nullptr);
 
   // Assign title if necessary.
   if (file->m_title.empty() || this->findDocumentByTitle(file->m_title)) {

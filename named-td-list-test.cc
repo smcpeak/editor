@@ -17,6 +17,8 @@
 
 #include <stdarg.h>                    // va_start, etc.
 
+using namespace smbase;
+
 
 // Kinds of notifications.
 enum NotifyFunction {
@@ -451,7 +453,7 @@ static void testAddDuplicateName()
 
   NamedTextDocument *file2 = new NamedTextDocument;
   file2->setDocumentName(docName);
-  EXPECT_EXN(dlist.addDocument(file2), smbase::XAssert);
+  EXPECT_EXN(dlist.addDocument(file2), XAssert);
 
   // Nothing changed, and observers were not notified.
   EXPECT_EQ(dlist.numDocuments(), numDocs);
