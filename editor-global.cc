@@ -8,6 +8,7 @@
 #include "command-runner.h"                      // CommandRunner
 #include "connections-dialog.h"                  // ConnectionsDialog
 #include "diagnostic-details-dialog.h"           // DiagnosticDetailsDialog
+#include "doc-type-detect.h"                     // detectDocumentType
 #include "editor-command.ast.gen.h"              // EditorCommand
 #include "editor-navigation-options.h"           // EditorNavigationOptions
 #include "editor-proxy-style.h"                  // EditorProxyStyle
@@ -772,6 +773,8 @@ NamedTextDocument *EditorGlobal::loadFileContents(
     newDoc->setDocumentName(docName);
     newDoc->m_title = this->uniqueTitleFor(docName);
 
+    this->useDefaultHighlighter(newDoc.get());
+
     // Transfer ownership into the document list, but then get back a
     // non-owning pointer.
     doc = this->trackNewDocumentFile(std::move(newDoc));
@@ -798,6 +801,37 @@ NamedTextDocument *EditorGlobal::loadFileContents(
   doc->notifyMetadataChange();
 
   return doc;
+}
+
+
+void EditorGlobal::setDocumentType(
+  NamedTextDocument *ntd,
+  DocumentType newDT)
+{
+  if (newDT == ntd->documentType()) {
+    // If the new type is the same, don't do anything.  This avoids
+    // needlessly closing the file with LSP.
+    return;
+  }
+
+  // Close the file with LSP since the document type affects its scope.
+  lspClientManager()->closeFile(ntd);
+
+  // Make the change.
+  ntd->setDocumentType(newDT);
+
+  // Notify observers.
+  this->notifyDocumentAttributeChanged(ntd);
+}
+
+
+void EditorGlobal::useDefaultHighlighter(NamedTextDocument *ntd)
+{
+  TRACE1("useDefaultHighlighter: ntd: " <<
+         toGDValue(ntd->documentName()));
+
+  DocumentType dt = detectDocumentType(ntd->documentName());
+  this->setDocumentType(ntd, dt);
 }
 
 

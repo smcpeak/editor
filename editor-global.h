@@ -319,6 +319,12 @@ public:       // funcs
     DocumentName const &docName,
     bool fileWasOriginallyOpen);
 
+  // Change the highlighting used for `ntd`.
+  void setDocumentType(NamedTextDocument *ntd, DocumentType newDT);
+
+  // Set the highlighter using name-based heuristics.
+  void useDefaultHighlighter(NamedTextDocument *ntd);
+
   // ------------------------ Special documents ------------------------
   // Find a document that is untitled and has no modifications if one
   // exists.

@@ -6,7 +6,6 @@
 // editor
 #include "apply-command-dialog.h"                // ApplyCommandDialog
 #include "command-runner.h"                      // CommandRunner
-#include "doc-type-detect.h"                     // detectDocumentType
 #include "doc-type.h"                            // DocumentType
 #include "editor-global.h"                       // EditorGlobal
 #include "editor-navigation-options.h"           // EditorNavigationOptions
@@ -751,16 +750,6 @@ void EditorWindow::updateForChangedFile()
 }
 
 
-void EditorWindow::useDefaultHighlighter(NamedTextDocument *file)
-{
-  TRACE1("useDefaultHighlighter: file: " <<
-         toGDValue(file->documentName()));
-
-  DocumentType dt = detectDocumentType(file->documentName());
-  setDocumentType(file, dt);
-}
-
-
 string EditorWindow::fileChooseDialog(HostName /*INOUT*/ &hostName,
   string const &origDir, bool saveAs)
 {
@@ -863,14 +852,11 @@ void EditorWindow::openOrSwitchToFile(HostAndResourceName const &harn)
     return;
   }
 
-  // TODO: This does not belong here!  The highlighter is part of the
-  // global state, not window- or widget-specific state.
-  this->useDefaultHighlighter(doc);
-
   this->setDocumentFile(doc);
 
-  // Now that we have switched to the new document, delete the untitled
-  // placeholder we might have been using.
+  // Delete the untitled placeholder we might have been using.  This is
+  // not done inside `loadFileContents` because we need to wait for the
+  // widget to switch what it is showing.
   m_editorGlobal->deleteUntitledUnmodifiedDocument();
 }
 
@@ -1068,7 +1054,7 @@ void EditorWindow::fileSaveAs() NOEXCEPT
       fileDoc->setDocumentName(docName);
       fileDoc->m_title = m_editorGlobal->uniqueTitleFor(docName);
       writeTheFile();
-      this->useDefaultHighlighter(fileDoc);
+      m_editorGlobal->useDefaultHighlighter(fileDoc);
 
       // Notify observers of the file name and highlighter change.  This
       // includes myself.
@@ -1266,7 +1252,7 @@ void EditorWindow::fileSetDocumentType() NOEXCEPT
   bool found = false;
   FOR_EACH_KNOWN_DOCUMENT_TYPE(dt) {
     if (chosenName == languageName(dt)) {
-      setDocumentType(doc, dt);
+      m_editorGlobal->setDocumentType(doc, dt);
       found = true;
       break;
     }
@@ -1274,27 +1260,6 @@ void EditorWindow::fileSetDocumentType() NOEXCEPT
   xassert(found);
 
   GENERIC_CATCH_END
-}
-
-
-void EditorWindow::setDocumentType(
-  NamedTextDocument *ntd,
-  DocumentType newDT)
-{
-  if (newDT == ntd->documentType()) {
-    // If the new type is the same, don't do anything.  This avoids
-    // needlessly closing the file with LSP.
-    return;
-  }
-
-  // Close the file with LSP since the document type affects its scope.
-  lspClientManager()->closeFile(ntd);
-
-  // Make the change.
-  ntd->setDocumentType(newDT);
-
-  // Notify observers.
-  m_editorGlobal->notifyDocumentAttributeChanged(ntd);
 }
 
 
@@ -1338,7 +1303,7 @@ void EditorWindow::innerLaunchCommand(
     editorWidget()->initCursorForProcessOutput();
 
     // Choose a highlighter based on the command line.
-    this->useDefaultHighlighter(doc);
+    m_editorGlobal->useDefaultHighlighter(doc);
   }
 }
 
