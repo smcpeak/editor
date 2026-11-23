@@ -1,0 +1,117 @@
+rename-event-replay-to-ui-shell.txt
+Plan for renaming the "Event Replay" system to "UI Shell"
+2026-11-23
+
+
+Background
+==========
+
+The name "event replay" originated from the idea that the GUI tests
+would primarily work by "replaying" events that had previously been
+recorded.  However, it currently includes a large number of "Check*"
+commands that are inserted by the test author after recording.
+Additionally, doc/plans/claude-gui-control-shell.txt anticipates
+expanding it to cover app queries that can be returned via a new
+auxiliary control interface.  That is, this system is no longer
+restricted to "events", nor does not merely "replay" things that were
+previously recorded.  It needs a new name.
+
+
+New name: "UI Shell"
+====================
+
+I choose "UI Shell" as the new name.  The name "shell" evokes, to me at
+least, a sequential interaction model organized around text or
+text-adjacent (e.g., JSON/GDVN) requests/commands and replies.
+
+This mechanism is primarily concerned with querying and operating the
+user interface, hence "UI".
+
+
+Specific renamings
+------------------
+
+Prior to doing any of the things in claude-gui-control-shell.txt, the
+set of renames to perform is as follows:
+
+"Event Replay" subsystem name -> "UI Shell"
+
+  Plus "UI Shell Language" where needed to distinguish the language.
+
+".ev" file extension -> ".uis"
+
+  Rename test/*.ev to test/*.uis.
+
+  Change all references to those files accordingly, except in doc/plans.
+  In particular, defer updating claude-gui-control-shell.txt.
+
+"-ev" command line option -> "-uisCmds"
+
+  Later, "-uisServer" will be added.
+
+  Change Makefile to use "-uisCmds".
+
+  Change test/all-tests.gdvn likewise.
+
+"event-replay" module -> "ui-shell-script-runner"
+
+  Including in its INIT_TRACE call.
+
+"EventReplay" class -> "UIShellScriptRunner"
+
+  Later, "UIShellExecutor" will be split off from the script runner.
+
+  In the EventReplay class method names, "replay" is changed to
+  "execute".
+
+"doc/event-replay.txt" -> "doc/ui-shell.txt"
+
+  Defer updating the contents of that file until after all the code
+  renames are done.
+
+"EventReplayQueryable" class -> "UIShellQueryable"
+
+  "eventReplayQuery" method -> "uiShellQuery", and similarly for other
+  methods in the class, such as "eventReplayImage" -> "uiShellImage".
+
+doc-type-detect currently handles "ev" as GDVN.  Add "uis".
+
+  Later, we will add "uisk" too.
+
+Currently, "-record" writes "events.out".  Change to "recorded.uis".
+
+Change editor-global.cc `optionsDescription` to:
+
+  options:
+    -help           Print this message and exit.
+    -version        Print the version and exit.
+    -uisCmds=file.uis
+                    Execute UI shell commands in file.uis, then quit.
+                    Implies -no-settings.
+    -testCommands=tests.gdvn
+                    Replay all tests in tests.gdvn.
+    -record         Record events to events.out.
+    -conn=hostname  Start with an active remote connection to hostname.
+    -no-settings    Do not read or write user settings.
+    -fake-lsp       Use `lsp-test-server.py` as the LSP server.
+
+  With -uisCmds, set envvar NOQUIT=1 to stop if failure and NOQUIT=0 to
+  stop after replay regardless of failure.
+
+Change editor-global.cc error regarding specified files to:
+
+  if (!m_eventTestFileName.empty()) {
+    xformat("Cannot specify files to open with -uisCmds.  Put them "
+            "into the .uis file instead.");
+  }
+
+Misc. names:
+
+  m_eventReplayDelayMS         -> m_uiShellDelayMS
+  REPLAY_DELAY_MS              -> UI_SHELL_DELAY_MS
+  REPLAY_DISABLE_SELFCHECK     -> UI_SHELL_DISABLE_SELFCHECK
+
+Update CLAUDE.md to reflect the renames listed here.
+
+
+EOF
