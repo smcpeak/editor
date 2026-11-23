@@ -13,7 +13,7 @@ commands that are inserted by the test author after recording.
 Additionally, doc/plans/claude-gui-control-shell.txt anticipates
 expanding it to cover app queries that can be returned via a new
 auxiliary control interface.  That is, this system is no longer
-restricted to "events", nor does not merely "replay" things that were
+restricted to "events", nor does it merely "replay" things that were
 previously recorded.  It needs a new name.
 
 
@@ -40,10 +40,12 @@ set of renames to perform is as follows:
 
 ".ev" file extension -> ".uis"
 
-  Rename test/*.ev to test/*.uis.
+  Rename test/*.ev to test/*.uis.  Also change the first line of each
+  file to reflect its new name.
 
-  Change all references to those files accordingly, except in doc/plans.
-  In particular, defer updating claude-gui-control-shell.txt.
+  Change all references to those files accordingly, including in
+  Makefile, except in doc/plans.  In particular, defer updating
+  claude-gui-control-shell.txt.
 
 "-ev" command line option -> "-uisCmds"
 
@@ -55,28 +57,42 @@ set of renames to perform is as follows:
 
 "event-replay" module -> "ui-shell-script-runner"
 
-  Including in its INIT_TRACE call.
+  Including in its INIT_TRACE call, #include guard name, and the
+  Makefile.
 
 "EventReplay" class -> "UIShellScriptRunner"
 
-  Later, "UIShellExecutor" will be split off from the script runner.
+  Later, "UIShellExecutor" and "UIShellQueryable" will be split off from
+  the script runner.
 
-  In the EventReplay class method names, "replay" is changed to
-  "execute".
+  Method renames:
+
+    replayCall                 -> executeCommand
+    replayShortcut             -> executeShortcut
+    replayNextEvent            -> executeNextCommand
+    replayFocusKey             -> executeFocusKey
+    callReplayNextEvent        -> callExecuteNextCommand
+
+"EventReplayQueryable" class -> "UIShellQueryable"
+
+  Method renames:
+
+    eventReplayQuery           -> uiShellQuery
+    tryEventReplayQuery        -> tryUIShellQuery
+    eventReplayImage           -> uiShellImage
 
 "doc/event-replay.txt" -> "doc/ui-shell.txt"
 
   Defer updating the contents of that file until after all the code
   renames are done.
 
-"EventReplayQueryable" class -> "UIShellQueryable"
-
-  "eventReplayQuery" method -> "uiShellQuery", and similarly for other
-  methods in the class, such as "eventReplayImage" -> "uiShellImage".
-
 doc-type-detect currently handles "ev" as GDVN.  Add "uis".
 
   Later, we will add "uisk" too.
+
+  Keep "ev" in the list, at least for now.
+
+  Add a "uis" test case to doc-type-detect-test.cc.
 
 Currently, "-record" writes "events.out".  Change to "recorded.uis".
 
@@ -89,14 +105,17 @@ Change editor-global.cc `optionsDescription` to:
                     Execute UI shell commands in file.uis, then quit.
                     Implies -no-settings.
     -testCommands=tests.gdvn
-                    Replay all tests in tests.gdvn.
-    -record         Record events to events.out.
+                    Execute all tests in tests.gdvn.
+    -record         Record events to recorded.uis.
     -conn=hostname  Start with an active remote connection to hostname.
     -no-settings    Do not read or write user settings.
     -fake-lsp       Use `lsp-test-server.py` as the LSP server.
 
   With -uisCmds, set envvar NOQUIT=1 to stop if failure and NOQUIT=0 to
-  stop after replay regardless of failure.
+  stop after execution regardless of failure.
+
+Note: The "With -uisCmds" sentence is a mess, as is the mechanism it
+describes.  We will fix that later.
 
 Change editor-global.cc error regarding specified files to:
 
@@ -110,8 +129,42 @@ Misc. names:
   m_eventReplayDelayMS         -> m_uiShellDelayMS
   REPLAY_DELAY_MS              -> UI_SHELL_DELAY_MS
   REPLAY_DISABLE_SELFCHECK     -> UI_SHELL_DISABLE_SELFCHECK
+  m_eventTestFileName          -> m_uiShellCmdsFileName
+  m_eventTestCommands          -> m_uiShellCommands
+  processEventTestFile         -> processUIShellCmdsFile
+
+.gitignore: Change "events.out" to "recorded.uis".
+
+doc/os-wait-timer.txt, todo.txt: Change "event-replay.cc" to
+"ui-shell-script-runner.cc", but otherwise leave "replay" as-is (the
+text is referring to replay per se, not the subsystem generally).
+
+Update each #include line that refers to "event-replay.h" to instead
+refer to "ui-shell.h", adjust its order in the list ("LANG=C sort"
+order), adjust its trailing comment, and re-align the comments
+vertically.
+
+In general, apply the renamings within comments and string literals too.
+Some specifics:
+
+  noun "event replay"          -> "UI shell"
+  verb "replay" (in context)   -> "execute"
+  noun "replay event"          -> "command execution"
 
 Update CLAUDE.md to reflect the renames listed here.
+
+After making these changes, run "make clean" before rebuilding.
+
+
+Git rename detection support
+----------------------------
+
+To aid in git rename detection, all file renames should be done with an
+initial "git mv" before making any content changes, then edit the moved
+file.  This way, the unedited content will be staged.  My intention is
+to then commit all of the pure "git mv" effects at once, then commit the
+content edits as a second commit.  The intermediate commit will not
+compile, but that's ok.
 
 
 EOF
