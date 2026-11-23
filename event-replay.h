@@ -30,17 +30,33 @@ class QWidget;
 //
 // This is also used during recording to do some filtering.
 class EventReplayQueryable {
-public:
-  // Return some application-specific state.  This result must match the
-  // argument to the "CheckQuery" command in test scripts for the test
-  // to pass.
-  //
-  // It can throw any exception to indicate a syntax error with 'state';
-  // that will cause the test to fail.  It can also just return an error
-  // message, as that will not be what the test script is expecting.
-  //
-  // The default returns the string "unknown state: $state",
+public:      // funcs
+  /*
+    Returns the tagged tuple:
+
+      Error("$msg")
+
+    A tagged `Error` tuple with a single string element containing a
+    human-readable error message is the usual way to convey errors.
+  */
+  static gdv::GDValue errorTuple(string const &msg);
+
+  /*
+    Return some application-specific state.  This result must match the
+    argument to the "CheckQuery" command in test scripts for the test
+    to pass.  Typically, the returned value is a string or an integer,
+    but it can be any GDValue.
+
+    If it throws an exception, that will normally be converted into an
+    `Error` tagged tuple by `tryEventReplayQuery`.
+
+    The default calls `errorTuple` with "unknown state: $state".
+  */
   virtual gdv::GDValue eventReplayQuery(string const &state);
+
+  // Calls `eventReplayQuery`.  If it throws, its message is passed to
+  // `errorTuple` and that returned.
+  gdv::GDValue tryEventReplayQuery(string const &state);
 
   // Return an app-specific image, identified by 'what'.  Corresponds to
   // the "CheckQuery" command.  The default implementation returns a

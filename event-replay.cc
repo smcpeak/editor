@@ -83,10 +83,28 @@ INIT_TRACE("event-replay");
 
 
 // -------------------- EventReplayQueryable --------------------
+/*static*/ GDValue EventReplayQueryable::errorTuple(string const &msg)
+{
+  return GDVTaggedTuple("Error"_sym, GDVTuple({toGDValue(msg)}));
+}
+
+
 GDValue EventReplayQueryable::eventReplayQuery(string const &state)
 {
-  return stringb("unknown state: " << doubleQuote(state));
+  return errorTuple(stringb("unknown state: " << doubleQuote(state)));
 }
+
+
+GDValue EventReplayQueryable::tryEventReplayQuery(string const &state)
+{
+  try {
+    return eventReplayQuery(state);
+  }
+  catch (std::exception &e) {
+    return errorTuple(e.what());
+  }
+}
+
 
 QImage EventReplayQueryable::eventReplayImage(string const &)
 {
@@ -741,7 +759,7 @@ void EventReplay::replayCall(GDValue const &command)
     EXN_CONTEXT(expect.sourceLocation().asString());
 
     EventReplayQueryable *q = getQueryableFromPath(receiver);
-    GDValue actual = q->eventReplayQuery(state);
+    GDValue actual = q->tryEventReplayQuery(state);
     CHECK_EQ("CheckQuery " << doubleQuote(receiver) << ' ' <<
              doubleQuote(state));
   }
@@ -751,7 +769,13 @@ void EventReplay::replayCall(GDValue const &command)
       gdvpToTuple<std::string, std::string, std::string>(parser);
 
     EventReplayQueryable *q = getQueryableFromPath(receiver);
-    std::string actual = q->eventReplayQuery(state).stringGet();
+    GDValue actualValue = q->tryEventReplayQuery(state);
+    if (!actualValue.isString()) {
+      xmessagesb("CheckQueryMatches: the actual value " <<
+        actualValue << " is not a string; expected it to the regex " <<
+        doubleQuote(expectRE) << ".");
+    }
+    std::string actual = actualValue.stringGet();
     CHECK_RE_MATCH("CheckQueryMatches " << doubleQuote(receiver) << ' ' <<
                    doubleQuote(state));
   }
