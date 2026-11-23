@@ -55,15 +55,15 @@ set of renames to perform is as follows:
 
   Change test/all-tests.gdvn likewise.
 
-"event-replay" module -> "ui-shell-script-runner"
+"event-replay" module -> "ui-shell"
 
   Including in its INIT_TRACE call, #include guard name, and the
   Makefile.
 
 "EventReplay" class -> "UIShellScriptRunner"
 
-  Later, "UIShellExecutor" and "UIShellQueryable" will be split off from
-  the script runner.
+  Later, "UIShellExecutor" will be split off from the script runner
+  class.
 
   Method renames:
 
@@ -80,6 +80,8 @@ set of renames to perform is as follows:
     eventReplayQuery           -> uiShellQuery
     tryEventReplayQuery        -> tryUIShellQuery
     eventReplayImage           -> uiShellImage
+
+  Later, we may split off "ui-shell-queryable" as its own module.
 
 "doc/event-replay.txt" -> "doc/ui-shell.txt"
 
@@ -136,8 +138,8 @@ Misc. names:
 .gitignore: Change "events.out" to "recorded.uis".
 
 doc/os-wait-timer.txt, todo.txt: Change "event-replay.cc" to
-"ui-shell-script-runner.cc", but otherwise leave "replay" as-is (the
-text is referring to replay per se, not the subsystem generally).
+"ui-shell.cc", but otherwise leave "replay" as-is (the text is referring
+to replay per se, not the subsystem generally).
 
 Update each #include line that refers to "event-replay.h" to instead
 refer to "ui-shell.h", adjust its order in the list ("LANG=C sort"
