@@ -7,9 +7,9 @@
 #include "open-files-dialog-fwd.h"               // fwds for this module
 
 #include "editor-global-fwd.h"                   // EditorGlobal
-#include "event-replay.h"                        // EventReplayQueryable
 #include "modal-dialog.h"                        // ModalDialog
 #include "named-td-list.h"                       // NamedTextDocumentList
+#include "ui-shell.h"                            // UIShellQueryable
 
 #include "smqtutil/sm-table-widget-fwd.h"        // SMTableWidget
 
@@ -33,7 +33,7 @@ ostream& operator<< (ostream &os, QModelIndex const &index);
 //
 // This is sort of like an "editor" for NamedTextDocumentList.
 class OpenFilesDialog : public ModalDialog,
-                        public EventReplayQueryable {
+                        public UIShellQueryable {
   Q_OBJECT
 
 private:     // instance data
@@ -91,8 +91,8 @@ public:      // funcs
   // QObject methods.
   virtual bool eventFilter(QObject *watched, QEvent *event) OVERRIDE;
 
-  // EventReplayQueryable methods.
-  virtual gdv::GDValue eventReplayQuery(string const &state) OVERRIDE;
+  // UIShellQueryable methods.
+  virtual gdv::GDValue uiShellQuery(string const &state) OVERRIDE;
 
 public Q_SLOTS:
   void on_doubleClicked(QModelIndex const &index) NOEXCEPT;

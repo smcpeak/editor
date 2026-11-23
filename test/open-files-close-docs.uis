@@ -1,7 +1,7 @@
-// open-files-close-docs.ev
+// open-files-close-docs.uis
 // In the open-files dialog, close some documents.
 {
-  args: ["test/read-only1.ev" "test/read-only2.ev" "test/read-only3.ev" "test/resize1.ev"]
+  args: ["test/read-only1.uis" "test/read-only2.uis" "test/read-only3.uis" "test/resize1.uis"]
   cmds: [
 
 // Open the open-files dialog.
@@ -10,43 +10,43 @@ Shortcut("window1.m_menuBar.windowMenu.windowOpenFilesList" "Ctrl+O")
 CheckFocusWidget("OpenFilesDialog.m_tableWidget")
 
 // I expect this to start with four specific files open.
-CheckQuery("OpenFilesDialog" "allDocumentsFilenamePathBase" "resize1.ev\nread-only3.ev\nread-only2.ev\nread-only1.ev\n")
+CheckQuery("OpenFilesDialog" "allDocumentsFilenamePathBase" "resize1.uis\nread-only3.uis\nread-only2.uis\nread-only1.uis\n")
 CheckQuery("OpenFilesDialog" "numRows" "4")
 
 // The first should be selected.
 CheckQuery("OpenFilesDialog" "cursorRow" "0")
-CheckQuery("OpenFilesDialog" "cursorDocumentFilenamePathBase" "resize1.ev")
+CheckQuery("OpenFilesDialog" "cursorDocumentFilenamePathBase" "resize1.uis")
 
 // Close the first one.
 ClickButton("OpenFilesDialog.m_closeSelButton")
 
 // Should now be three files.
-CheckQuery("OpenFilesDialog" "allDocumentsFilenamePathBase" "read-only3.ev\nread-only2.ev\nread-only1.ev\n")
+CheckQuery("OpenFilesDialog" "allDocumentsFilenamePathBase" "read-only3.uis\nread-only2.uis\nread-only1.uis\n")
 CheckQuery("OpenFilesDialog" "cursorRow" "0")
-CheckQuery("OpenFilesDialog" "cursorDocumentFilenamePathBase" "read-only3.ev")
+CheckQuery("OpenFilesDialog" "cursorDocumentFilenamePathBase" "read-only3.uis")
 
 // Move to the second one.
 FocusKeyPR("Key_Down" "")
 CheckQuery("OpenFilesDialog" "cursorRow" "1")
-CheckQuery("OpenFilesDialog" "cursorDocumentFilenamePathBase" "read-only2.ev")
+CheckQuery("OpenFilesDialog" "cursorDocumentFilenamePathBase" "read-only2.uis")
 
 // Close it.
 ClickButton("OpenFilesDialog.m_closeSelButton")
 CheckQuery("OpenFilesDialog" "cursorRow" "1")
-CheckQuery("OpenFilesDialog" "cursorDocumentFilenamePathBase" "read-only1.ev")
+CheckQuery("OpenFilesDialog" "cursorDocumentFilenamePathBase" "read-only1.uis")
 
 // Close the last file in the list, leaving just one.
 ClickButton("OpenFilesDialog.m_closeSelButton")
 CheckQuery("OpenFilesDialog" "cursorRow" "0")
-CheckQuery("OpenFilesDialog" "cursorDocumentFilenamePathBase" "read-only3.ev")
-CheckQuery("OpenFilesDialog" "allDocumentsFilenamePathBase" "read-only3.ev\n")
+CheckQuery("OpenFilesDialog" "cursorDocumentFilenamePathBase" "read-only3.uis")
+CheckQuery("OpenFilesDialog" "allDocumentsFilenamePathBase" "read-only3.uis\n")
 
 // Close the dialog.
 FocusKeyPR("Key_Escape" "\u{1B}")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
 // Remaining file should be all that is open.
-CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "read-only3.ev")
+CheckQuery("window1.frame1.editorFrame.m_editorWidget" "documentFileName" "read-only3.uis")
 
 
 ]}

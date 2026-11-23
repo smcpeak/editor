@@ -1,4 +1,4 @@
-// lsp-all-uses.ev
+// lsp-all-uses.uis
 // Exercise the "all uses" LSP function.
 {
   args: ["test/language-test.cc"]

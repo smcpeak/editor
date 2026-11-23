@@ -288,7 +288,7 @@ RFA_AsyncMultiClient *EditorWindow::rfaAMClient() const
 // a pointer-to-member argument.
 //
 // It also exists to set the object name of the QAction in order to help
-// my event record/replay test framework.
+// my UI shell test framework.
 //
 // I might move this to smqtutil at some point.
 template <class RECEIVER>
@@ -697,7 +697,7 @@ void EditorWindow::buildMenu()
   }
 
   // Allow the menu bar to get smaller than the sum of all its labels.
-  // This is needed for test/screenshot1.ev when running on a high-DPI
+  // This is needed for test/screenshot1.uis when running on a high-DPI
   // display.
   this->m_menuBar->setMinimumWidth(200);
 

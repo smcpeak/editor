@@ -34,7 +34,6 @@ config.mk
 editor
 editor-stable
 editor-strutil-test
-events.out
 gap-test
 hashcomment-hilite-test
 historybuf
@@ -49,6 +48,7 @@ nearby-file-test
 out
 personal-make-cmd.sh
 qtbdffont
+recorded.uis
 style
 td-core
 td-core-test

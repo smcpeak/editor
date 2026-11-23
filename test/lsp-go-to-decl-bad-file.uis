@@ -1,4 +1,4 @@
-// lsp-go-to-decl-bad-file.ev
+// lsp-go-to-decl-bad-file.uis
 // Try to go to the decl of a symbol with bad file name info.
 {
   args: ["test/language-test.cc"]

@@ -1,4 +1,4 @@
-// reload-after-modification.ev
+// reload-after-modification.uis
 // Test reloading a file after it is modified on disk.
 {
   args: ["test/gets-modified.txt"]

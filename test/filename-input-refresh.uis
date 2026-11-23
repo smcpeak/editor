@@ -1,4 +1,4 @@
-// filename-input-refresh.ev
+// filename-input-refresh.uis
 // Test the "Refresh" button of the file name input dialog.
 {
   args: []

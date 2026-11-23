@@ -1,4 +1,4 @@
-// keysequence2.ev
+// keysequence2.uis
 // Test with some shifted characters and caps lock.
 {
   args: []

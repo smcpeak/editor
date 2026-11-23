@@ -1,4 +1,4 @@
-// undo-redo-undo.ev
+// undo-redo-undo.uis
 // Reproduce a crash involving undo and redo and file save.
 {
   args: ["tmp.h"]

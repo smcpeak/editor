@@ -1,8 +1,8 @@
-// event-replay.h
-// EventReplay class.
+// ui-shell.h
+// UIShellScriptRunner class.
 
-#ifndef EVENT_REPLAY_H
-#define EVENT_REPLAY_H
+#ifndef UI_SHELL_H
+#define UI_SHELL_H
 
 // smbase
 #include "smbase/array.h"              // ArrayStack
@@ -25,11 +25,11 @@ class QImage;
 class QWidget;
 
 
-// Interface that the replay engine uses to query arbitrary state
+// Interface that the UI shell uses to query arbitrary state
 // elements of objects.
 //
 // This is also used during recording to do some filtering.
-class EventReplayQueryable {
+class UIShellQueryable {
 public:      // funcs
   /*
     Returns the tagged tuple:
@@ -48,20 +48,20 @@ public:      // funcs
     but it can be any GDValue.
 
     If it throws an exception, that will normally be converted into an
-    `Error` tagged tuple by `tryEventReplayQuery`.
+    `Error` tagged tuple by `tryUIShellQuery`.
 
     The default calls `errorTuple` with "unknown state: $state".
   */
-  virtual gdv::GDValue eventReplayQuery(string const &state);
+  virtual gdv::GDValue uiShellQuery(string const &state);
 
-  // Calls `eventReplayQuery`.  If it throws, its message is passed to
+  // Calls `uiShellQuery`.  If it throws, its message is passed to
   // `errorTuple` and that returned.
-  gdv::GDValue tryEventReplayQuery(string const &state);
+  gdv::GDValue tryUIShellQuery(string const &state);
 
   // Return an app-specific image, identified by 'what'.  Corresponds to
   // the "CheckQuery" command.  The default implementation returns a
   // null QImage.
-  virtual QImage eventReplayImage(string const &what);
+  virtual QImage uiShellImage(string const &what);
 
   // Return true if resize events should be recorded for this object.
   // Doing so facilitates writing tests for resizing.  The default is
@@ -73,8 +73,8 @@ public:      // funcs
 // Read events and test assertions from a file.  Synthesize the events
 // to drive the app, and check the assertions.
 //
-// See doc/event-replay.txt for theory of operation.
-class EventReplay : public QObject {
+// See doc/ui-shell.txt for theory of operation.
+class UIShellScriptRunner : public QObject {
   Q_OBJECT
 
 private:     // types
@@ -93,13 +93,13 @@ private:     // class data
   static int s_quiescenceEventType;
 
 private:     // instance data
-  // Sequence of replay commands to execute.
+  // Sequence of UI shell commands to execute.
   std::vector<gdv::GDValue> const &m_testCommands;
 
   // Index in `m_textCommands` to execute next.
   std::size_t m_nextTestCommandIndex;
 
-  // Queue of ordinary typing characters to replay before continuing
+  // Queue of ordinary typing characters to execute before continuing
   // with the events in 'm_in'.
   ArrayStack<char> m_queuedFocusKeySequence;
 
@@ -113,7 +113,7 @@ private:     // instance data
   // If non-zero, use a delay timer *instead* of the quiescence
   // mechanism.  A timer is less reliable but can help during debugging.
   // Currently this can only be set with an envvar.
-  int m_eventReplayDelayMS;
+  int m_uiShellDelayMS;
 
   // Active timer ID, or 0 if none.
   int m_timerId;
@@ -132,9 +132,9 @@ private:     // funcs
   // the function we are performing, and used in a `TRACE` call.
   QWidget *getFocusWidget(QString const &funcName);
 
-  // Replay a single `command`.  Throw an exception if there is a
+  // Execute a single `command`.  Throw an exception if there is a
   // problem.
-  void replayCall(gdv::GDValue const &command);
+  void executeCommand(gdv::GDValue const &command);
 
   // Do an extra sleep on Linux as a workaround for a bug.  See comments
   // on implementation.
@@ -143,21 +143,21 @@ private:     // funcs
   // Sleep for 'ms' milliseconds while pumping the event queue.
   void sleepForMS(int ms);
 
-  // Replay a "Shortcut" event.
-  void replayShortcut(
+  // Execute a "Shortcut" event.
+  void executeShortcut(
     std::string const &receiverPath,
     std::string const &keys);
 
-  // Replay an ordinary typing event.
-  void replayFocusKey(char c);
+  // Execute an ordinary typing event.
+  void executeFocusKey(char c);
 
-  // Read the next event from 'm_in' and replay it.  Return true if
+  // Read the next command from 'm_in' and execute it.  Return true if
   // the test should continue after doing that.
-  bool replayNextEvent();
+  bool executeNextCommand();
 
-  // Wrapper around 'replayNextEvent' that shuts down the event loop if
-  // the test should stop.
-  bool callReplayNextEvent();
+  // Wrapper around 'executeNextCommand' that shuts down the event loop
+  // if the test should stop.
+  bool callExecuteNextCommand();
 
   // Execute the "WaitUntilCheckQuery" command.
   void waitUntilCheckQuery(
@@ -176,17 +176,17 @@ private:     // funcs
   // Post a QuiescenceEvent to the application event queue.
   void postQuiescenceEvent();
 
-  // Install a timer to trigger the next replay event.
+  // Install a timer to trigger the next command execution.
   void installTimer();
 
   // Kill the timer if it is active.
   void killTimerIf();
 
 public:      // funcs
-  explicit EventReplay(
+  explicit UIShellScriptRunner(
     std::vector<gdv::GDValue> const &testCommands,
     std::function<void ()> globalSelfCheck);
-  ~EventReplay();
+  ~UIShellScriptRunner();
 
   // Inject all the events and check all the assertions.  If everything
   // is ok, return "".  Otherwise return a string describing the test
@@ -207,4 +207,4 @@ private Q_SLOTS:
 };
 
 
-#endif // EVENT_REPLAY_H
+#endif // UI_SHELL_H

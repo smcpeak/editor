@@ -17,7 +17,6 @@
 #include "editor-navigation-options.h"           // EditorNavigationOptions
 #include "editor-settings-fwd.h"                 // EditorSettings [n]
 #include "editor-window-fwd.h"                   // EditorWindow [n]
-#include "event-replay.h"                        // EventReplayQueryable
 #include "fail-reason-opt.h"                     // FailReasonOpt
 #include "host-file-olb.h"                       // HostFile_OptLineByte
 #include "line-difference.h"                     // LineDifference
@@ -36,6 +35,7 @@
 #include "td-editor.h"                           // TextDocumentEditor
 #include "text-search.h"                         // TextSearch
 #include "textcategory.h"                        // TextCategory, LineCategoryAOAs
+#include "ui-shell.h"                            // UIShellQueryable
 #include "uri-util.h"                            // URIPathSemantics
 
 // smqtutil
@@ -80,7 +80,7 @@ class EditorWidget
       // Note: `TextDocumentObserver` inherits `SerfRefCount`, so that
       // allows `RCSerf`s to point to `EditorWidget`.
     public NamedTextDocumentListObserver,        // Watch the list of files.
-    public EventReplayQueryable { // Respond to test queries.
+    public UIShellQueryable { // Respond to test queries.
   Q_OBJECT
 
   // Currently, SAR needs access to m_editor, and I am torn about
@@ -844,9 +844,9 @@ public:      // funcs
   string applyCommandSubstitutions(string const &orig) const;
 
   // -------------------------- testing ----------------------------
-  // EventReplayQueryable methods.
-  virtual gdv::GDValue eventReplayQuery(string const &state) OVERRIDE;
-  virtual QImage eventReplayImage(string const &what) OVERRIDE;
+  // UIShellQueryable methods.
+  virtual gdv::GDValue uiShellQuery(string const &state) OVERRIDE;
+  virtual QImage uiShellImage(string const &what) OVERRIDE;
   virtual bool wantResizeEventsRecorded() OVERRIDE;
 
 public Q_SLOTS:

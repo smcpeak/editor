@@ -76,7 +76,7 @@ void RFA_AsyncSingleClient::setState(State s)
   TRACE("RFA_AsyncSingleClient",
     "setState: " << toString(m_state) << " -> " << toString(s));
 
-  // Inform 'EventReplay' if our waitingness has changed.
+  // Inform 'UIShellScriptRunner' if our waitingness has changed.
   int wasWaiting = isWaitingState(m_state);
   int nowWaiting = isWaitingState(s);
   adjWaitingCounter(nowWaiting - wasWaiting);

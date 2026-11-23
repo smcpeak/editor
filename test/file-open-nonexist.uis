@@ -1,4 +1,4 @@
-// file-open-nonexist.ev
+// file-open-nonexist.uis
 // Test the prompt for opening a file that does not exist.
 {
   args: []

@@ -1,4 +1,4 @@
-// down.ev
+// down.uis
 // Just a couple down-arrow presses.
 {
   args: ["test/file1.h"]

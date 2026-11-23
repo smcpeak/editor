@@ -1,4 +1,4 @@
-// prompt-unsaved-changes.ev
+// prompt-unsaved-changes.uis
 // Prompt before quitting with unsaved changes.
 {
   args: []

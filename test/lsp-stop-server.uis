@@ -1,4 +1,4 @@
-// lsp-stop-server.ev
+// lsp-stop-server.uis
 // Test stopping the server.
 {
   args: ["test/language-test.cc"]

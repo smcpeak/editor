@@ -1,4 +1,4 @@
-// lsp-reload-file.ev
+// lsp-reload-file.uis
 // Test that reloading the file also syncs.
 {
   args: ["test/language-test.cc"]

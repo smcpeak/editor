@@ -1,4 +1,4 @@
-// inspect-decl-other-window.ev
+// inspect-decl-other-window.uis
 // Test Shift+F12, inspecting a symbol declaration in another window.
 {
   args: ["test/language-test.cc"]

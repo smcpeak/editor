@@ -1,4 +1,4 @@
-// sar-match-limit.ev
+// sar-match-limit.uis
 // Test hitting the match limit.
 {
   args: ["test/file1.h"]

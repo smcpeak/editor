@@ -1,4 +1,4 @@
-// select-beyond-eof.ev
+// select-beyond-eof.uis
 // Test visual depiction of selection that extends beyond EOF.
 {
   args: []

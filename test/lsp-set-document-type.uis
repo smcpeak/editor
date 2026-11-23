@@ -1,4 +1,4 @@
-// lsp-set-document-type.ev
+// lsp-set-document-type.uis
 // Test changing the document type.
 {
   args: ["test/language-test.cc"]

@@ -1,4 +1,4 @@
-// cut-then-paste.ev
+// cut-then-paste.uis
 // Simple test of Ctrl+K then Ctrl+V restoring the line.
 {
   args: []

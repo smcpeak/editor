@@ -16,7 +16,7 @@ TODOs:
     no longer tracking the end of the file.
 
   - Event replay problems on Linux
-    - Currently I have some ugly sleeps in event-replay.cc; see
+    - Currently I have some ugly sleeps in ui-shell.cc; see
       `checkFocusWorkaround`
     - Also the tests sometimes just hang and I have to kill the
       process in another terminal

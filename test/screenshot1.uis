@@ -1,4 +1,4 @@
-// screenshot1.ev
+// screenshot1.uis
 // Simple test that involves taking a screenshot.
 {
   args: ["test/file1.h"]

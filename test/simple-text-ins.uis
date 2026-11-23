@@ -1,4 +1,4 @@
-// simple-text-ins.ev
+// simple-text-ins.uis
 // Starting with an empty file, insert some text and edit it slightly.
 {
   args: []

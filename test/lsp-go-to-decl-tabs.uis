@@ -1,4 +1,4 @@
-// lsp-go-to-decl-tabs.ev
+// lsp-go-to-decl-tabs.uis
 // Test using LSP to jump to a declaration that has tab characters.
 {
   args: ["test/language-test.cc"]

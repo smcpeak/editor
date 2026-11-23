@@ -1,4 +1,4 @@
-// sar-find-cs-completion.ev
+// sar-find-cs-completion.uis
 // Test that the SAR "Find" box does not use case-insensitive completion.
 {
   args: ["test/file1.h"]

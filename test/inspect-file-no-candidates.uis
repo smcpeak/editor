@@ -1,4 +1,4 @@
-// inspect-file-no-candidates.ev
+// inspect-file-no-candidates.uis
 // Use "Inspect file", but there are no candidates.
 {
   args: ["test/language-test.cc"]

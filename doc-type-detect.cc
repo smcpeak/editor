@@ -192,6 +192,7 @@ DocumentType detectDocumentType(DocumentName const &docName)
       "java",      // C/C++ highlighting is better than none.
       "json",      // Should work fine.
       "lex",
+      "uis",       // Also GDVN.
       "y",
     };
     if (stringAmong(ext, cLikeExts, TABLESIZE(cLikeExts))) {

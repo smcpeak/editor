@@ -1,4 +1,4 @@
-// set-highlighting.ev
+// set-highlighting.uis
 // Test the "File | Set document type ..." menu item.
 {
   args: ["test/language-test.cc"]

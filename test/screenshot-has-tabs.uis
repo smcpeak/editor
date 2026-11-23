@@ -1,4 +1,4 @@
-// screenshot-has-tabs.ev
+// screenshot-has-tabs.uis
 // Screenshot showing test/has-tabs.c highlighted.
 {
   args: ["test/has-tabs.c"]

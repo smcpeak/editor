@@ -1,4 +1,4 @@
-// lsp-mgr-multiple-servers.ev
+// lsp-mgr-multiple-servers.uis
 // Demonstrate the LSP Servers dialog with multiple servers.
 {
   args: ["test/language-test.cc" "lsp-test-server.py" "smbase/create-tuple-class.py"]

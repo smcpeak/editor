@@ -1,4 +1,4 @@
-// lsp-no-op-change.ev
+// lsp-no-op-change.uis
 // Test attempting to refresh diagnostics without any change.
 {
   args: ["test/language-test.cc"]

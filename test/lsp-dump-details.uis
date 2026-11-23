@@ -1,4 +1,4 @@
-// lsp-dump-details.ev
+// lsp-dump-details.uis
 // Test "LSP | Debug | Dump all server details".
 {
   args: ["test/language-test.cc" "lsp-test-server.py"]

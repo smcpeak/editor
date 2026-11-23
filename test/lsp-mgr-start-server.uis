@@ -1,4 +1,4 @@
-// lsp-mgr-start-server.ev
+// lsp-mgr-start-server.uis
 // Test LSP Servers dialog "Start server" button.
 {
   args: ["test/language-test.cc"]

@@ -1,7 +1,7 @@
-// event-replay.cc
-// code for event-replay.h
+// ui-shell.cc
+// code for ui-shell.h
 
-#include "event-replay.h"                        // this module
+#include "ui-shell.h"                            // this module
 
 // NOTE: There should not be any dependencies here on the editor per se.
 // If you want to, say, query an EditorWidget from a test script, use
@@ -79,26 +79,26 @@ using namespace gdv;
 using namespace smbase;
 
 
-INIT_TRACE("event-replay");
+INIT_TRACE("ui-shell");
 
 
-// -------------------- EventReplayQueryable --------------------
-/*static*/ GDValue EventReplayQueryable::errorTuple(string const &msg)
+// --------------------- UIShellQueryable ---------------------
+/*static*/ GDValue UIShellQueryable::errorTuple(string const &msg)
 {
   return GDVTaggedTuple("Error"_sym, GDVTuple({toGDValue(msg)}));
 }
 
 
-GDValue EventReplayQueryable::eventReplayQuery(string const &state)
+GDValue UIShellQueryable::uiShellQuery(string const &state)
 {
   return errorTuple(stringb("unknown state: " << doubleQuote(state)));
 }
 
 
-GDValue EventReplayQueryable::tryEventReplayQuery(string const &state)
+GDValue UIShellQueryable::tryUIShellQuery(string const &state)
 {
   try {
-    return eventReplayQuery(state);
+    return uiShellQuery(state);
   }
   catch (std::exception &e) {
     return errorTuple(e.what());
@@ -106,30 +106,30 @@ GDValue EventReplayQueryable::tryEventReplayQuery(string const &state)
 }
 
 
-QImage EventReplayQueryable::eventReplayImage(string const &)
+QImage UIShellQueryable::uiShellImage(string const &)
 {
   return QImage();
 }
 
-bool EventReplayQueryable::wantResizeEventsRecorded()
+bool UIShellQueryable::wantResizeEventsRecorded()
 {
   return false;
 }
 
 
-// ------------------------ EventReplay -------------------------
-int EventReplay::s_quiescenceEventType = 0;
+// ------------------- UIShellScriptRunner --------------------
+int UIShellScriptRunner::s_quiescenceEventType = 0;
 
 
-EventReplay::QuiescenceEvent::QuiescenceEvent()
+UIShellScriptRunner::QuiescenceEvent::QuiescenceEvent()
   : QEvent((QEvent::Type)s_quiescenceEventType)
 {}
 
-EventReplay::QuiescenceEvent::~QuiescenceEvent()
+UIShellScriptRunner::QuiescenceEvent::~QuiescenceEvent()
 {}
 
 
-EventReplay::EventReplay(
+UIShellScriptRunner::UIShellScriptRunner(
   std::vector<gdv::GDValue> const &testCommands,
   std::function<void ()> globalSelfCheck)
 :
@@ -138,7 +138,7 @@ EventReplay::EventReplay(
   m_queuedFocusKeySequence(),
   m_testResult(),
   m_eventLoop(),
-  m_eventReplayDelayMS(0),
+  m_uiShellDelayMS(0),
   m_timerId(0),
   IMEMBFP(globalSelfCheck)
 {
@@ -148,14 +148,14 @@ EventReplay::EventReplay(
     xassert(s_quiescenceEventType > 0);
   }
 
-  if (char const *d = getenv("REPLAY_DELAY_MS")) {
+  if (char const *d = getenv("UI_SHELL_DELAY_MS")) {
     // Use the timer instead of the 'aboutToBlock' signal.
-    m_eventReplayDelayMS = atoi(d);
+    m_uiShellDelayMS = atoi(d);
   }
 }
 
 
-EventReplay::~EventReplay()
+UIShellScriptRunner::~UIShellScriptRunner()
 {
   // See doc/signals-and-dtors.txt.
   //
@@ -170,7 +170,8 @@ EventReplay::~EventReplay()
 #define xmessagesb(msg) xmessage(stringb(msg))
 
 
-void EventReplay::resizeChildWidget(QWidget *widget, QSize const &targetSize)
+void UIShellScriptRunner::resizeChildWidget(
+  QWidget *widget, QSize const &targetSize)
 {
   // How much should the target widget's size change?
   QSize currentSize = widget->size();
@@ -186,7 +187,7 @@ void EventReplay::resizeChildWidget(QWidget *widget, QSize const &targetSize)
   // Check against its minimum.  On Linux when displaying on Windows via
   // X, the main window can end up with a fairly large minimum
   // horizontal size, depending on the window title text.  At least for
-  // now, I will just override it during event replay.
+  // now, I will just override it while executing UI shell commands.
   QSize curMinSize = window->minimumSize();
   QSize newMinSize = curMinSize.boundedTo(windowSize);
   if (newMinSize != curMinSize) {
@@ -295,7 +296,7 @@ T *getObjectFromPath(string const &path)
 // recognize it.
 //
 // I'm not really sure it makes sense to have both versions.  I started
-// with qobject_cast, but for EventReplayQueryable I want to use
+// with qobject_cast, but for UIShellQueryable I want to use
 // ordinary dynamic_cast since I don't want to make it a QObject due to
 // potential multiple inheritance issues.  Perhaps I should only use
 // dynamic_cast?  Although getting readable class names using C++ RTTI
@@ -315,13 +316,13 @@ T *getObjectFromPathDC(string const &path)
 }
 
 
-static EventReplayQueryable *getQueryableFromPath(string const &path)
+static UIShellQueryable *getQueryableFromPath(string const &path)
 {
-  return getObjectFromPathDC<EventReplayQueryable>(path);
+  return getObjectFromPathDC<UIShellQueryable>(path);
 }
 
 
-QWidget *EventReplay::getFocusWidget(QString const &funcName)
+QWidget *UIShellScriptRunner::getFocusWidget(QString const &funcName)
 {
   QWidget *focusWidget = QApplication::focusWidget();
   if (!focusWidget) {
@@ -509,8 +510,8 @@ static QPointF toQPointF(QPoint const &pt)
   parser.tupleGetValueAt(n).stringGet()
 
 
-// Bind 'arg1' to the single expected string argument of a replay
-// function.
+// Bind 'arg1' to the single expected string argument of a UI shell
+// command.
 #define BIND_STRING_ARGS1(arg1)                \
   CHECK_NUM_ARGS(1);                           \
   string arg1 = GET_STRING_ARG(0) /* user ; */
@@ -549,7 +550,7 @@ static QPointF toQPointF(QPoint const &pt)
   }
 
 
-void EventReplay::replayCall(GDValue const &command)
+void UIShellScriptRunner::executeCommand(GDValue const &command)
 {
   GDValueParser parser(command);
   parser.checkIsTuple();
@@ -608,13 +609,13 @@ void EventReplay::replayCall(GDValue const &command)
       m_queuedFocusKeySequence.push(keys[i]);
     }
 
-    // Return so 'replayNextEvent' will process them.
+    // Return so 'executeNextCommand' will process them.
   }
 
   else if (funcName == "Shortcut") {
     BIND_STRING_ARGS2(receiverPath, keys);
 
-    replayShortcut(receiverPath, keys);
+    executeShortcut(receiverPath, keys);
   }
 
   // I tried creating a "FocusShortcut", but it does not work
@@ -676,11 +677,11 @@ void EventReplay::replayCall(GDValue const &command)
     // continue immediately.  If the effect of clicking the button is to
     // pop up a modal dialog, then 'click()' would wait for it to be
     // dismissed.
-    QObject::connect(this, &EventReplay::signal_clickButton,
+    QObject::connect(this, &UIShellScriptRunner::signal_clickButton,
                      button, &QAbstractButton::click,
                      Qt::QueuedConnection);
     Q_EMIT signal_clickButton();
-    QObject::disconnect(this, &EventReplay::signal_clickButton,
+    QObject::disconnect(this, &UIShellScriptRunner::signal_clickButton,
                         button, &QAbstractButton::click);
   }
 
@@ -758,8 +759,8 @@ void EventReplay::replayCall(GDValue const &command)
     // `CheckQuery` came from an included file.
     EXN_CONTEXT(expect.sourceLocation().asString());
 
-    EventReplayQueryable *q = getQueryableFromPath(receiver);
-    GDValue actual = q->tryEventReplayQuery(state);
+    UIShellQueryable *q = getQueryableFromPath(receiver);
+    GDValue actual = q->tryUIShellQuery(state);
     CHECK_EQ("CheckQuery " << doubleQuote(receiver) << ' ' <<
              doubleQuote(state));
   }
@@ -768,8 +769,8 @@ void EventReplay::replayCall(GDValue const &command)
     auto [receiver, state, expectRE] =
       gdvpToTuple<std::string, std::string, std::string>(parser);
 
-    EventReplayQueryable *q = getQueryableFromPath(receiver);
-    GDValue actualValue = q->tryEventReplayQuery(state);
+    UIShellQueryable *q = getQueryableFromPath(receiver);
+    GDValue actualValue = q->tryUIShellQuery(state);
     if (!actualValue.isString()) {
       xmessagesb("CheckQueryMatches: the actual value " <<
         actualValue << " is not a string; expected it to the regex " <<
@@ -1004,8 +1005,8 @@ void EventReplay::replayCall(GDValue const &command)
       xmessagesb("Failed to load screenshot image: " << expectFname);
     }
 
-    EventReplayQueryable *q = getQueryableFromPath(path);
-    QImage actualImage = q->eventReplayImage(what);
+    UIShellQueryable *q = getQueryableFromPath(path);
+    QImage actualImage = q->uiShellImage(what);
 
     if (actualImage != expectImage) {
       QString actualFname("failing-actual-image.png");
@@ -1113,7 +1114,7 @@ void EventReplay::replayCall(GDValue const &command)
 }
 
 
-void EventReplay::sleepForMS(int ms)
+void UIShellScriptRunner::sleepForMS(int ms)
 {
   TRACE1("sleeping for " << ms << " ms");
   IncDecWaitingCounter idwc;
@@ -1122,7 +1123,7 @@ void EventReplay::sleepForMS(int ms)
 }
 
 
-void EventReplay::replayShortcut(
+void UIShellScriptRunner::executeShortcut(
   std::string const &receiverPath,
   std::string const &keys)
 {
@@ -1134,7 +1135,7 @@ void EventReplay::replayShortcut(
     if (QWidget *buddy = label->buddy()) {
       TRACE1("Its buddy is: " << buddy->objectName());
 
-      // If we replay this as a Shortcut event, it will not work (for
+      // If we execute this as a Shortcut event, it will not work (for
       // unknown reasons).  So manually set the focus.
       buddy->setFocus();
       return;
@@ -1149,7 +1150,7 @@ void EventReplay::replayShortcut(
     return;
   }
 
-  // Normal shortcut replay.
+  // Normal shortcut execution.
   QCoreApplication::postEvent(
     receiverObject,
     getShortcutEventFromString(keys));
@@ -1159,14 +1160,14 @@ void EventReplay::replayShortcut(
 // Workaround for problem on Linux I haven't solved: wait a little
 // before checking focus.
 //
-// The problem manifests with `file-open-dialog1.ev` (and this sleep
-// disabled), among others.  We replay the Return keypress that should
+// The problem manifests with `file-open-dialog1.uis` (and this sleep
+// disabled), among others.  We execute the Return keypress that should
 // close the dialog, but if we immediately check focus, then no widget
 // has focus.  I think there is a problem with how my event loops are
 // nested.
 //
 // TODO: Debug and fix.
-void EventReplay::checkFocusWorkaround()
+void UIShellScriptRunner::checkFocusWorkaround()
 {
   if (!PLATFORM_IS_WINDOWS) {
     sleepForMS(100);
@@ -1191,9 +1192,9 @@ static QKeyEvent *charToKeyEvent(QEvent::Type eventType, char c)
 }
 
 
-void EventReplay::replayFocusKey(char c)
+void UIShellScriptRunner::executeFocusKey(char c)
 {
-  QWidget *focusWidget = getFocusWidget("replayFocusKey");
+  QWidget *focusWidget = getFocusWidget("executeFocusKey");
 
   // As for 'FocusKeyPR', posting both events at once should be safe.
   QCoreApplication::postEvent(
@@ -1205,7 +1206,7 @@ void EventReplay::replayFocusKey(char c)
 }
 
 
-bool EventReplay::replayNextEvent()
+bool UIShellScriptRunner::executeNextCommand()
 {
   try {
     // Process any queued focus keys first.
@@ -1213,7 +1214,7 @@ bool EventReplay::replayNextEvent()
       // Note that the error reporting in the 'catch' blocks is
       // appropriate since the file and line number are still correct
       // when we get here.
-      this->replayFocusKey(m_queuedFocusKeySequence.pop());
+      this->executeFocusKey(m_queuedFocusKeySequence.pop());
       m_globalSelfCheck();
       return true;
     }
@@ -1223,14 +1224,14 @@ bool EventReplay::replayNextEvent()
       GDValue const &command =
         m_testCommands.at(m_nextTestCommandIndex++);
 
-      TRACE1("replaying: " << command.sourceLocationIndicator() <<
+      TRACE1("executing: " << command.sourceLocationIndicator() <<
              command);
       TRACE3("command dump: " << command.dumpToString());
 
       // Use the location of `command` as context.
       EXN_CONTEXT(command.sourceLocation());
 
-      this->replayCall(command);
+      this->executeCommand(command);
       m_globalSelfCheck();
       return true;
     }
@@ -1255,21 +1256,21 @@ bool EventReplay::replayNextEvent()
 }
 
 
-void EventReplay::waitUntilCheckQuery(
+void UIShellScriptRunner::waitUntilCheckQuery(
   long durationMS,
   string const &receiver,
   string const &state,
   GDValue const &expect)
 {
   auto gdvFunc = [receiver, state]() -> GDValue {
-    EventReplayQueryable *q = getQueryableFromPath(receiver);
-    return q->eventReplayQuery(state);
+    UIShellQueryable *q = getQueryableFromPath(receiver);
+    return q->uiShellQuery(state);
   };
   waitUntilCheckGDValueFunction(durationMS, gdvFunc, expect);
 }
 
 
-void EventReplay::waitUntilCheckGDValueFunction(
+void UIShellScriptRunner::waitUntilCheckGDValueFunction(
   long durationMS,
   std::function<GDValue ()> gdvFunc,
   GDValue const &expect)
@@ -1317,24 +1318,24 @@ void EventReplay::waitUntilCheckGDValueFunction(
 }
 
 
-void EventReplay::postQuiescenceEvent()
+void UIShellScriptRunner::postQuiescenceEvent()
 {
   QCoreApplication::postEvent(this, new QuiescenceEvent());
 }
 
 
-void EventReplay::installTimer()
+void UIShellScriptRunner::installTimer()
 {
-  xassert(m_eventReplayDelayMS);
+  xassert(m_uiShellDelayMS);
   TRACE1("starting timer");
 
   this->killTimerIf();
-  m_timerId = this->startTimer(m_eventReplayDelayMS);
+  m_timerId = this->startTimer(m_uiShellDelayMS);
   xassert(m_timerId != 0);
 }
 
 
-void EventReplay::killTimerIf()
+void UIShellScriptRunner::killTimerIf()
 {
   if (m_timerId != 0) {
     TRACE1("killing timer");
@@ -1344,24 +1345,24 @@ void EventReplay::killTimerIf()
 }
 
 
-string EventReplay::runTest()
+string UIShellScriptRunner::runTest()
 {
   // Do one self-check at the start so a later failure is known to be
-  // caused by something that happened while replaying.
+  // caused by something that happened while executing.
   m_globalSelfCheck();
 
-  if (m_eventReplayDelayMS) {
+  if (m_uiShellDelayMS) {
     // Use timer-based notification.
     TRACE1("installing first timer");
     this->installTimer();
   }
   else {
     // Arrange to get notified just before the event dispatcher yields
-    // control to the OS.  See doc/event-replay.txt.
+    // control to the OS.  See doc/ui-shell.txt.
     TRACE2("connecting slot_aboutToBlock");
     QObject::connect(QAbstractEventDispatcher::instance(),
                      &QAbstractEventDispatcher::aboutToBlock,
-                     this, &EventReplay::slot_aboutToBlock);
+                     this, &UIShellScriptRunner::slot_aboutToBlock);
   }
 
   // Process events until the test completes.
@@ -1369,7 +1370,7 @@ string EventReplay::runTest()
   // NOTE: This is simply the substitute for the top-level application
   // event loop.  While the test runs, the app may start other event
   // loops, e.g., for modal dialogs.  Thus, it would not work to simply
-  // unpack this loop and replay events here.
+  // unpack this loop and execute commands here.
   TRACE1("runTest starting top-level event loop");
   m_eventLoop.exec();
 
@@ -1378,9 +1379,9 @@ string EventReplay::runTest()
 }
 
 
-bool EventReplay::callReplayNextEvent()
+bool UIShellScriptRunner::callExecuteNextCommand()
 {
-  bool ret = this->replayNextEvent();
+  bool ret = this->executeNextCommand();
 
   if (!ret) {
     // Test is complete (pass or fail).  Stop the event loop we started
@@ -1393,16 +1394,16 @@ bool EventReplay::callReplayNextEvent()
       // dialog is closed, which is misleading.)
       cout << "test FAILED: " << m_testResult << endl;
     }
-    TRACE2("test complete, stopping replay event loop");
+    TRACE2("test complete, stopping UI shell event loop");
     m_eventLoop.exit(0);
   }
 
-  TRACE2("callReplayNextEvent returning " << ret);
+  TRACE2("callExecuteNextCommand returning " << ret);
   return ret;
 }
 
 
-bool EventReplay::event(QEvent *ev)
+bool UIShellScriptRunner::event(QEvent *ev)
 {
   if (ev->type() == s_quiescenceEventType) {
     TRACE2("received QuiescenceEvent");
@@ -1410,7 +1411,7 @@ bool EventReplay::event(QEvent *ev)
       TRACE2("ignoring QuiescenceEvent because g_waitingCounter is " <<
              g_waitingCounter);
     }
-    else if (this->callReplayNextEvent()) {
+    else if (this->callExecuteNextCommand()) {
       // Test is continuing.  We don't have to do anything to keep
       // receiving 'aboutToBlock' and hence enqueueing QuiescenceEvents.
     }
@@ -1430,7 +1431,7 @@ bool EventReplay::event(QEvent *ev)
     this->killTimerIf();
 
     // Post the next event.
-    if (this->callReplayNextEvent()) {
+    if (this->callExecuteNextCommand()) {
       // Test is continuing.  Arrange to receive another event.
       this->installTimer();
     }
@@ -1449,7 +1450,7 @@ bool EventReplay::event(QEvent *ev)
 }
 
 
-void EventReplay::slot_aboutToBlock() NOEXCEPT
+void UIShellScriptRunner::slot_aboutToBlock() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
@@ -1463,7 +1464,7 @@ void EventReplay::slot_aboutToBlock() NOEXCEPT
 
   // Getting here means the application really is quiescent; if we did
   // not do this, the app would block waiting for some external event.
-  // So, post an event that will trigger the next event to replay.
+  // So, post an event that will trigger the next command execution.
   this->postQuiescenceEvent();
 
   // At this point, we're about to return to the site of a call to

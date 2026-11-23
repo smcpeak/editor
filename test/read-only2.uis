@@ -1,4 +1,4 @@
-// read-only2.ev
+// read-only2.uis
 // Process output document should be read-only.
 {
   args: []

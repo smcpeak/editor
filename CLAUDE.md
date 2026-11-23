@@ -32,7 +32,7 @@ build stops with an error if `ast/astgen.exe` is missing.
 - `make` — builds `editor.exe`, `editor-fs-server.exe`, `gui-tests.exe`,
   and runs the non-GUI test programs (`test-prog-outs`). Parallel `make -j`
   works for this target.
-- `make check` — runs everything in `all`, plus the GUI event-replay
+- `make check` — runs everything in `all`, plus the GUI UI shell
   tests, the coding-rules check, the extradep validation, and
   `lsp-test-server.py` self-tests. GUI tests pop up windows, so they run
   serially and must not be run in parallel. Some are wrapped in
@@ -66,17 +66,17 @@ declare it in `unit-tests.h`, add a `RUN_TEST(foo)` line to
 to `UNIT_TESTS_OBJS` in the `Makefile`. Test assertions use the smbase
 `sm-test.h` macros (`EXPECT_EQ`, `EXPECT_EXN_REGEX`, etc.).
 
-### GUI / event-replay tests
+### GUI / UI shell tests
 
-- Run one: `./editor.exe -ev=test/<name>.ev`
+- Run one: `./editor.exe -uisCmds=test/<name>.uis`
 - Run the main batch: `./editor.exe -testCommands=test/all-tests.gdvn`
-  (add new `.ev` tests to that list).
-- `.ev` files have one action or check per line, aimed at widgets by
-  QObject name paths (for example,
-  `KeyPress "window1.editorFrame.m_editorWidget" "Key_X" "x"`,
-  `CheckLabel ...`). Use `-record` to capture an input sequence, then
-  add checks by hand. See `doc/event-replay.txt` for how replay waits
-  for the app to go idle between steps.
+  (add new `.uis` tests to that list).
+- `.uis` files have one UI shell command (an action or check) per line,
+  aimed at widgets by QObject name paths (for example,
+  `KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_X" "x")`,
+  `CheckLabel(...)`). Use `-record` to capture an input sequence into
+  `recorded.uis`, then add checks by hand. See `doc/ui-shell.txt` for
+  how execution waits for the app to go idle between steps.
 - `gui-tests.exe` tests individual dialogs and is run by hand.
 
 Claude should not run the GUI tests unless specifically directed to

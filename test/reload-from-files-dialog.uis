@@ -1,4 +1,4 @@
-// reload-from-files-dialog.ev
+// reload-from-files-dialog.uis
 // Test the behavior of the reload button in the open-files dialog.
 {
   args: ["test/gets-modified.txt" "test/gets-modified2.txt"]

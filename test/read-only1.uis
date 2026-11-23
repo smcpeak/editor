@@ -1,4 +1,4 @@
-// read-only1.ev
+// read-only1.uis
 // Test some basic read-only file behavior.
 {
   args: []

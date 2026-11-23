@@ -1,4 +1,4 @@
-// help-debug-open-log-file.ev
+// help-debug-open-log-file.uis
 // Test "Help | Debug | Open editor log file".
 {
   args: []

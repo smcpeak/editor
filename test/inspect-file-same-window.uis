@@ -1,4 +1,4 @@
-// inspect-file-same-window.ev
+// inspect-file-same-window.uis
 // Use "Inspect file", showing the result in the same window.
 {
   args: ["test/language-test.cc"]

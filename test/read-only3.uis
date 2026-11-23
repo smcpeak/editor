@@ -1,4 +1,4 @@
-// read-only3.ev
+// read-only3.uis
 // Switching between a read-only and not read-only document.
 {
   args: []

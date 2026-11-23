@@ -278,7 +278,7 @@ static string filenamePathBase(RCSerf<NamedTextDocument const> doc)
 }
 
 
-GDValue OpenFilesDialog::eventReplayQuery(string const &state)
+GDValue OpenFilesDialog::uiShellQuery(string const &state)
 {
   if (state == "cursorRow") {
     QModelIndex idx = m_tableWidget->currentIndex();
@@ -314,7 +314,7 @@ GDValue OpenFilesDialog::eventReplayQuery(string const &state)
   }
 
   else {
-    return EventReplayQueryable::eventReplayQuery(state);
+    return UIShellQueryable::uiShellQuery(state);
   }
 }
 

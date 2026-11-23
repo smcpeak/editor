@@ -1,4 +1,4 @@
-// apply-command-history.ev
+// apply-command-history.uis
 // Check that command history is retained by Apply Command.
 {
   args: []

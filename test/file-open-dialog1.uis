@@ -1,4 +1,4 @@
-// file-open-dialog1.ev
+// file-open-dialog1.uis
 // Use the file-open dialog to open a file, using Tab completion once.
 {
   args: ["test/file1.h"]

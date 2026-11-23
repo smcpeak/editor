@@ -87,7 +87,7 @@ void StatusBarDisplay::setFilenameText(QString newFilename)
      text.  That would, in turn, force the window to potentially be very
      wide, which I don't want to require.
 
-     Also, this interacts with the sceenshot1.ev test, since that needs
+     Also, this interacts with the sceenshot1.uis test, since that needs
      a fairly narrow width, but the file name might be arbitrarily long
      depending on which directory the editor has been compiled in. */
   m_filename->setMinimumWidth(20);

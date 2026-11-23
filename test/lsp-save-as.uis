@@ -1,4 +1,4 @@
-// lsp-save-as.ev
+// lsp-save-as.uis
 // Check interaction of "Save as" and having a file open in LSP.
 {
   args: ["test/language-test.cc"]

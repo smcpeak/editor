@@ -16,7 +16,6 @@
 #include "editor-widget.h"                       // EditorWidget
 #include "editor-window.h"                       // EditorWindow
 #include "event-recorder.h"                      // EventRecorder
-#include "event-replay.h"                        // EventReplay
 #include "fail-reason-opt.h"                     // FailReasonOpt
 #include "json-rpc-reply.h"                      // JSON_RPC_Reply
 #include "keybindings.doc.gen.h"                 // doc_keybindings
@@ -33,6 +32,7 @@
 #include "rfa-gui-sync-multi-client.h"           // RFA_GUISyncMultiClient
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics (implicit)
 #include "textinput.h"                           // TextInputDialog
+#include "ui-shell.h"                            // UIShellScriptRunner
 #include "uri-util.h"                            // getFileURIPath
 
 // smqtutil
@@ -134,8 +134,8 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_useUserSettingsFile(true),
     m_filenameInputDialogHistory(),
     m_recordInputEvents(false),
-    m_eventTestFileName(),
-    m_eventTestCommands()
+    m_uiShellCmdsFileName(),
+    m_uiShellCommands()
 {
   HTT_TASK("EditorGlobal ctor");
 
@@ -198,8 +198,8 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
   m_rfaAMClient.connectLocal();
 
   // Create the LSP client manager after processing the command line so
-  // the effect of setting `m_lspIsFakeServer` in response to "-ev" and
-  // "-record" will be effective.
+  // the effect of setting `m_lspIsFakeServer` in response to "-uisCmds"
+  // and "-record" will be effective.
   m_lspClientManager.reset(new LSPClientManager(
     &m_documentList,
     &m_rfaAMClient,
@@ -385,17 +385,18 @@ static char const *optionsDescription =
   "options:\n"
   "  -help           Print this message and exit.\n"
   "  -version        Print the version and exit.\n"
-  "  -ev=file.ev     Replay events in file.ev for testing.\n"
-  "                  (Implies -no-settings.)\n"
+  "  -uisCmds=file.uis\n"
+  "                  Execute UI shell commands in file.uis, then quit.\n"
+  "                  Implies -no-settings.\n"
   "  -testCommands=tests.gdvn\n"
-  "                  Replay all tests in tests.gdvn.\n"
-  "  -record         Record events to events.out.\n"
+  "                  Execute all tests in tests.gdvn.\n"
+  "  -record         Record events to recorded.uis.\n"
   "  -conn=hostname  Start with an active remote connection to hostname.\n"
   "  -no-settings    Do not read or write user settings.\n"
   "  -fake-lsp       Use `lsp-test-server.py` as the LSP server.\n"
   "\n"
-  "With -ev, set envvar NOQUIT=1 to stop if failure and NOQUIT=0 to\n"
-  "stop after replay regardless of failure.\n"
+  "With -uisCmds, set envvar NOQUIT=1 to stop if failure and NOQUIT=0 to\n"
+  "stop after execution regardless of failure.\n"
   ;
 
 
@@ -414,25 +415,25 @@ void EditorGlobal::addFileToOpenInitially(
 }
 
 
-void EditorGlobal::processEventTestFile(
+void EditorGlobal::processUIShellCmdsFile(
   std::vector<std::string> &filesToOpen /*APPEND*/,
   std::string const &fname)
 {
-  if (!m_eventTestFileName.empty()) {
-    xformat("Multiple \"-ev=\" options are not allowed.");
+  if (!m_uiShellCmdsFileName.empty()) {
+    xformat("Multiple \"-uisCmds=\" options are not allowed.");
   }
-  m_eventTestFileName = fname;
+  m_uiShellCmdsFileName = fname;
 
   // We are going to run an automated test, so ignore user
   // settings.
   m_useUserSettingsFile = false;
 
-  // Only use the fake server with record/replay
+  // Only use the fake server with -record or -uisCmds.
   m_lspIsFakeServer = true;
 
   // Read the script and parse it.
   GDValue testScript =
-    GDValue::readFromFile(m_eventTestFileName);
+    GDValue::readFromFile(m_uiShellCmdsFileName);
   GDValueParser parser(testScript);
   parser.checkIsMap();
 
@@ -477,7 +478,7 @@ void EditorGlobal::processEventTestFile(
   TRACE3("substCmds dump: " << substCmds.dumpToString());
 
   // Flatten as a sequence of values.
-  gdvFlattenSequence(m_eventTestCommands /*APPEND*/, substCmds);
+  gdvFlattenSequence(m_uiShellCommands /*APPEND*/, substCmds);
 }
 
 
@@ -500,9 +501,9 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
         THROW(QuitAfterPrintingHelp(""));
       }
 
-      else if (beginsWith(arg, "-ev=")) {
-        // Replay a sequence of events as part of a test.
-        processEventTestFile(filesToOpen /*APPEND*/, arg.substr(4));
+      else if (beginsWith(arg, "-uisCmds=")) {
+        // Execute a sequence of UI shell commands as part of a test.
+        processUIShellCmdsFile(filesToOpen /*APPEND*/, arg.substr(9));
       }
 
       else if (arg == "-record") {
@@ -513,7 +514,7 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
         // not have user settings, turn them off here too.
         m_useUserSettingsFile = false;
 
-        // Only use the fake server with record/replay
+        // Only use the fake server with -record or -uisCmds.
         m_lspIsFakeServer = true;
       }
 
@@ -550,9 +551,9 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
     }
 
     else {
-      if (!m_eventTestFileName.empty()) {
-        xformat("Cannot specify files to open with -ev.  Put them "
-                "into the .ev file instead.");
+      if (!m_uiShellCmdsFileName.empty()) {
+        xformat("Cannot specify files to open with -uisCmds.  Put them "
+                "into the .uis file instead.");
       }
 
       // Open all non-option files specified on the command line.
@@ -1914,12 +1915,12 @@ static int innerMain(int argc, char **argv)
 
       EditorGlobal app(argc, argv);
 
-      // Optionally disable the replay selfCheck.  This is mainly useful
-      // when I'm trying to do performance analysis.
+      // Optionally disable the UI shell selfCheck.  This is mainly
+      // useful when I'm trying to do performance analysis.
       bool const runEventSelfCheck =
-        !envAsBool("REPLAY_DISABLE_SELFCHECK");
+        !envAsBool("UI_SHELL_DISABLE_SELFCHECK");
 
-      // Self-check function to run after every event during replay.
+      // Self-check function to run after every UI shell command.
       auto selfCheck = [&app, runEventSelfCheck]() -> void {
         if (runEventSelfCheck) {
           app.selfCheck();
@@ -1928,37 +1929,38 @@ static int innerMain(int argc, char **argv)
 
       Owner<EventRecorder> recorder;
       if (app.m_recordInputEvents) {
-        recorder = new EventRecorder("events.out");
+        recorder = new EventRecorder("recorded.uis");
       }
 
-      if (!app.m_eventTestFileName.empty()) {
+      if (!app.m_uiShellCmdsFileName.empty()) {
         // Automated GUI test.
         g_abortUponDevWarning = true;
-        cout << "running test: " << app.m_eventTestFileName << endl;
+        cout << "running test: " << app.m_uiShellCmdsFileName << endl;
 
-        // Cause the event script name to be included in any failure
+        // Cause the UI shell script name to be included in any failure
         // message.
-        EXN_CONTEXT(app.m_eventTestFileName);
-        HTT_TASK_DYNAMIC_LABEL(app.m_eventTestFileName);
+        EXN_CONTEXT(app.m_uiShellCmdsFileName);
+        HTT_TASK_DYNAMIC_LABEL(app.m_uiShellCmdsFileName);
 
         // Disable message box sounds since they are annoying to listen
         // to while the automated tests run.
         SilentMessageBoxFilter silentFilter(&app);
 
-        EventReplay replay(app.m_eventTestCommands, selfCheck);
-        std::string error = replay.runTest();
+        UIShellScriptRunner runner(app.m_uiShellCommands, selfCheck);
+        std::string error = runner.runTest();
         if (error.empty()) {
           cout << "test passed" << endl;
 
           // Check all invariants before declaring victory.  (This is
-          // redundant with the calls to `selfCheck` done during replay,
-          // but harmless.)
+          // redundant with the calls to `selfCheck` done during
+          // execution, but harmless.)
           app.selfCheck();
 
           ret = 0;   // It could still fail, depending on object counts.
         }
         else {
-          // In the failure case, EventReplay prints the failure.
+          // In the failure case, UIShellScriptRunner prints the
+          // failure.
           ret = 2;
         }
 

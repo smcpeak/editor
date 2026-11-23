@@ -2146,8 +2146,8 @@ void EditorWidget::keyReleaseEvent(QKeyEvent *k) NOEXCEPT
 
   // 2026-11-14: In the past, I did `this->selfCheck();` here, but that
   // causes performance problems when large files are loaded.  Since the
-  // event replay does per-event self-check, and there is a menu option
-  // to invoke self-check manually, I've removed the automatic check.
+  // UI shell does per-command self-check, and there is a menu option to
+  // invoke self-check manually, I've removed the automatic check.
 
   // 2026-11-17: Optionally perform the check so I can gather some
   // performance data to compare behavior with and without it.  This
@@ -2300,7 +2300,7 @@ static void setClipboard(string const &newText)
     To reproduce it, build and run `clipboard-experiment.exe`, open the
     clipboard, then run:
 
-      ./editor.exe -ev=test/file-open-dialog1.ev
+      ./editor.exe -uisCmds=test/file-open-dialog1.uis
   */
   setClipboardWithRetry(newText);
 }
@@ -4090,7 +4090,7 @@ int EditorWidget::getFullLineHeight() const
 }
 
 
-GDValue EditorWidget::eventReplayQuery(string const &state)
+GDValue EditorWidget::uiShellQuery(string const &state)
 {
   if (state == "firstVisible") {
     return stringb(m_editor->firstVisible());
@@ -4143,24 +4143,24 @@ GDValue EditorWidget::eventReplayQuery(string const &state)
     // Just invoke self check, throwing if it fails.  The returned
     // string is not meaningful.
     //
-    // Note: This should be unnecessary since the event replay
-    // infrastructure does a global self-check after every event.
+    // Note: This should be unnecessary since the UI shell
+    // infrastructure does a global self-check after every command.
     this->selfCheck();
     return "";
   }
   else {
-    return EventReplayQueryable::eventReplayQuery(state);
+    return UIShellQueryable::uiShellQuery(state);
   }
 }
 
 
-QImage EditorWidget::eventReplayImage(string const &what)
+QImage EditorWidget::uiShellImage(string const &what)
 {
   if (what == "screenshot") {
     return this->getScreenshot();
   }
   else {
-    return EventReplayQueryable::eventReplayImage(what);
+    return UIShellQueryable::uiShellImage(what);
   }
 }
 

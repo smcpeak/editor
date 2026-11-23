@@ -1,4 +1,4 @@
-// visible-tabs.ev
+// visible-tabs.uis
 // Test rendering of visible Tab characters.
 {
   args: ["test/tabs-test.txt"]

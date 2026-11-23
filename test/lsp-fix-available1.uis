@@ -1,4 +1,4 @@
-// lsp-fix-available1.ev
+// lsp-fix-available1.uis
 // Test when a diagnostic has a fix available.
 
 {

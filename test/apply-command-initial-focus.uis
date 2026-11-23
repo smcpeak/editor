@@ -1,4 +1,4 @@
-// apply-command-initial-focus.ev
+// apply-command-initial-focus.uis
 // Check that the initial focus in the "Apply Command" dialog is on the
 // list box even if it was on a different control when it was last
 // closed.

@@ -597,7 +597,7 @@ bool FilenameInputDialog::eventFilter(QObject *watched, QEvent *event)
 }
 
 
-GDValue FilenameInputDialog::eventReplayQuery(
+GDValue FilenameInputDialog::uiShellQuery(
   std::string const &state)
 {
   if (state == "currentRequestDir") {
@@ -606,7 +606,7 @@ GDValue FilenameInputDialog::eventReplayQuery(
 
   else {
     // Complain about unknown state.
-    return EventReplayQueryable::eventReplayQuery(state);
+    return UIShellQueryable::uiShellQuery(state);
   }
 }
 

@@ -1,4 +1,4 @@
-// apply-command-clear-new.ev
+// apply-command-clear-new.uis
 // In the Apply Command Dialog, ensure that if we type a string into the
 // "new command" box, then close and reopen the dialog, that string has
 // been cleared.

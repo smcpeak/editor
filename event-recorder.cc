@@ -4,7 +4,7 @@
 #include "event-recorder.h"            // this module
 
 // editor
-#include "event-replay.h"              // EventReplayQueryable
+#include "ui-shell.h"                  // UIShellQueryable
 
 // smqtutil
 #include "smqtutil/gdvalue-qt.h"       // toGDValue(QSize), toGDValue(QMouseEvent)
@@ -98,8 +98,8 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
         // Filter for widgets that want resize recorded.  (There are a
         // lot of resize events that flow through the system, and I only
         // care about a small fraction of them.)
-        if (EventReplayQueryable *queryable =
-              dynamic_cast<EventReplayQueryable*>(receiver)) {
+        if (UIShellQueryable *queryable =
+              dynamic_cast<UIShellQueryable*>(receiver)) {
           if (queryable->wantResizeEventsRecorded()) {
             this->recordEvent(GDVTaggedTuple("ResizeEvent"_sym, {
               qObjectPath(receiver),
@@ -114,11 +114,11 @@ bool EventRecorder::eventFilter(QObject *receiver, QEvent *event)
       // events sent to the QProxyStyle, which is a little odd and
       // anyway not relevant.
       if (receiver && qobject_cast<QWidget*>(receiver)) {
-        // Focus is not a kind of input event, so we will not replay it.
-        // But it is useful for ensuring synchronization between the
-        // test and application, so I will automatically emit a check
-        // during recording.  (I can then choose whether to keep it when
-        // editing the test.)
+        // Focus is not a kind of input event, so we will not execute
+        // it.  But it is useful for ensuring synchronization between
+        // the test and application, so I will automatically emit a
+        // check during recording.  (I can then choose whether to keep
+        // it when editing the test.)
         this->recordEvent(GDVTaggedTuple("CheckFocusWidget"_sym, {
           qObjectPath(receiver),
         }));
@@ -143,7 +143,7 @@ void EventRecorder::recordShortcutEvent(
     shortcutEvent->shortcutId(),
     shortcutEvent->isAmbiguous());
 
-  // I've fixed the problem this was meant to address on the replay
+  // I've fixed the problem this was meant to address on the execution
   // side, but I'll keep this code around in case a related problem
   // reappears.
   if (false) {
@@ -194,7 +194,7 @@ void EventRecorder::recordMouseEvent(
   event.tupleAppend(receiverPath);
 
   // Always include the position.  This is just the "local" position;
-  // the other coordinates can be calculated from this during replay.
+  // the other coordinates can be calculated from this during execution.
   event.tupleAppend(toGDValue(mouseEvent->pos()));
 
   // Include the initiating button if it is not merely a movement.

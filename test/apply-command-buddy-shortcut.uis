@@ -1,4 +1,4 @@
-// apply-command-buddy-shortcut.ev
+// apply-command-buddy-shortcut.uis
 // Testing the ability of Shortcut to use a buddy shortcut.
 {
   args: []

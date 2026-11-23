@@ -1,4 +1,4 @@
-// lsp-mgr-stop-server.ev
+// lsp-mgr-stop-server.uis
 // Test LSP Servers dialog "Stop server" button.
 {
   args: ["test/language-test.cc"]

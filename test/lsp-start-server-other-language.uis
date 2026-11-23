@@ -1,4 +1,4 @@
-// lsp-start-server-other-language.ev
+// lsp-start-server-other-language.uis
 // Try to start an LSP server for a language we cannot handle.
 {
   args: ["README.md"]

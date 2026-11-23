@@ -1,4 +1,4 @@
-// lsp-mgr-live-update.ev
+// lsp-mgr-live-update.uis
 // Test LSP Servers dialog's ability to track live updates.
 {
   args: ["test/language-test.cc"]

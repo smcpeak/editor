@@ -1,4 +1,4 @@
-// fn-input-repeat-tab.ev
+// fn-input-repeat-tab.uis
 // Test that I can press Tab repeatedly to drill into a
 {
   args: []

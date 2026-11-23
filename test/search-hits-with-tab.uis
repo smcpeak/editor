@@ -1,4 +1,4 @@
-// search-hits-with-tab.ev
+// search-hits-with-tab.uis
 // Showing search hits in presence of Tab character.
 {
   args: ["test/tabs-test.txt"]

@@ -1,4 +1,4 @@
-// sar-repl-cs-completion.ev
+// sar-repl-cs-completion.uis
 // Test that the SAR "Repl" box does not use case-insensitive completion.
 {
   args: ["test/file1.h"]

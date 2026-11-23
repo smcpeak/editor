@@ -51,6 +51,7 @@ void test_detectDocumentType()
   testOne_detectFileType("foo.patch.cc", DocumentType::DT_CPP);
 
   testOne_detectFileType("some-test.ev", DocumentType::DT_C_LIKE);
+  testOne_detectFileType("some-test.uis", DocumentType::DT_C_LIKE);
 
   testOne_detectDocumentType(cmdDocName("differences"), DocumentType::DT_PLAIN_TEXT);
   testOne_detectDocumentType(cmdDocName("diff ere nces"), DocumentType::DT_DIFF);

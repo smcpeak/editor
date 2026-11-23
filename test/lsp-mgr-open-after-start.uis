@@ -1,4 +1,4 @@
-// lsp-mgr-open-after-start.ev
+// lsp-mgr-open-after-start.uis
 // Open the LSP manager only after starting LSP.
 {
   args: ["test/language-test.cc"]

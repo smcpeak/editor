@@ -1,4 +1,4 @@
-// inspect-file-other-window.ev
+// inspect-file-other-window.uis
 // Test "File | Inspect in other window" menu item when used on a file.
 {
   args: ["test/language-test.cc"]

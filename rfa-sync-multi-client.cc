@@ -72,7 +72,7 @@ RFA_SyncMultiClient::issueRequestSynchronously(
   TRACE("RFA_SyncMultiClient",
     "request " << origRequestID << ": issued: " << requestDescription);
 
-  // Inform the event replay infrastructure that we are awaiting IPC.
+  // Inform the UI shell infrastructure that we are awaiting IPC.
   IncDecWaitingCounter idwc;
 
   auto doneCondition = [this]() -> bool {

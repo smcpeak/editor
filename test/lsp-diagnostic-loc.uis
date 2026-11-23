@@ -1,4 +1,4 @@
-// lsp-diagnostic-loc.ev
+// lsp-diagnostic-loc.uis
 // When we go to the main diagnostic location, it is accurate.
 
 {

@@ -1,4 +1,4 @@
-// sar-remote-ctlm.ev
+// sar-remote-ctlm.uis
 // Use search and replace to remove ^M characters.
 {
   args: ["tmp.h"]

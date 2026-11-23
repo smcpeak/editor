@@ -1,4 +1,4 @@
-// empty.ev
+// empty.uis
 // Test that does nothing at all.
 
 // I run this without any retries, before running any other tests, so if

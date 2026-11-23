@@ -1,4 +1,4 @@
-// resize1.ev
+// resize1.uis
 // Check that resize events can be replayed and affect the grid size.
 {
   args: ["test/file1.h"]

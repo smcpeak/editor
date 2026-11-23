@@ -1,4 +1,4 @@
-// filename-input-mkdir.ev
+// filename-input-mkdir.uis
 // Test making a directory from the filename input dialog.
 {
   args: []

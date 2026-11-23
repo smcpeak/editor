@@ -7,7 +7,7 @@
 #define EDITOR_DIAGNOSTIC_DETAILS_DIALOG_H
 
 #include "diagnostic-element-fwd.h"              // DiagnosticElement [n]
-#include "event-replay.h"                        // EventReplayQueryable
+#include "ui-shell.h"                            // UIShellQueryable
 
 #include "smqtutil/sm-table-widget-fwd.h"        // SMTableWidget
 
@@ -31,7 +31,7 @@ class QSplitter;
 //
 class DiagnosticDetailsDialog : public QDialog,
                                 public SerfRefCount,
-                                public EventReplayQueryable {
+                                public UIShellQueryable {
   Q_OBJECT
 
 private:     // data
@@ -68,8 +68,8 @@ public:      // methods
   // Replace the current set of diagnostics.
   void setDiagnostics(QVector<DiagnosticElement> &&diagnostics);
 
-  // EventReplayQueryable methods.
-  virtual gdv::GDValue eventReplayQuery(string const &state) override;
+  // UIShellQueryable methods.
+  virtual gdv::GDValue uiShellQuery(string const &state) override;
 
 Q_SIGNALS:
   // Emitted when the user indicates they want to see one element in

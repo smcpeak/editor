@@ -1,4 +1,4 @@
-// lsp-mgr-simple-lifecycle.ev
+// lsp-mgr-simple-lifecycle.uis
 // Use the LSP Servers dialog to monitor a simple LSP server lifecycle.
 {
   args: ["test/language-test.cc"]

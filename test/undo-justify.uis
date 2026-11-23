@@ -1,4 +1,4 @@
-// undo-justify.ev
+// undo-justify.uis
 // Test "undo" for "Justify paragraph" command.
 {
   args: []

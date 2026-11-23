@@ -1,4 +1,4 @@
-// apply-command-same-text.ev
+// apply-command-same-text.uis
 // Test "Apply command" when the output is the same as the input.
 {
   args: ["test/language-test.cc"]

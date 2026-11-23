@@ -5,11 +5,11 @@
 #define EDITOR_FILENAME_INPUT_H
 
 // editor
-#include "event-replay.h"              // EventReplayQueryable
 #include "host-name.h"                 // HostName
 #include "modal-dialog.h"              // ModalDialog
 #include "named-td-list.h"             // NamedTextDocumentList
 #include "rfa-async-multi-client.h"    // RFA_AsyncMultiClient
+#include "ui-shell.h"                  // UIShellQueryable
 
 // smqtutil
 #include "smqtutil/sm-line-edit-fwd.h" // SMLineEdit
@@ -51,7 +51,7 @@ class QTextEdit;
      * Let me double-click on completion list items with mouse.
 */
 class FilenameInputDialog : public ModalDialog,
-                            public EventReplayQueryable {
+                            public UIShellQueryable {
   Q_OBJECT
 
 public:      // types
@@ -195,8 +195,8 @@ public:      // funcs
   // QObject methods.
   virtual bool eventFilter(QObject *watched, QEvent *event) OVERRIDE;
 
-  // EventReplayQueryable methods.
-  virtual gdv::GDValue eventReplayQuery(std::string const &state) OVERRIDE;
+  // UIShellQueryable methods.
+  virtual gdv::GDValue uiShellQuery(std::string const &state) OVERRIDE;
   virtual bool wantResizeEventsRecorded() OVERRIDE;
 
 public Q_SLOTS:

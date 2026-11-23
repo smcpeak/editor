@@ -1,4 +1,4 @@
-// prompt-no-unsaved.ev
+// prompt-no-unsaved.uis
 // Test the prompt that appears when trying to save a file that does not
 {
   args: ["test/gets-saved.txt"]

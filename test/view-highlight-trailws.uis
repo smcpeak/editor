@@ -1,4 +1,4 @@
-// view-highlight-trailws.ev
+// view-highlight-trailws.uis
 // Test "View | Highlight trailing whitespace".
 {
   args: ["test/language-test.cc"]

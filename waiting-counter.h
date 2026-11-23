@@ -8,9 +8,9 @@
 #include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
 
 
-// This is for use by EventReplay (event-replay.h).  It is not a member
-// of that class because that header has some dependencies that I do not
-// want to impose on modules that manipulate this value.
+// This is for use by UIShellScriptRunner (ui-shell.h).  It is not a
+// member of that class because that header has some dependencies that I
+// do not want to impose on modules that manipulate this value.
 //
 // When this is non-zero, some component is currently waiting for an
 // event that will come from an external source, and consequently this

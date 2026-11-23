@@ -1,4 +1,4 @@
-// apply-command-stderr-nonzer-exit.ev
+// apply-command-stderr-nonzer-exit.uis
 // "Apply command" has stderr and a non-zero exit status.
 {
   args: ["test/language-test.cc"]

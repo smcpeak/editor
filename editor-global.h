@@ -177,17 +177,17 @@ public:      // data
   // Shared history for a dialog.
   FilenameInputDialog::History m_filenameInputDialogHistory;
 
-  // True to record input to "events.out" for test case creation.
+  // True to record input to "recorded.uis" for test case creation.
   bool m_recordInputEvents;
 
-  // Name of an event file test to run, or empty for none.
+  // Name of a UI shell commands file to run, or empty for none.
   //
   // This member and the next are public because `innerMain` accesses
-  // them as it initiates the replay procedure.
-  std::string m_eventTestFileName;
+  // them as it initiates UI shell command execution.
+  std::string m_uiShellCmdsFileName;
 
   // Sequence of commands to run for the test.
-  std::vector<gdv::GDValue> m_eventTestCommands;
+  std::vector<gdv::GDValue> m_uiShellCommands;
 
 private:     // methods
   // Treat `fname` like a file specified on the command line, adding it
@@ -196,9 +196,9 @@ private:     // methods
     std::vector<std::string> &filesToOpen /*APPEND*/,
     std::string const &fname);
 
-  // Process `fname`, the argument to an "-ev=" option.  Among other
+  // Process `fname`, the argument to a "-uisCmds=" option.  Among other
   // things, augment `filesToOpen`.
-  void processEventTestFile(
+  void processUIShellCmdsFile(
     std::vector<std::string> &filesToOpen /*APPEND*/,
     std::string const &fname);
 

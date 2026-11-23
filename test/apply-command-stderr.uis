@@ -1,4 +1,4 @@
-// apply-command-stderr.ev
+// apply-command-stderr.uis
 // "Apply command" command has stderr but zero exit code.
 {
   args: ["test/language-test.cc"]

@@ -1,4 +1,4 @@
-// lsp-all-uses-other-window.ev
+// lsp-all-uses-other-window.uis
 // Exercise the "all uses, other window" LSP function.
 {
   args: ["test/language-test.cc"]

@@ -21,8 +21,8 @@ class QMouseEvent;
 class QShortcutEvent;
 
 
-// Acts as an event filter to record input events for later replay as
-// part of an automated test.
+// Acts as an event filter to record input events for later execution
+// as part of an automated test.
 class EventRecorder : public QObject {
 private:     // data
   // File to which we are recording events.  Only the 'recordEvent'

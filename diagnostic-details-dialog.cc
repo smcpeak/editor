@@ -276,7 +276,7 @@ void DiagnosticDetailsDialog::setDiagnostics(
 }
 
 
-gdv::GDValue DiagnosticDetailsDialog::eventReplayQuery(
+gdv::GDValue DiagnosticDetailsDialog::uiShellQuery(
   std::string const &state)
 {
   try {

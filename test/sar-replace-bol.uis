@@ -1,4 +1,4 @@
-// sar-replace-bol.ev
+// sar-replace-bol.uis
 // Check for a bug involving replacing the beginning of the line.
 {
   args: ["test/file1.h"]

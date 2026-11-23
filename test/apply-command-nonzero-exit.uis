@@ -1,4 +1,4 @@
-// apply-command-nonzero-exit.ev
+// apply-command-nonzero-exit.uis
 // "Apply command" command has a non-zero exit status.
 {
   args: ["test/language-test.cc"]

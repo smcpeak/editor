@@ -1,4 +1,4 @@
-// lsp-go-to-decl-bad-loc.ev
+// lsp-go-to-decl-bad-loc.uis
 // Try to go to the decl of a symbol with bad location info.
 {
   args: ["test/language-test.cc"]

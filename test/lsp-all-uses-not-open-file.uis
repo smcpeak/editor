@@ -1,4 +1,4 @@
-// lsp-all-uses-not-open-file.ev
+// lsp-all-uses-not-open-file.uis
 // "All uses" where an occurrence is in a file that is not open.
 {
   args: ["test/language-test.cc"]

@@ -1,4 +1,4 @@
-// keysequence.ev
+// keysequence.uis
 // Test that FocusKeySequence works as intended.
 {
   args: []

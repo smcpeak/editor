@@ -1,4 +1,4 @@
-// fn-input-dialog-size.ev
+// fn-input-dialog-size.uis
 // Test ability of the filename input dialog to remember its size.
 {
   args: []
@@ -19,7 +19,7 @@ CheckSize("window1.filename_input" QSize(800 800))
 ResizeEvent("window1.filename_input" QSize(750 600))
 
 // Close dialog.
-FocusKeySequence("copy-paste.ev")
+FocusKeySequence("copy-paste.uis")
 FocusKeyPR("Key_Return" "\r")
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 

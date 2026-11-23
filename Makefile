@@ -450,13 +450,13 @@ EDITOR_OBJS += connections-dialog.moc.o
 EDITOR_OBJS += diagnostic-details-dialog.moc.o
 EDITOR_OBJS += diagnostic-details-dialog.o
 EDITOR_OBJS += editor-proxy-style.o
-EDITOR_OBJS += event-replay.o
-EDITOR_OBJS += event-replay.moc.o
 EDITOR_OBJS += list-choice-dialog.o
 EDITOR_OBJS += list-choice-dialog.moc.o
 EDITOR_OBJS += modal-dialog.o
 EDITOR_OBJS += modal-dialog.moc.o
 EDITOR_OBJS += pixmaps.o
+EDITOR_OBJS += ui-shell.o
+EDITOR_OBJS += ui-shell.moc.o
 
 GUI_TESTS_OBJS := $(EDITOR_OBJS)
 GUI_TESTS_OBJS += completions-dialog-test.o
@@ -703,17 +703,17 @@ clean:
 #
 check:
 	@# The first test runs without any retry.
-	./editor.exe -ev=test/empty.ev
+	./editor.exe -uisCmds=test/empty.uis
 	@#
 	@# Run the big batch of tests that all run in one process, with
 	@# internal retry capabilities.
 	./editor.exe -testCommands=test/all-tests.gdvn
 	@#
 	@# Remaining tests that can't easily run in the big batch.
-	cp test/file1.h tmp.h && $(RETRY) ./editor.exe -ev=test/undo-redo-undo.ev && rm tmp.h
-	cd test && sh ../retry.sh 3 ../editor.exe -ev=fn-input-dialog-size.ev
+	cp test/file1.h tmp.h && $(RETRY) ./editor.exe -uisCmds=test/undo-redo-undo.uis && rm tmp.h
+	cd test && sh ../retry.sh 3 ../editor.exe -uisCmds=fn-input-dialog-size.uis
 	cp test/robotank.info.json.crlf.bin tmp.h && \
-	  $(RETRY) ./editor.exe -ev=test/sar-remove-ctlm.ev && \
+	  $(RETRY) ./editor.exe -uisCmds=test/sar-remove-ctlm.uis && \
 	  cmp tmp.h test/robotank.info.json.lf.bin && \
 	  rm tmp.h
 	@#
