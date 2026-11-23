@@ -143,9 +143,9 @@ void EventRecorder::recordShortcutEvent(
     shortcutEvent->shortcutId(),
     shortcutEvent->isAmbiguous());
 
-  // I've fixed the problem this was meant to address on the execution
-  // side, but I'll keep this code around in case a related problem
-  // reappears.
+  // I've fixed the problem this was meant to address on the replay side
+  // of the UI shell, but I'll keep this code around in case a related
+  // problem reappears.
   if (false) {
     if (QLabel *label = dynamic_cast<QLabel*>(receiver)) {
       TRACE1("Shortcut receiver is a label: " << label->objectName());
@@ -194,7 +194,8 @@ void EventRecorder::recordMouseEvent(
   event.tupleAppend(receiverPath);
 
   // Always include the position.  This is just the "local" position;
-  // the other coordinates can be calculated from this during execution.
+  // the other coordinates can be calculated from this during replay
+  // execution.
   event.tupleAppend(toGDValue(mouseEvent->pos()));
 
   // Include the initiating button if it is not merely a movement.

@@ -82,7 +82,7 @@ using namespace smbase;
 INIT_TRACE("ui-shell");
 
 
-// --------------------- UIShellQueryable ---------------------
+// ------------------------- UIShellQueryable --------------------------
 /*static*/ GDValue UIShellQueryable::errorTuple(string const &msg)
 {
   return GDVTaggedTuple("Error"_sym, GDVTuple({toGDValue(msg)}));
@@ -117,7 +117,7 @@ bool UIShellQueryable::wantResizeEventsRecorded()
 }
 
 
-// ------------------- UIShellScriptRunner --------------------
+// ------------------------ UIShellScriptRunner ------------------------
 int UIShellScriptRunner::s_quiescenceEventType = 0;
 
 

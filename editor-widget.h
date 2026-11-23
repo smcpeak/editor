@@ -80,7 +80,7 @@ class EditorWidget
       // Note: `TextDocumentObserver` inherits `SerfRefCount`, so that
       // allows `RCSerf`s to point to `EditorWidget`.
     public NamedTextDocumentListObserver,        // Watch the list of files.
-    public UIShellQueryable { // Respond to test queries.
+    public UIShellQueryable {     // Respond to test queries.
   Q_OBJECT
 
   // Currently, SAR needs access to m_editor, and I am torn about
