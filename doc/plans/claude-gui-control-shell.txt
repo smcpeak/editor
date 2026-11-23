@@ -2,7 +2,7 @@ claude-gui-control-shell.txt
 Plan for an interactive GUI control shell built on event replay
 2026-11-22
 
-Written by Claude Code.
+Written by Claude Code, with small adjustments by smcpeak.
 
 
 Motivation
@@ -258,7 +258,7 @@ at first.
 New commands
 ------------
 
-  * DumpTree(path [options]): return the QObject subtree rooted at
+  * DumpTree{path:"some.path" [options]}: return the QObject subtree rooted at
     `path` as GDVN.  For each object: objectName, class name, and the
     path to use in other commands.  For widgets also: visible, enabled,
     hasFocus, geometry, and, where meaningful, text (QLabel,
@@ -268,6 +268,11 @@ New commands
     replaces guessing paths from the source code.  The existing
     DumpObjectTree prints Qt's text dump to stderr, which the client
     would not see.
+
+    Note that this is a GDVN tagged map, not a tagged tuple, so the
+    arguments are key/value pairs, like Python keyword arguments.  (That
+    makes this interface easier to evolve without breaking
+    compatibility.)
 
   * Screenshot(path filename): QWidget::grab() on the widget, saved as
     a PNG.  This lets the agent see layout and rendering problems that
