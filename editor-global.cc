@@ -1962,6 +1962,7 @@ static int innerMain(int argc, char **argv)
           ret = 2;
         }
 
+        // TODO: This is a bizarre interface.  Improve it.
         if (char const *noQuit = getenv("NOQUIT")) {
           // If we are going to return at least $NOQUIT, keep the app
           // running so I can inspect its state.  Often I will use
