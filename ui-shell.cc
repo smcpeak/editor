@@ -1491,7 +1491,7 @@ UIShellScriptRunner::UIShellScriptRunner(
   QObject(),
   IMEMBFP(testCommands),
   m_nextTestCommandIndex(0),
-  m_testResult(),
+  m_testFailureMessage(),
   m_eventLoop(),
   IMEMBFP(globalSelfCheck),
   m_executor(globalSelfCheck)
@@ -1521,7 +1521,7 @@ void UIShellScriptRunner::startNextCommand()
 }
 
 
-std::string UIShellScriptRunner::runTest()
+std::optional<std::string> UIShellScriptRunner::runTest()
 {
   // Do one self-check at the start so a later failure is known to be
   // caused by something that happened while executing.
@@ -1546,8 +1546,14 @@ std::string UIShellScriptRunner::runTest()
   TRACE1("runTest starting top-level event loop");
   m_eventLoop.exec();
 
-  TRACE1("runTest finished; result: " << doubleQuote(m_testResult));
-  return m_testResult;
+  if (m_testFailureMessage) {
+    TRACE1("runTest finished with error: " <<
+           doubleQuote(*m_testFailureMessage));
+  }
+  else {
+    TRACE1("runTest finished successfully");
+  }
+  return m_testFailureMessage;
 }
 
 
@@ -1558,14 +1564,14 @@ void UIShellScriptRunner::slot_hasCommandResult() NOEXCEPT
   UIShellResult result(m_executor.takeCommandResult());
 
   if (result.isRight()) {
-    m_testResult = result.right();
+    m_testFailureMessage = result.right();
 
     // Our event loop might not be the innermost event loop at the
     // moment, e.g., if we're running a modal dialog.  So, print the
     // result to the console now so the user can see that the test has
     // failed.  (Otherwise it looks like the test fails when the dialog
     // is closed, which is misleading.)
-    cout << "test FAILED: " << m_testResult << endl;
+    cout << "test FAILED: " << *m_testFailureMessage << endl;
   }
   else if (m_nextTestCommandIndex < m_testCommands.size()) {
     // Test is continuing.

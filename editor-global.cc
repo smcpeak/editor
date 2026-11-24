@@ -1947,8 +1947,8 @@ static int innerMain(int argc, char **argv)
         SilentMessageBoxFilter silentFilter(&app);
 
         UIShellScriptRunner runner(app.m_uiShellCommands, selfCheck);
-        std::string error = runner.runTest();
-        if (error.empty()) {
+        std::optional<std::string> error = runner.runTest();
+        if (!error.has_value()) {
           cout << "test passed" << endl;
 
           // Check all invariants before declaring victory.  (This is

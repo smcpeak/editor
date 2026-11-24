@@ -283,10 +283,8 @@ private:     // instance data
   std::size_t m_nextTestCommandIndex;
 
   // If the test has failed, this describes how.  Otherwise (test still
-  // running, or it succeeded) it is "".
-  //
-  // TODO: Rename to `m_testFailureMessage`.
-  std::string m_testResult;
+  // running, or it succeeded) it is absent.
+  std::optional<std::string> m_testFailureMessage;
 
   // Event loop object started by 'runTest'.
   QEventLoop m_eventLoop;
@@ -311,9 +309,9 @@ public:      // funcs
   ~UIShellScriptRunner();
 
   // Inject all the events and check all the assertions.  If everything
-  // is ok, return "".  Otherwise return a string describing the test
-  // failure.
-  std::string runTest();
+  // is ok, return nothing.  Otherwise return a string describing the
+  // test failure.
+  std::optional<std::string> runTest();
 
 private Q_SLOTS:
   // Called when `m_executor` has a result for the current command.
