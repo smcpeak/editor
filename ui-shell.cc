@@ -151,7 +151,7 @@ void UIShellExecutor::startCommand(GDValue const &command)
 
   m_reply.reset();
   m_pendingCommand = command;
-  m_commandResult = GDValue();
+  m_commandResult.reset();
   m_busy = true;
 
   this->startWatching();
@@ -683,18 +683,7 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
   else if (funcName == "ClickButton") {
     BIND_STRING_ARGS1(path);
 
-    QAbstractButton *button = getObjectFromPath<QAbstractButton>(path);
-
-    // This is like 'button->click()', except we enqueue the action and
-    // continue immediately.  If the effect of clicking the button is to
-    // pop up a modal dialog, then 'click()' would wait for it to be
-    // dismissed.
-    QObject::connect(this, &UIShellExecutor::signal_clickButton,
-                     button, &QAbstractButton::click,
-                     Qt::QueuedConnection);
-    Q_EMIT signal_clickButton();
-    QObject::disconnect(this, &UIShellExecutor::signal_clickButton,
-                        button, &QAbstractButton::click);
+    postClickButton(getObjectFromPath<QAbstractButton>(path));
   }
 
   else if (funcName == "MouseButtonPress" ||
@@ -1129,6 +1118,17 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
 }
 
 
+void UIShellExecutor::postClickButton(QAbstractButton *button)
+{
+  QObject::connect(this, &UIShellExecutor::signal_clickButton,
+                   button, &QAbstractButton::click,
+                   Qt::QueuedConnection);
+  Q_EMIT signal_clickButton();
+  QObject::disconnect(this, &UIShellExecutor::signal_clickButton,
+                      button, &QAbstractButton::click);
+}
+
+
 void UIShellExecutor::sleepForMS(int ms)
 {
   TRACE1("sleeping for " << ms << " ms");
@@ -1161,7 +1161,7 @@ void UIShellExecutor::executeShortcut(
   // menu item.  For a button I seem to have to click it myself.
   if (auto *button = dynamic_cast<QPushButton*>(receiverObject)) {
     TRACE1("Shortcut receiver is a button: " << button->objectName());
-    button->click();
+    postClickButton(button);
     return;
   }
 
@@ -1289,11 +1289,16 @@ void UIShellExecutor::executeNextStep()
     // TODO: Move `errorTuple` to a new `ui-shell-tuples` module.
     this->finishCommand(UIShellQueryable::errorTuple(*errorMessage));
   }
+  else if (!m_commandResult) {
+    // I don't think this can happen, but an error (rather than an
+    // assertion) should suffice.
+    this->finishCommand(UIShellQueryable::errorTuple(
+      "Finished command but no result?"));
+  }
   else {
     // TODO: std::exchange
     // TODO: Make `okTuple`.
-    GDValue result(std::move(m_commandResult));
-    m_commandResult = GDValue();
+    GDValue result(std::move(*m_commandResult));
     this->finishCommand(GDVTaggedTuple("Ok"_sym,
                                        GDVTuple({std::move(result)})));
   }
@@ -1307,6 +1312,7 @@ void UIShellExecutor::finishCommand(GDValue &&reply)
   this->stopWatching();
   m_busy = false;
   m_reply = std::move(reply);
+  m_commandResult.reset();
 
   Q_EMIT signal_hasCommandReply();
 

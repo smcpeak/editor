@@ -24,6 +24,7 @@
 #include <optional>                    // std::optional
 #include <string>                      // std::string
 
+class QAbstractButton;
 class QWidget;
 
 
@@ -66,8 +67,9 @@ private:     // instance data
   // Result of the command that was executed most recently, to be
   // wrapped in `Ok` once the command finishes.
   //
-  // TODO: Make optional?
-  gdv::GDValue m_commandResult;
+  // This has a value only between the calls to `executeCommand` and
+  // `finishCommand`.
+  std::optional<gdv::GDValue> m_commandResult;
 
   // Reply for the most recently finished command, if it has not yet
   // been taken.
@@ -129,6 +131,11 @@ private:     // funcs
   // Do an extra sleep on Linux as a workaround for a bug.  See comments
   // on implementation.
   void checkFocusWorkaround();
+
+  // Like `button->click()`, but posting the event rather than sending
+  // it for immediate execution.  This ensures we don't get trapped in
+  // a new event loop if the button, say, pops up a modal dialog.
+  void postClickButton(QAbstractButton *button);
 
   // Sleep for 'ms' milliseconds while pumping the event queue.
   void sleepForMS(int ms);
