@@ -171,6 +171,11 @@ TOCLEAN += *.o *.d *.o.json
 -include $(wildcard *.d)
 
 
+# For occasional diagnostic purposes, a rule to preprocess explicitly.
+%.ii: %.cc
+	$(CXX) -E -o $@ $(CCFLAGS) $<
+
+
 # Clean generated sources.
 TOCLEAN += *.gen.*
 
