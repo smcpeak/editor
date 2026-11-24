@@ -71,11 +71,16 @@ private:     // instance data
   // wrapped in `UIShellResult` once the command finishes.
   //
   // This has a value only between the calls to `executeCommand` and
-  // `finishCommand`.
+  // `finishCommand`, at which point it is either moved into
+  // `m_commandResult` (left side) or discarded when the final result is
+  // an error.
   std::optional<gdv::GDValue> m_commandSuccessResult;
 
   // Result (success or error) for the most recently finished command,
   // if it has not yet been taken.
+  //
+  // Invariant: !(m_commandSuccessResult.has_value() &&
+  //              m_commandResult.has_value())
   std::optional<UIShellResult> m_commandResult;
 
   // Queue of ordinary typing characters to execute before the current

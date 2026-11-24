@@ -150,9 +150,9 @@ void UIShellExecutor::startCommand(GDValue const &command)
 {
   xassertPrecondition(!m_busy);
 
+  m_commandSuccessResult.reset();
   m_commandResult.reset();
   m_pendingCommand = command;
-  m_commandSuccessResult.reset();
   m_busy = true;
 
   this->startWatching();
@@ -1310,8 +1310,8 @@ void UIShellExecutor::finishCommand(UIShellResult &&reply)
 
   this->stopWatching();
   m_busy = false;
-  m_commandResult = std::move(reply);
   m_commandSuccessResult.reset();
+  m_commandResult = std::move(reply);
 
   Q_EMIT signal_hasCommandReply();
 
