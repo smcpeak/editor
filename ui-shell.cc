@@ -1262,14 +1262,12 @@ void UIShellExecutor::executeNextStep()
 
     // Process any queued focus keys.
     if (!m_queuedFocusKeySequence.isEmpty()) {
-      // Note that the error reporting in the 'catch' blocks is
-      // appropriate since the file and line number are still correct
-      // when we get here.
-      //
-      // TODO: I don't think the above is true.  Where did file/line get
-      // set?  I think this comment is from before I added the
-      // EXN_CONTEXT_STRING call.
+      // Here, we are not in an EXN_CONTEXT block, so will not get
+      // source location info if the call throws.  Fortunately, this
+      // just injects ordinary keystrokes, and that basically never
+      // fails.
       this->executeFocusKey(m_queuedFocusKeySequence.pop());
+
       m_globalSelfCheck();
       selfCheck();
       return;
