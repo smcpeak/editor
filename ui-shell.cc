@@ -1250,14 +1250,9 @@ void UIShellExecutor::executeNextStep()
 
       // Use the location of `command` as context.  A command that was
       // not read from a file might not have one.
-      //
-      // TODO: Create EXN_CONTEXT_STRING_IF to handle this better.
-      //
-      // TODO: Also use `sourceLocationIndicator` rather than the GDVN
-      // of the location.
-      EXN_CONTEXT_STRING(command.hasSourceLocation()?
-        stringb(command.sourceLocation()) :
-        std::string("(no source location)"));
+      EXN_CONTEXT_STRING_OPT(command.hasSourceLocation()?
+        std::make_optional(stringb(command.sourceLocation())) :
+        std::nullopt);
 
       m_commandSuccessResult = this->executeCommand(command);
       m_globalSelfCheck();
