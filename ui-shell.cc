@@ -24,7 +24,7 @@
 // smbase
 #include "smbase/c-string-reader.h"              // parseQuotedCString
 #include "smbase/chained-cond.h"                 // smbase::cc::z_le_lt
-#include "smbase/exc.h"                          // smbase::{XBase, XMessage}, EXN_CONTEXT, GENERIC_CATCH_BEGIN/END
+#include "smbase/exc.h"                          // smbase::{XBase, XMessage}, xmessagesb, EXN_CONTEXT, GENERIC_CATCH_BEGIN/END
 #include "smbase/gdvalue-parser.h"               // gdv::{GDValueParser, gdvpTo}
 #include "smbase/gdvalue-tuple.h"                // gdv::gdvpToTuple
 #include "smbase/gdvalue-vector.h"               // gdv::toGDValue(std::vector)
@@ -185,12 +185,6 @@ UIShellResult UIShellExecutor::takeCommandResult()
 
   return takeOptionalsValue(std::move(m_commandResult));
 }
-
-
-// Throw an `XMessage` exception built using `stringb`.
-//
-// TODO: Why is this here?
-#define xmessagesb(msg) xmessage(stringb(msg))
 
 
 void UIShellExecutor::resizeChildWidget(
