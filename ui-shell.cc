@@ -1275,11 +1275,6 @@ void UIShellExecutor::executeNextStep()
 
     // Nothing remains, so the command has finished successfully.
   }
-  catch (std::string const &msg) {
-    // TODO: Am I still throwing strings somewhere?  If so, then
-    // `tryUIShellQuery` needs updating.
-    errorMessage = msg;
-  }
   catch (std::exception &x) {
     errorMessage = x.what();
   }

@@ -38,6 +38,9 @@ UIShellResult UIShellQueryable::tryUIShellQuery(std::string const &state)
   catch (std::exception &e) {
     return UIShellResult::makeRight(e.what());
   }
+  catch (...) {
+    return UIShellResult::makeRight("caught unknown exception!");
+  }
 }
 
 
