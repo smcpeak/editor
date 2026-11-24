@@ -2,6 +2,9 @@ rename-event-replay-to-ui-shell.txt
 Plan for renaming the "Event Replay" system to "UI Shell"
 2026-11-23
 
+2026-11-23: This plan has now been executed as described, including
+updating ui-shell.txt and creating the ui-shell-queryable module.
+
 
 Background
 ==========
