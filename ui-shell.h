@@ -14,6 +14,7 @@
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/refct-serf.h"         // SerfRefCount
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
+#include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
 #include "smbase/sm-override.h"        // OVERRIDE
 #include "smbase/std-vector-fwd.h"     // std::vector [f]
 
@@ -38,6 +39,7 @@ class QWidget;
 // See doc/ui-shell.txt for theory of operation.
 class UIShellExecutor : public QObject {
   Q_OBJECT
+  NO_OBJECT_COPIES(UIShellExecutor);
 
 private:     // types
   // The user event that indicates application quiescence (i.e., the
@@ -90,9 +92,7 @@ private:     // instance data
   // If non-zero, use a delay timer *instead* of the quiescence
   // mechanism.  A timer is less reliable but can help during debugging.
   // Currently this can only be set with an envvar.
-  //
-  // TODO: Make this `const`.
-  int m_uiShellDelayMS;
+  int const m_uiShellDelayMS;
 
   // Active timer ID, or 0 if none.
   //

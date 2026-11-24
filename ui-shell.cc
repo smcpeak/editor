@@ -32,6 +32,7 @@
 #include "smbase/overflow.h"                     // safeToInt
 #include "smbase/nonport.h"                      // getMilliseconds
 #include "smbase/run-process.h"                  // RunProcess
+#include "smbase/sm-env.h"                       // smbase::envAsIntOr
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-is-equal.h"                  // smbase::is_equal
 #include "smbase/sm-macros.h"                    // IMEMBFP
@@ -76,9 +77,6 @@
 #include <typeinfo>                              // typeid
 #include <utility>                               // std::move
 
-// libc
-#include <stdlib.h>                              // getenv, atoi    // TODO: use sm-env.h
-
 using namespace gdv;
 using namespace smbase;
 
@@ -108,7 +106,7 @@ UIShellExecutor::UIShellExecutor(
   m_commandSuccessResult(),
   m_commandResult(),
   m_queuedFocusKeySequence(),
-  m_uiShellDelayMS(0),
+  m_uiShellDelayMS(envAsIntOr(0, "UI_SHELL_DELAY_MS")),
   m_timerId(0),
   m_watchingAboutToBlock(false)
 {
@@ -116,11 +114,6 @@ UIShellExecutor::UIShellExecutor(
     s_quiescenceEventType = QEvent::registerEventType();
     TRACE2(DEBUG_VALUES(s_quiescenceEventType));
     xassert(s_quiescenceEventType > 0);
-  }
-
-  if (char const *d = getenv("UI_SHELL_DELAY_MS")) {
-    // Use the timer instead of the 'aboutToBlock' signal.
-    m_uiShellDelayMS = atoi(d);
   }
 
   selfCheck();
