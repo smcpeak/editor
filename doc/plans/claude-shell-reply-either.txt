@@ -1,0 +1,224 @@
+claude-shell-reply-either.txt
+Plan to represent UI shell replies with `Either`
+2026-11-24
+
+Written by Claude Code.
+
+
+Motivation
+----------
+
+`ui-shell` and `ui-shell-queryable` represent "a value or an error" as
+a GDValue that is either `Ok(<value>)` or `Error("<message>")`.  Code
+that consumes such a value has to inspect the tag and then dig the
+payload out of a tuple, and nothing in the type says which of the two
+shapes is present, or even that the value has one of them.
+
+Replace that with `smbase::Either<gdv::GDValue, std::string>`: the
+left alternative is the successful value, and the right is the error
+message.  Within ui-shell, the "Ok" and "Error" tags disappear
+entirely.  They will come back when the shell server IPC protocol is
+implemented (doc/plans/claude-gui-control-shell.txt), as the wire
+encoding of a reply, which the server will build from the `Either`.
+
+
+Type
+----
+
+Add, in ui-shell-queryable-fwd.h:
+
+  // Result of a UI shell query or command: either the value (left) or
+  // an error message (right).
+  using UIShellResult = smbase::Either<gdv::GDValue, std::string>;
+
+That header then needs smbase/either-fwd.h, smbase/gdvalue-fwd.h, and
+smbase/std-string-fwd.h, and ui-shell.h has to include it.  An alias
+keeps the signatures below short.  If an alias is not wanted, spell
+out the full type everywhere below instead.
+
+Construction hazard: GDValue has an implicit constructor from
+`std::string`.  So `UIShellResult(someString)` selects the *right*
+(error) alternative, since that is an exact match, even when the
+string is meant as a successful value.  To avoid that, always
+construct with an explicit index:
+
+  UIShellResult(std::in_place_index<0>, value)     // success
+  UIShellResult(std::in_place_index<1>, message)   // error
+
+(json-rpc-reply.h notes the same kind of hazard for `JSON_RPC_Reply`.)
+If that proves too verbose, add two small helpers next to the alias,
+e.g. `uiShellSuccess(GDValue&&)` and `uiShellError(std::string)`, but
+the plan does not require them.
+
+
+ui-shell-queryable
+------------------
+
+Delete:
+
+  static gdv::GDValue errorTuple(std::string const &msg);
+
+Unchanged signature, changed behavior:
+
+  virtual gdv::GDValue uiShellQuery(std::string const &state);
+
+  Returning normally means success.  To report failure, throw.  The
+  default implementation now *throws* (via `xmessage`) "unknown state:
+  $state" instead of returning an Error tuple.  The overrides in
+  editor-widget, filename-input, open-files-dialog, and
+  diagnostic-details-dialog do not need to change; they already fall
+  back to the base class for unknown states.
+
+Changed:
+
+  // Calls `uiShellQuery`.  A normal return becomes the left
+  // alternative; an exception's message becomes the right one.
+  UIShellResult tryUIShellQuery(std::string const &state);
+
+The implementation catches `std::exception` as it does now.  Since
+`uiShellQuery` overrides can throw anything, it should probably also
+catch `std::string` and `...`, as `UIShellExecutor::executeNextStep`
+does, so that `tryUIShellQuery` really never throws.  The header
+comment on `uiShellQuery` changes to describe the throw convention
+instead of `Error` tuples.
+
+ui-shell-queryable.h includes smbase/either-fwd.h (or gets it through
+its fwd header); ui-shell-queryable.cc includes smbase/either.h.
+
+
+UIShellExecutor
+---------------
+
+Changed members:
+
+  // Reply for the most recently finished command, if it has not yet
+  // been taken.
+  std::optional<UIShellResult> m_reply;
+
+  `m_commandResult` stays `std::optional<gdv::GDValue>`; it holds the
+  raw result between `executeCommand` and `finishCommand`, and its
+  comment changes from "wrapped in `Ok`" to "becomes the left
+  alternative of the reply".
+
+Changed methods:
+
+  // Take the reply out of this executor object.  Its left
+  // alternative is the command's result, which is null for an action
+  // or the value of a query; its right alternative is an error
+  // message.
+  //
+  // Requires: hasCommandReply()
+  //
+  // Ensures: !hasCommandReply()
+  UIShellResult takeCommandReply();
+
+  // (private)
+  void finishCommand(UIShellResult &&reply);
+
+Unchanged: `executeCommand` keeps returning `gdv::GDValue` and
+throwing on failure; `startCommand`, `hasCommandReply`, `isBusy`, and
+the signals are unaffected.
+
+`executeNextStep` builds the reply like this:
+
+  * error message caught:     UIShellResult(in_place_index<1>, *msg)
+  * no `m_commandResult`:     UIShellResult(in_place_index<1>,
+                                "Finished command but no result?")
+  * otherwise:                UIShellResult(in_place_index<0>,
+                                std::move(*m_commandResult))
+
+The `TODO` comments about `errorTuple`, `okTuple`, and a
+"ui-shell-tuples" module go away, as does the `TODO` on `m_reply`
+about using a pair.
+
+`finishCommand` traces the reply with `toGDValue(reply)` from
+smbase/gdvalue-either.h, which prints `left(...)` or `right(...)`.
+It stores it with `m_reply.emplace(std::move(reply))`; `m_reply` is
+always empty at that point because `startCommand` resets it.
+
+ui-shell.h includes smbase/either.h (needed for the complete type
+inside `std::optional`), and ui-shell.cc includes
+smbase/gdvalue-either.h for tracing.
+
+
+UIShellExecutor::executeCommand callers of queries
+--------------------------------------------------
+
+  * CheckQuery and CheckQueryMatches call `tryUIShellQuery`.  Today,
+    a failed query yields an `Error(...)` GDValue that is then
+    compared against the expected value, so the test fails with a
+    mismatch.  After the change, on a right result they throw, e.g.:
+
+      CheckQuery "<receiver>" "<state>": query failed: <message>
+
+    On a left result they proceed as now, using `left()`.  No .uis
+    test expects an `Error(...)` value from a query (checked with
+    grep), so no test files change.  Only the failure message text
+    differs.
+
+  * `waitUntilCheckQuery` calls `uiShellQuery` directly and is not
+    changed.  One behavior change follows from the new default: a
+    WaitUntilCheckQuery on an unknown state used to see an `Error`
+    tuple that never matched, and so timed out; now the exception
+    propagates and the command fails right away, with a clearer
+    message.
+
+
+UIShellScriptRunner
+-------------------
+
+`slot_hasCommandReply` stops inspecting tags:
+
+  UIShellResult reply(m_executor.takeCommandReply());
+  if (reply.isRight()) {
+    m_testResult = reply.right();
+    ...print "test FAILED", as now...
+  }
+  else if (more commands) ...
+
+The `isOk`/`isError` computation, its `xassert`, and the "Use a
+pair" `TODO` are removed.  Its public interface is unchanged.
+
+
+Documentation
+-------------
+
+  * ui-shell-queryable.h and ui-shell.h: the comments mentioned
+    above.
+  * doc/plans/claude-gui-control-shell.txt: the executor's interface
+    and the "Execution sequence" section describe the reply as
+    Ok(...)/Error(...); change them to the `Either`, and note that
+    UIShellServer converts it to `Ok`/`Error` when sending a reply.
+    The protocol sections, which describe the wire format, keep
+    `Ok`/`Error`.
+  * doc/ui-shell.txt does not mention `Ok`/`Error`, so it does not
+    change.
+
+
+Testing
+-------
+
+  * Build with -Werror; run unit-tests.exe.
+  * Optionally, add a small ui-shell-queryable-test.cc that checks
+    `tryUIShellQuery` returns left for a normal return, right with the
+    message for a throwing override, and right with "unknown state"
+    for the default.  This module has no Qt event-loop dependence
+    (only QImage in the interface), so it fits in unit-tests.exe.
+  * `make check` (run by smcpeak) for the .uis regression suite.
+
+
+Steps
+-----
+
+This is small enough for one commit:
+
+  1. Add the `UIShellResult` alias; change `uiShellQuery`'s default,
+     `tryUIShellQuery`, and delete `errorTuple`.
+  2. Change `m_reply`, `takeCommandReply`, `finishCommand`,
+     `executeNextStep`, CheckQuery/CheckQueryMatches, and
+     `UIShellScriptRunner::slot_hasCommandReply`.
+  3. Update comments and claude-gui-control-shell.txt.
+  4. Optionally add the unit test.
+
+
+EOF
