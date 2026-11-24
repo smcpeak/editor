@@ -6,6 +6,9 @@
 #ifndef EDITOR_UI_SHELL_H
 #define EDITOR_UI_SHELL_H
 
+// editor
+#include "ui-shell-result.h"           // UIShellResult
+
 // smbase
 #include "smbase/array.h"              // ArrayStack
 #include "smbase/gdvalue.h"            // gdv::GDValue
@@ -65,19 +68,15 @@ private:     // instance data
   std::optional<gdv::GDValue> m_pendingCommand;
 
   // Result of the command that was executed most recently, to be
-  // wrapped in `Ok` once the command finishes.
+  // wrapped in `UIShellResult` once the command finishes.
   //
   // This has a value only between the calls to `executeCommand` and
   // `finishCommand`.
-  std::optional<gdv::GDValue> m_commandResult;
+  std::optional<gdv::GDValue> m_commandSuccessResult;
 
-  // Reply for the most recently finished command, if it has not yet
-  // been taken.
-  //
-  // TODO: Change this to a pair where the first element is a "success"
-  // boolean rather than relying on the GDValue tag.  Or, in the error
-  // case, something that requires a string.
-  std::optional<gdv::GDValue> m_reply;
+  // Result (success or error) for the most recently finished command,
+  // if it has not yet been taken.
+  std::optional<UIShellResult> m_commandResult;
 
   // Queue of ordinary typing characters to execute before the current
   // command is considered finished.
@@ -162,7 +161,7 @@ private:     // funcs
   // Store `reply`, stop watching for quiescence, and emit
   // `signal_hasCommandReply`.  If the signal handler starts another
   // command, execute it now.
-  void finishCommand(gdv::GDValue &&reply);
+  void finishCommand(UIShellResult &&reply);
 
   // Execute the "WaitUntilCheckQuery" command.
   void waitUntilCheckQuery(
@@ -196,7 +195,7 @@ private:     // funcs
 public:      // funcs
   // `globalSelfCheck` is called after each command, and after each
   // queued FocusKeySequence character.  It should throw to indicate a
-  // failure, which then becomes the command's Error reply.
+  // failure, which then becomes an error result.
   explicit UIShellExecutor(std::function<void ()> globalSelfCheck);
 
   // Disconnects from the event dispatcher and kills any timer.
@@ -223,13 +222,12 @@ public:      // funcs
 
   // Take the reply out of this executor object.
   //
-  // The reply is either Ok(<result>), where <result> is null for an
-  // action or the value of a query, or Error("<message>").
+  // TODO: Call this a "command result" instead of a "reply".
   //
   // Requires: hasCommandReply()
   //
   // Ensures: !hasCommandReply()
-  gdv::GDValue takeCommandReply();
+  UIShellResult takeCommandReply();
 
   // QObject methods.
   virtual bool event(QEvent *ev) OVERRIDE;
@@ -268,6 +266,8 @@ private:     // instance data
 
   // If the test has failed, this describes how.  Otherwise (test still
   // running, or it succeeded) it is "".
+  //
+  // TODO: Rename to `m_testFailureMessage`.
   std::string m_testResult;
 
   // Event loop object started by 'runTest'.

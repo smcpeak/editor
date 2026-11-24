@@ -11,6 +11,7 @@
 #include "debug-values.h"                        // DEBUG_VALUES
 #include "file-mod-time.h"                       // getFileModTime
 #include "ui-shell-queryable.h"                  // UIShellQueryable
+#include "ui-shell-result.h"                     // UIShellResult
 #include "waiting-counter.h"                     // g_waitingCounter, IncDecWaitingCounter
 
 // smqtutil
@@ -104,8 +105,8 @@ UIShellExecutor::UIShellExecutor(
   IMEMBFP(globalSelfCheck),
   m_busy(false),
   m_pendingCommand(),
+  m_commandSuccessResult(),
   m_commandResult(),
-  m_reply(),
   m_queuedFocusKeySequence(),
   m_uiShellDelayMS(0),
   m_timerId(0),
@@ -149,9 +150,9 @@ void UIShellExecutor::startCommand(GDValue const &command)
 {
   xassertPrecondition(!m_busy);
 
-  m_reply.reset();
-  m_pendingCommand = command;
   m_commandResult.reset();
+  m_pendingCommand = command;
+  m_commandSuccessResult.reset();
   m_busy = true;
 
   this->startWatching();
@@ -160,17 +161,17 @@ void UIShellExecutor::startCommand(GDValue const &command)
 
 bool UIShellExecutor::hasCommandReply() const
 {
-  return m_reply.has_value();
+  return m_commandResult.has_value();
 }
 
 
-GDValue UIShellExecutor::takeCommandReply()
+UIShellResult UIShellExecutor::takeCommandReply()
 {
   xassertPrecondition(hasCommandReply());
 
   // TODO: Use std::exchange?
-  GDValue ret(std::move(*m_reply));
-  m_reply.reset();
+  UIShellResult ret(std::move(*m_commandResult));
+  m_commandResult.reset();
   return ret;
 }
 
@@ -761,7 +762,7 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
     EXN_CONTEXT(expect.sourceLocation().asString());
 
     UIShellQueryable *q = getQueryableFromPath(receiver);
-    GDValue actual = q->tryUIShellQuery(state);
+    GDValue actual = q->uiShellQuery(state);
     CHECK_EQ("CheckQuery " << doubleQuote(receiver) << ' ' <<
              doubleQuote(state));
   }
@@ -771,7 +772,7 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
       gdvpToTuple<std::string, std::string, std::string>(parser);
 
     UIShellQueryable *q = getQueryableFromPath(receiver);
-    GDValue actualValue = q->tryUIShellQuery(state);
+    GDValue actualValue = q->uiShellQuery(state);
     if (!actualValue.isString()) {
       xmessagesb("CheckQueryMatches: the actual value " <<
         actualValue << " is not a string; expected it to the regex " <<
@@ -1250,7 +1251,7 @@ void UIShellExecutor::executeNextStep()
         stringb(command.sourceLocation()) :
         std::string("(no source location)"));
 
-      m_commandResult = this->executeCommand(command);
+      m_commandSuccessResult = this->executeCommand(command);
       m_globalSelfCheck();
       return;
     }
@@ -1272,7 +1273,8 @@ void UIShellExecutor::executeNextStep()
     // Nothing remains, so the command has finished successfully.
   }
   catch (std::string const &msg) {
-    // TODO: Am I still throwing strings somewhere?
+    // TODO: Am I still throwing strings somewhere?  If so, then
+    // `tryUIShellQuery` needs updating.
     errorMessage = msg;
   }
   catch (std::exception &x) {
@@ -1286,33 +1288,30 @@ void UIShellExecutor::executeNextStep()
     // Discard whatever remains of the failed command.
     m_queuedFocusKeySequence.clear();
 
-    // TODO: Move `errorTuple` to a new `ui-shell-tuples` module.
-    this->finishCommand(UIShellQueryable::errorTuple(*errorMessage));
+    this->finishCommand(UIShellResult::makeRight(
+      *errorMessage));
   }
-  else if (!m_commandResult) {
-    // I don't think this can happen, but an error (rather than an
-    // assertion) should suffice.
-    this->finishCommand(UIShellQueryable::errorTuple(
+  else if (!m_commandSuccessResult) {
+    // This shouldn't happen, but if it does, an error (rather than an
+    // assertion) suffices.
+    this->finishCommand(UIShellResult::makeRight(
       "Finished command but no result?"));
   }
   else {
-    // TODO: std::exchange
-    // TODO: Make `okTuple`.
-    GDValue result(std::move(*m_commandResult));
-    this->finishCommand(GDVTaggedTuple("Ok"_sym,
-                                       GDVTuple({std::move(result)})));
+    this->finishCommand(UIShellResult::makeLeft(
+      std::move(*m_commandSuccessResult)));
   }
 }
 
 
-void UIShellExecutor::finishCommand(GDValue &&reply)
+void UIShellExecutor::finishCommand(UIShellResult &&reply)
 {
-  TRACE2("command finished: " << reply);
+  TRACE2("command finished: " << toGDValue(reply));
 
   this->stopWatching();
   m_busy = false;
-  m_reply = std::move(reply);
-  m_commandResult.reset();
+  m_commandResult = std::move(reply);
+  m_commandSuccessResult.reset();
 
   Q_EMIT signal_hasCommandReply();
 
@@ -1529,15 +1528,10 @@ void UIShellScriptRunner::slot_hasCommandReply() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  GDValue reply(m_executor.takeCommandReply());
+  UIShellResult reply(m_executor.takeCommandReply());
 
-  // TODO: Use a pair.
-  bool isOk = (reply.taggedContainerGetTagName() == "Ok");
-  bool isError = (reply.taggedContainerGetTagName() == "Error");
-  xassert(isOk != isError);
-
-  if (isError) {
-    m_testResult = reply.tupleGetValueAt(0).stringGet();
+  if (reply.isRight()) {
+    m_testResult = reply.right();
 
     // Our event loop might not be the innermost event loop at the
     // moment, e.g., if we're running a modal dialog.  So, print the
@@ -1553,6 +1547,11 @@ void UIShellScriptRunner::slot_hasCommandReply() NOEXCEPT
   }
   else {
     TRACE1("end of commands reached");
+
+    // In the context of the script runner, which is not interactive, we
+    // just discard the successful `result`, which is normally just the
+    // `null` GDValue.  The UI shell server will return it to the
+    // client.
   }
 
   // Test is complete (pass or fail).  Stop the event loop we started in

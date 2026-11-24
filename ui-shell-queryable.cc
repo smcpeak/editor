@@ -3,40 +3,40 @@
 
 #include "ui-shell-queryable.h"        // this module
 
+// editor
+#include "ui-shell-result.h"           // UIShellResult
+
 // smbase
-#include "smbase/gdvalue.h"                      // gdv::GDValue, etc.
-#include "smbase/string-util.h"                  // doubleQuote
-#include "smbase/stringb.h"                      // stringb
+#include "smbase/exc.h"                // smbase::xmessage
+#include "smbase/gdvalue.h"            // gdv::GDValue, etc.
+#include "smbase/string-util.h"        // doubleQuote
+#include "smbase/stringb.h"            // stringb
 
 // Qt
 #include <QImage>
 
 // libc++
-#include <exception>                             // std::exception
+#include <exception>                   // std::exception
 
 
 using namespace gdv;
-
-
-/*static*/ GDValue UIShellQueryable::errorTuple(std::string const &msg)
-{
-  return GDVTaggedTuple("Error"_sym, GDVTuple({toGDValue(msg)}));
-}
+using namespace smbase;
 
 
 GDValue UIShellQueryable::uiShellQuery(std::string const &state)
 {
-  return errorTuple(stringb("unknown state: " << doubleQuote(state)));
+  xmessage(stringb("unknown state: " << doubleQuote(state)));
+  return GDValue();   // not reached
 }
 
 
-GDValue UIShellQueryable::tryUIShellQuery(std::string const &state)
+UIShellResult UIShellQueryable::tryUIShellQuery(std::string const &state)
 {
   try {
-    return uiShellQuery(state);
+    return UIShellResult::makeLeft(uiShellQuery(state));
   }
   catch (std::exception &e) {
-    return errorTuple(e.what());
+    return UIShellResult::makeRight(e.what());
   }
 }
 
@@ -45,6 +45,7 @@ QImage UIShellQueryable::uiShellImage(std::string const &)
 {
   return QImage();
 }
+
 
 bool UIShellQueryable::wantResizeEventsRecorded()
 {

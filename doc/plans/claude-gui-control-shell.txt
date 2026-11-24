@@ -226,6 +226,10 @@ either QtNetwork (QTcpSocket) or plain sockets.
 Refactoring UIShellScriptRunner
 -------------------------------
 
+2026-11-24: This step has been completed, although the interface has
+changed a little, including using UIShellResult instead of the Ok/Error
+tuples here.  (Those will only appear in the shell server protocol.)
+
 Today UIShellScriptRunner owns both the command dispatcher and the test
 driver (the command sequence, the event loop, pass/fail).  Split it
 into UIShellExecutor, which executes one command at a time and reports

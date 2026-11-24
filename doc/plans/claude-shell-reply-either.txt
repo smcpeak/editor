@@ -5,6 +5,9 @@ Plan to represent UI shell replies with `Either`
 Written by Claude Code.
 
 
+2026-11-24: Plan has been executed with minor adjustments.
+
+
 Motivation
 ----------
 
