@@ -29,6 +29,7 @@
 #include "smbase/gdvalue-tuple.h"                // gdv::gdvpToTuple
 #include "smbase/gdvalue-vector.h"               // gdv::toGDValue(std::vector)
 #include "smbase/gdvalue.h"                      // gdv::GDValue
+#include "smbase/optional-util.h"                // smbase::takeOptionalsValue
 #include "smbase/overflow.h"                     // safeToInt
 #include "smbase/nonport.h"                      // getMilliseconds
 #include "smbase/run-process.h"                  // RunProcess
@@ -182,10 +183,7 @@ UIShellResult UIShellExecutor::takeCommandResult()
   xassertPrecondition(hasCommandResult());
   selfCheck();
 
-  // TODO: Use std::exchange?
-  UIShellResult ret(std::move(*m_commandResult));
-  m_commandResult.reset();
-  return ret;
+  return takeOptionalsValue(std::move(m_commandResult));
 }
 
 
@@ -1250,9 +1248,7 @@ void UIShellExecutor::executeNextStep()
   try {
     // Execute the pending command, if any.
     if (m_pendingCommand) {
-      // TODO: Use std::exchange or a dedicated helper for this.
-      GDValue command(std::move(*m_pendingCommand));
-      m_pendingCommand.reset();
+      GDValue command(takeOptionalsValue(std::move(m_pendingCommand)));
 
       TRACE1("executing: " << command.sourceLocationIndicator() <<
              command);
