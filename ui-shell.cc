@@ -1325,11 +1325,8 @@ void UIShellExecutor::finishCommand(UIShellResult &&result)
     // so each command runs at the first quiescence after the previous
     // one finished.
     //
-    // This (I think!) isn't necessary for correctness, but is how the
-    // code worked prior to splitting `UIShellExecutor` off, and is a
-    // slight efficiency win.
-    //
-    // TODO: Test if it is necessary.
+    // This isn't necessary for correctness.  In theory it's a slight
+    // efficiency win, but in practice the benefit cannot be measured.
     TRACE2("executing the next command immediately");
     this->executeNextStep();
   }
@@ -1472,10 +1469,10 @@ UIShellScriptRunner::UIShellScriptRunner(
   IMEMBFP(globalSelfCheck),
   m_executor(globalSelfCheck)
 {
-  // The connection must be direct so that, when the slot starts the
-  // next command, the executor runs it in the same quiescence cycle.
-  //
-  // TODO: Clarify how necessary that is.
+  // We use a direct (rather than queued) connection so that, when the
+  // slot starts the next command, the executor runs it in the same
+  // quiescence cycle.  But this makes no measurable difference in
+  // performance.
   QObject::connect(&m_executor, &UIShellExecutor::signal_hasCommandResult,
                    this, &UIShellScriptRunner::slot_hasCommandResult,
                    Qt::DirectConnection);
