@@ -107,7 +107,7 @@ UIShellExecutor::UIShellExecutor(
   m_commandResult(),
   m_queuedFocusKeySequence(),
   m_uiShellDelayMS(envAsIntOr(0, "UI_SHELL_DELAY_MS")),
-  m_timerId(0),
+  m_timerId(),
   m_watchingAboutToBlock(false)
 {
   if (s_quiescenceEventType == 0) {
@@ -1426,7 +1426,7 @@ void UIShellExecutor::startWatching()
 {
   if (m_uiShellDelayMS) {
     // Use timer-based notification.
-    if (m_timerId == 0) {
+    if (!m_timerId.has_value()) {
       TRACE1("installing first timer");
       this->installTimer();
     }
@@ -1470,16 +1470,15 @@ void UIShellExecutor::installTimer()
 
   this->killTimerIf();
   m_timerId = this->startTimer(m_uiShellDelayMS);
-  xassert(m_timerId != 0);
 }
 
 
 void UIShellExecutor::killTimerIf()
 {
-  if (m_timerId != 0) {
+  if (m_timerId.has_value()) {
     TRACE1("killing timer");
-    this->killTimer(m_timerId);
-    m_timerId = 0;
+    this->killTimer(*m_timerId);
+    m_timerId.reset();
   }
 }
 
@@ -1626,7 +1625,7 @@ bool UIShellExecutor::event(QEvent *ev)
       this->executeNextStep();
     }
 
-    if (m_busy && m_timerId == 0) {
+    if (m_busy && !m_timerId.has_value()) {
       // The command is continuing.  Arrange to receive another event.
       // (If the command finished and the handler started another,
       // `startWatching` has already installed a timer.)

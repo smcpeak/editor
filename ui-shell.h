@@ -94,10 +94,8 @@ private:     // instance data
   // Currently this can only be set with an envvar.
   int const m_uiShellDelayMS;
 
-  // Active timer ID, or 0 if none.
-  //
-  // TODO: Make optional?
-  int m_timerId;
+  // Active timer ID if one is active.
+  std::optional<int> m_timerId;
 
   // True if we are connected to the event dispatcher's `aboutToBlock`
   // signal.
