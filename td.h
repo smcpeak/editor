@@ -231,7 +231,7 @@ public:      // funcs
   // Convenience functions to append to the end of the document.
   void appendText(char const *text, ByteCount textLen);
   void appendCStr(char const *s);
-  void appendString(string const &s);
+  void appendString(std::string const &s);
 
   // Like the `TextDocumentCore` method, but with a different
   // implementation.

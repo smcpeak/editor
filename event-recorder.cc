@@ -28,6 +28,10 @@
 #include <QShortcutEvent>
 #include <QWidget>
 
+// libc++
+#include <iostream>                    // std::endl
+#include <string>                      // std::string
+
 // libc
 #include <string.h>                    // strcmp
 
@@ -38,7 +42,7 @@ using namespace smbase;
 INIT_TRACE("event-recorder");
 
 
-EventRecorder::EventRecorder(string const &filename)
+EventRecorder::EventRecorder(std::string const &filename)
   : m_outStream(filename.c_str(), std::ios::binary /*use LF line endings*/),
     m_ordinaryKeyChars()
 {
@@ -305,7 +309,7 @@ void EventRecorder::recordOrdinaryKeyPress(char c)
 void EventRecorder::flushOrdinaryKeyChars()
 {
   // Extract the string first, since 'recordEvent' also flushes.
-  string keys = m_ordinaryKeyChars.str();
+  std::string keys = m_ordinaryKeyChars.str();
   if (!keys.empty()) {
     m_ordinaryKeyChars.str("");
 
@@ -319,7 +323,7 @@ void EventRecorder::flushOrdinaryKeyChars()
 void EventRecorder::recordEvent(GDValue const &event)
 {
   this->flushOrdinaryKeyChars();
-  m_outStream << event << endl;
+  m_outStream << event << std::endl;
 }
 
 

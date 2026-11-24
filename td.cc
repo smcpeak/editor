@@ -252,7 +252,7 @@ void TextDocument::appendCStr(char const *s)
   this->appendText(s, strlenBC(s));
 }
 
-void TextDocument::appendString(string const &s)
+void TextDocument::appendString(std::string const &s)
 {
   this->appendCStr(s.c_str());
 }

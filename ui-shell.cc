@@ -235,7 +235,7 @@ void UIShellExecutor::resizeChildWidget(
 
 // Get an object from its path from a top-level window, or throw
 // `XMessage` if we cannot find it.
-static QObject *getQObjectFromPath(string const &path)
+static QObject *getQObjectFromPath(std::string const &path)
 {
   QStringList elts = toQString(path).split('.');
   if (elts.isEmpty()) {
@@ -289,7 +289,7 @@ static QObject *getQObjectFromPath(string const &path)
 // Get a named object with a particular type using 'qobject_cast' to
 // recognize it.
 template <class T>
-T *getObjectFromPath(string const &path)
+T *getObjectFromPath(std::string const &path)
 {
   QObject *o = getQObjectFromPath(path);
   xassert(o);
@@ -313,7 +313,7 @@ T *getObjectFromPath(string const &path)
 // dynamic_cast?  Although getting readable class names using C++ RTTI
 // is annoying.
 template <class T>
-T *getObjectFromPathDC(string const &path)
+T *getObjectFromPathDC(std::string const &path)
 {
   QObject *o = getQObjectFromPath(path);
   xassert(o);
@@ -327,7 +327,7 @@ T *getObjectFromPathDC(string const &path)
 }
 
 
-static UIShellQueryable *getQueryableFromPath(string const &path)
+static UIShellQueryable *getQueryableFromPath(std::string const &path)
 {
   return getObjectFromPathDC<UIShellQueryable>(path);
 }
@@ -348,14 +348,15 @@ QWidget *UIShellExecutor::getFocusWidget(QString const &funcName)
 
 
 // Return true if a substring of 'str' matches 're'.
-static bool regexSearch(string const &str, string const &re)
+static bool regexSearch(std::string const &str, std::string const &re)
 {
   std::regex regex(re.c_str(), std::regex::ECMAScript);
   return std::regex_search(str.c_str(), regex);
 }
 
 
-static void checkRegexSearch(string const &actual, string const &expectRE)
+static void checkRegexSearch(
+  std::string const &actual, std::string const &expectRE)
 {
   if (!regexSearch(actual, expectRE)) {
     xmessagesb("re match fail: " << GDVN_OMAP_EXPRS(actual, expectRE));
@@ -523,27 +524,27 @@ static QPointF toQPointF(QPoint const &pt)
 
 // Bind 'arg1' to the single expected string argument of a UI shell
 // command.
-#define BIND_STRING_ARGS1(arg1)                \
-  CHECK_NUM_ARGS(1);                           \
-  string arg1 = GET_STRING_ARG(0) /* user ; */
+#define BIND_STRING_ARGS1(arg1)                     \
+  CHECK_NUM_ARGS(1);                                \
+  std::string arg1 = GET_STRING_ARG(0) /* user ; */
 
-#define BIND_STRING_ARGS2(arg1, arg2)          \
-  CHECK_NUM_ARGS(2);                           \
-  string arg1 = GET_STRING_ARG(0);             \
-  string arg2 = GET_STRING_ARG(1) /* user ; */
+#define BIND_STRING_ARGS2(arg1, arg2)               \
+  CHECK_NUM_ARGS(2);                                \
+  std::string arg1 = GET_STRING_ARG(0);             \
+  std::string arg2 = GET_STRING_ARG(1) /* user ; */
 
-#define BIND_STRING_ARGS3(arg1, arg2, arg3)    \
-  CHECK_NUM_ARGS(3);                           \
-  string arg1 = GET_STRING_ARG(0);             \
-  string arg2 = GET_STRING_ARG(1);             \
-  string arg3 = GET_STRING_ARG(2) /* user ; */
+#define BIND_STRING_ARGS3(arg1, arg2, arg3)         \
+  CHECK_NUM_ARGS(3);                                \
+  std::string arg1 = GET_STRING_ARG(0);             \
+  std::string arg2 = GET_STRING_ARG(1);             \
+  std::string arg3 = GET_STRING_ARG(2) /* user ; */
 
-#define BIND_STRING_ARGS4(arg1, arg2, arg3, arg4) \
-  CHECK_NUM_ARGS(4);                              \
-  string arg1 = GET_STRING_ARG(0);                \
-  string arg2 = GET_STRING_ARG(1);                \
-  string arg3 = GET_STRING_ARG(2);                \
-  string arg4 = GET_STRING_ARG(3) /* user ; */
+#define BIND_STRING_ARGS4(arg1, arg2, arg3, arg4)   \
+  CHECK_NUM_ARGS(4);                                \
+  std::string arg1 = GET_STRING_ARG(0);             \
+  std::string arg2 = GET_STRING_ARG(1);             \
+  std::string arg3 = GET_STRING_ARG(2);             \
+  std::string arg4 = GET_STRING_ARG(3) /* user ; */
 
 
 #define CHECK_EQ(context)                          \
@@ -796,7 +797,7 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
     BIND_STRING_ARGS2(path, expect);
 
     QLabel *label = getObjectFromPath<QLabel>(path);
-    string actual = toString(label->text());
+    std::string actual = toString(label->text());
     CHECK_EQ("CheckLabel " << doubleQuote(path));
   }
 
@@ -815,7 +816,7 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
     BIND_STRING_ARGS2(path, expectRE);
 
     QLabel *label = getObjectFromPath<QLabel>(path);
-    string actual = toString(label->text());
+    std::string actual = toString(label->text());
     CHECK_RE_MATCH("CheckLabelMatches " << doubleQuote(path));
   }
 
@@ -823,7 +824,7 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
     BIND_STRING_ARGS2(path, expect);
 
     QComboBox *cbox = getObjectFromPath<QComboBox>(path);
-    string actual = toString(cbox->currentText());
+    std::string actual = toString(cbox->currentText());
     CHECK_EQ("CheckComboBoxText " << doubleQuote(path));
   }
 
@@ -831,7 +832,7 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
     BIND_STRING_ARGS2(path, expect);
 
     QLineEdit *lineEdit = getObjectFromPath<QLineEdit>(path);
-    string actual = toString(lineEdit->text());
+    std::string actual = toString(lineEdit->text());
     CHECK_EQ("CheckLineEditText " << doubleQuote(path));
   }
 
@@ -840,7 +841,7 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
       gdvpToTuple<std::string, std::string>(parser);
 
     auto *textEdit = getObjectFromPath<QTextEdit>(path);
-    string actual = toString(textEdit->toPlainText());
+    std::string actual = toString(textEdit->toPlainText());
     CHECK_EQ("CheckTextEditText " << doubleQuote(path));
   }
 
@@ -854,7 +855,7 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
     QModelIndex index = listView->currentIndex();
     QString itemText = index.data(Qt::DisplayRole).toString();
 
-    string actual = toString(itemText);
+    std::string actual = toString(itemText);
     CHECK_EQ("CheckListViewSelectedItem " << doubleQuote(path));
   }
 
@@ -928,7 +929,7 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
       gdvpToTuple<std::string, int, int, std::string>(parser);
 
     QTableWidget *table = getObjectFromPath<QTableWidget>(objPath);
-    string actual = getTableWidgetCell(table, r, c);
+    std::string actual = getTableWidgetCell(table, r, c);
     CHECK_RE_MATCH("CheckTableWidgetCellMatches " << doubleQuote(objPath) <<
                    " " << r << " " << c);
   }
@@ -938,7 +939,7 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
       gdvpToTuple<std::string, std::string>(parser);
 
     QMessageBox *mb = getObjectFromPath<QMessageBox>(path);
-    string actual = toString(mb->text());
+    std::string actual = toString(mb->text());
     CHECK_RE_MATCH("CheckMessageBoxTextMatches");
   }
 
@@ -946,14 +947,14 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
     BIND_STRING_ARGS2(path, expect);
 
     QMessageBox *mb = getObjectFromPath<QMessageBox>(path);
-    string actual = toString(mb->detailedText());
+    std::string actual = toString(mb->detailedText());
     CHECK_EQ("CheckMessageBoxDetailedText");
   }
 
   else if (funcName == "CheckClipboard") {
     BIND_STRING_ARGS1(expect);
 
-    string actual = toString(QApplication::clipboard()->text());
+    std::string actual = toString(QApplication::clipboard()->text());
     CHECK_EQ("CheckClipboard");
   }
 
@@ -970,7 +971,7 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
     BIND_STRING_ARGS1(expect);
 
     checkFocusWorkaround();
-    string actual =
+    std::string actual =
       toString(getFocusWidget(funcName)->window()->windowTitle());
     CHECK_EQ("CheckFocusWindowTitle");
   }
@@ -979,7 +980,7 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
     BIND_STRING_ARGS1(expectRE);
 
     checkFocusWorkaround();
-    string actual =
+    std::string actual =
       toString(getFocusWidget(funcName)->window()->windowTitle());
     CHECK_RE_MATCH("CheckFocusWindowTitleMatches");
   }
@@ -988,7 +989,7 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
     BIND_STRING_ARGS2(path, expect);
 
     QWidget *widget = getObjectFromPath<QWidget>(path);
-    string actual = toString(widget->window()->windowTitle());
+    std::string actual = toString(widget->window()->windowTitle());
     CHECK_EQ("CheckWindowTitle");
   }
 
@@ -996,7 +997,7 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
     BIND_STRING_ARGS1(expect);
 
     checkFocusWorkaround();
-    string actual = qObjectPath(getFocusWidget(funcName)->window());
+    std::string actual = qObjectPath(getFocusWidget(funcName)->window());
     CHECK_EQ("CheckFocusWindow");
   }
 
@@ -1004,7 +1005,7 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
     BIND_STRING_ARGS1(expect);
 
     checkFocusWorkaround();
-    string actual = qObjectPath(getFocusWidget(funcName));
+    std::string actual = qObjectPath(getFocusWidget(funcName));
     CHECK_EQ("CheckFocusWidget");
   }
 
@@ -1108,7 +1109,7 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
     auto [fname, expect] =
       gdvpToTuple<std::string, std::string>(parser);
 
-    string actual = SMFileUtil().readFileAsString(fname);
+    std::string actual = SMFileUtil().readFileAsString(fname);
     CHECK_EQ("CheckFileContentsSize " << doubleQuote(fname));
   }
 
@@ -1270,7 +1271,7 @@ void UIShellExecutor::executeNextStep()
 
     // Nothing remains, so the command has finished successfully.
   }
-  catch (string const &msg) {
+  catch (std::string const &msg) {
     // TODO: Am I still throwing strings somewhere?
     errorMessage = msg;
   }
@@ -1328,8 +1329,8 @@ void UIShellExecutor::finishCommand(GDValue &&reply)
 
 void UIShellExecutor::waitUntilCheckQuery(
   long durationMS,
-  string const &receiver,
-  string const &state,
+  std::string const &receiver,
+  std::string const &state,
   GDValue const &expect)
 {
   auto gdvFunc = [receiver, state]() -> GDValue {
@@ -1488,7 +1489,7 @@ void UIShellScriptRunner::startNextCommand()
 }
 
 
-string UIShellScriptRunner::runTest()
+std::string UIShellScriptRunner::runTest()
 {
   // Do one self-check at the start so a later failure is known to be
   // caused by something that happened while executing.

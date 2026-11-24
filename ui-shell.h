@@ -13,7 +13,6 @@
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
 #include "smbase/sm-override.h"        // OVERRIDE
 #include "smbase/std-vector-fwd.h"     // std::vector [f]
-#include "smbase/str.h"                // string    // TODO: std::string
 
 // Qt
 #include <QEvent>
@@ -23,6 +22,7 @@
 #include <cstddef>                     // std::size_t
 #include <functional>                  // std::function
 #include <optional>                    // std::optional
+#include <string>                      // std::string
 
 class QWidget;
 
@@ -160,8 +160,8 @@ private:     // funcs
   // Execute the "WaitUntilCheckQuery" command.
   void waitUntilCheckQuery(
     long durationMS,
-    string const &receiver,
-    string const &state,
+    std::string const &receiver,
+    std::string const &state,
     gdv::GDValue const &expect);
 
   // Wait for up to `durationMS` for `gdvFunc` to return `expect`.
@@ -261,7 +261,7 @@ private:     // instance data
 
   // If the test has failed, this describes how.  Otherwise (test still
   // running, or it succeeded) it is "".
-  string m_testResult;
+  std::string m_testResult;
 
   // Event loop object started by 'runTest'.
   QEventLoop m_eventLoop;
@@ -288,7 +288,7 @@ public:      // funcs
   // Inject all the events and check all the assertions.  If everything
   // is ok, return "".  Otherwise return a string describing the test
   // failure.
-  string runTest();
+  std::string runTest();
 
 private Q_SLOTS:
   // Called when `m_executor` has a reply for the current command.
