@@ -1,12 +1,14 @@
 // ui-shell.h
-// UIShellScriptRunner class.
+// Classes that implement the "UI shell".  See doc/ui-shell.txt.
 
-#ifndef UI_SHELL_H
-#define UI_SHELL_H
+// See license.txt for copyright and terms of use.
+
+#ifndef EDITOR_UI_SHELL_H
+#define EDITOR_UI_SHELL_H
 
 // smbase
 #include "smbase/array.h"              // ArrayStack
-#include "smbase/gdvalue-fwd.h"        // gdv::GDValue [n]
+#include "smbase/gdvalue-fwd.h"        // gdv::GDValue [f]
 #include "smbase/refct-serf.h"         // SerfRefCount
 #include "smbase/sm-override.h"        // OVERRIDE
 #include "smbase/std-vector-fwd.h"     // std::vector
@@ -23,51 +25,6 @@
 
 class QImage;
 class QWidget;
-
-
-// Interface that the UI shell uses to query arbitrary state
-// elements of objects.
-//
-// This is also used during recording to do some filtering.
-class UIShellQueryable {
-public:      // funcs
-  /*
-    Returns the tagged tuple:
-
-      Error("$msg")
-
-    A tagged `Error` tuple with a single string element containing a
-    human-readable error message is the usual way to convey errors.
-  */
-  static gdv::GDValue errorTuple(string const &msg);
-
-  /*
-    Return some application-specific state.  This result must match the
-    argument to the "CheckQuery" command in test scripts for the test
-    to pass.  Typically, the returned value is a string or an integer,
-    but it can be any GDValue.
-
-    If it throws an exception, that will normally be converted into an
-    `Error` tagged tuple by `tryUIShellQuery`.
-
-    The default calls `errorTuple` with "unknown state: $state".
-  */
-  virtual gdv::GDValue uiShellQuery(string const &state);
-
-  // Calls `uiShellQuery`.  If it throws, its message is passed to
-  // `errorTuple` and that returned.
-  gdv::GDValue tryUIShellQuery(string const &state);
-
-  // Return an app-specific image, identified by 'what'.  Corresponds to
-  // the "CheckQuery" command.  The default implementation returns a
-  // null QImage.
-  virtual QImage uiShellImage(string const &what);
-
-  // Return true if resize events should be recorded for this object.
-  // Doing so facilitates writing tests for resizing.  The default is
-  // false.
-  virtual bool wantResizeEventsRecorded();
-};
 
 
 // Read events and test assertions from a file.  Synthesize the events
@@ -207,4 +164,4 @@ private Q_SLOTS:
 };
 
 
-#endif // UI_SHELL_H
+#endif // EDITOR_UI_SHELL_H

@@ -9,7 +9,7 @@
 #include "modal-dialog.h"              // ModalDialog
 #include "named-td-list.h"             // NamedTextDocumentList
 #include "rfa-async-multi-client.h"    // RFA_AsyncMultiClient
-#include "ui-shell.h"                  // UIShellQueryable
+#include "ui-shell-queryable.h"        // UIShellQueryable
 
 // smqtutil
 #include "smqtutil/sm-line-edit-fwd.h" // SMLineEdit

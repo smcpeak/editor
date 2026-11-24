@@ -10,6 +10,7 @@
 // editor
 #include "debug-values.h"                        // DEBUG_VALUES
 #include "file-mod-time.h"                       // getFileModTime
+#include "ui-shell-queryable.h"                  // UIShellQueryable
 #include "waiting-counter.h"                     // g_waitingCounter, IncDecWaitingCounter
 
 // smqtutil
@@ -80,41 +81,6 @@ using namespace smbase;
 
 
 INIT_TRACE("ui-shell");
-
-
-// ------------------------- UIShellQueryable --------------------------
-/*static*/ GDValue UIShellQueryable::errorTuple(string const &msg)
-{
-  return GDVTaggedTuple("Error"_sym, GDVTuple({toGDValue(msg)}));
-}
-
-
-GDValue UIShellQueryable::uiShellQuery(string const &state)
-{
-  return errorTuple(stringb("unknown state: " << doubleQuote(state)));
-}
-
-
-GDValue UIShellQueryable::tryUIShellQuery(string const &state)
-{
-  try {
-    return uiShellQuery(state);
-  }
-  catch (std::exception &e) {
-    return errorTuple(e.what());
-  }
-}
-
-
-QImage UIShellQueryable::uiShellImage(string const &)
-{
-  return QImage();
-}
-
-bool UIShellQueryable::wantResizeEventsRecorded()
-{
-  return false;
-}
 
 
 // ------------------------ UIShellScriptRunner ------------------------

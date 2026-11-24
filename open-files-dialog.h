@@ -9,7 +9,7 @@
 #include "editor-global-fwd.h"                   // EditorGlobal
 #include "modal-dialog.h"                        // ModalDialog
 #include "named-td-list.h"                       // NamedTextDocumentList
-#include "ui-shell.h"                            // UIShellQueryable
+#include "ui-shell-queryable.h"                  // UIShellQueryable
 
 #include "smqtutil/sm-table-widget-fwd.h"        // SMTableWidget
 

@@ -35,7 +35,7 @@
 #include "td-editor.h"                           // TextDocumentEditor
 #include "text-search.h"                         // TextSearch
 #include "textcategory.h"                        // TextCategory, LineCategoryAOAs
-#include "ui-shell.h"                            // UIShellQueryable
+#include "ui-shell-queryable.h"                  // UIShellQueryable
 #include "uri-util.h"                            // URIPathSemantics
 
 // smqtutil

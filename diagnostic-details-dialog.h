@@ -6,8 +6,8 @@
 #ifndef EDITOR_DIAGNOSTIC_DETAILS_DIALOG_H
 #define EDITOR_DIAGNOSTIC_DETAILS_DIALOG_H
 
-#include "diagnostic-element-fwd.h"              // DiagnosticElement [n]
-#include "ui-shell.h"                            // UIShellQueryable
+#include "diagnostic-element-fwd.h"              // DiagnosticElement [f]
+#include "ui-shell-queryable.h"                  // UIShellQueryable
 
 #include "smqtutil/sm-table-widget-fwd.h"        // SMTableWidget
 
@@ -69,7 +69,7 @@ public:      // methods
   void setDiagnostics(QVector<DiagnosticElement> &&diagnostics);
 
   // UIShellQueryable methods.
-  virtual gdv::GDValue uiShellQuery(string const &state) override;
+  virtual gdv::GDValue uiShellQuery(std::string const &state) override;
 
 Q_SIGNALS:
   // Emitted when the user indicates they want to see one element in

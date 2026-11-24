@@ -4,7 +4,7 @@
 #include "event-recorder.h"            // this module
 
 // editor
-#include "ui-shell.h"                  // UIShellQueryable
+#include "ui-shell-queryable.h"        // UIShellQueryable
 
 // smqtutil
 #include "smqtutil/gdvalue-qt.h"       // toGDValue(QSize), toGDValue(QMouseEvent)

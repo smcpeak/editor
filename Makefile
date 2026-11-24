@@ -443,20 +443,21 @@ endif # TEST_SSH_LOCALHOST
 
 
 # ----------------------------- gui-tests ------------------------------
-EDITOR_OBJS += completions-dialog.o
 EDITOR_OBJS += completions-dialog.moc.o
-EDITOR_OBJS += connections-dialog.o
+EDITOR_OBJS += completions-dialog.o
 EDITOR_OBJS += connections-dialog.moc.o
+EDITOR_OBJS += connections-dialog.o
 EDITOR_OBJS += diagnostic-details-dialog.moc.o
 EDITOR_OBJS += diagnostic-details-dialog.o
 EDITOR_OBJS += editor-proxy-style.o
-EDITOR_OBJS += list-choice-dialog.o
 EDITOR_OBJS += list-choice-dialog.moc.o
-EDITOR_OBJS += modal-dialog.o
+EDITOR_OBJS += list-choice-dialog.o
 EDITOR_OBJS += modal-dialog.moc.o
+EDITOR_OBJS += modal-dialog.o
 EDITOR_OBJS += pixmaps.o
-EDITOR_OBJS += ui-shell.o
+EDITOR_OBJS += ui-shell-queryable.o
 EDITOR_OBJS += ui-shell.moc.o
+EDITOR_OBJS += ui-shell.o
 
 GUI_TESTS_OBJS := $(EDITOR_OBJS)
 GUI_TESTS_OBJS += completions-dialog-test.o
