@@ -128,10 +128,8 @@ UIShellExecutor::~UIShellExecutor()
   //
   // It is possible we already disconnected, or never connected in the
   // first place, but this is still safe.
-  //
-  // TODO: "NULL" -> "nullptr"
-  QObject::disconnect(QAbstractEventDispatcher::instance(), NULL,
-                      this, NULL);
+  QObject::disconnect(QAbstractEventDispatcher::instance(), nullptr,
+                      this, nullptr);
 }
 
 
@@ -1450,8 +1448,8 @@ void UIShellExecutor::stopWatching()
   if (m_watchingAboutToBlock) {
     // Disconnect from the event dispatcher to stop getting signals.
     TRACE2("disconnecting slot_aboutToBlock");
-    QObject::disconnect(QAbstractEventDispatcher::instance(), NULL,
-                        this, NULL);
+    QObject::disconnect(QAbstractEventDispatcher::instance(), nullptr,
+                        this, nullptr);
     m_watchingAboutToBlock = false;
   }
 }
