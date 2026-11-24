@@ -1,8 +1,12 @@
 claude-gui-control-shell.txt
-Plan for an interactive GUI control shell built on event replay
+Plan for an interactive UI shell server
 2026-11-22
 
 Written by Claude Code, with small adjustments by smcpeak.
+
+Revised 2026-11-23 to use the names from
+doc/plans/rename-event-replay-to-ui-shell.txt ("event replay" became
+"UI shell").
 
 
 Motivation
@@ -12,19 +16,20 @@ The goal is to let an agent (Claude Code) or a person drive a running
 editor interactively: inspect the UI state (based on the Qt object
 hierarchy), inject inputs such as keystrokes and clicks, and see the
 results.  The immediate use is trying out a new dialog during
-development without writing a complete .ev script blind first.
+development without writing a complete .uis script blind first.
 
-The event replay system (event-replay.{h,cc}, doc/event-replay.txt)
-already has most of the pieces:
+The UI shell (ui-shell.{h,cc}, ui-shell-queryable.{h,cc},
+doc/ui-shell.txt) already has most of the pieces:
 
-  * A command language: GDVN tagged tuples such as
-    KeyPress("window1.editorFrame.m_editorWidget" "Key_X" "x"),
-    dispatched by EventReplay::replayCall.
+  * A command language, the UI Shell Language: GDVN tagged tuples
+    such as
+      KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_X" "x")
+    dispatched by UIShellScriptRunner::executeCommand.
   * Addressing of widgets by QObject name path (getObjectFromPath).
   * Input synthesis: KeyPress, FocusKeySequence, Shortcut,
     TriggerAction, ClickButton, mouse events, ResizeEvent, and so on.
   * State checks: CheckLabel, CheckLineEditText, CheckFocusWidget,
-    CheckQuery (via EventReplayQueryable), CheckImage, and so on.
+    CheckQuery (via UIShellQueryable), CheckImage, and so on.
   * Synchronization: after each command, the next is not run until the
     application reaches quiescence (QuiescenceEvent posted from
     slot_aboutToBlock).
@@ -59,27 +64,27 @@ Design
 Overview
 --------
 
-  $ ./editor.exe -controlServer=out/ctl.gdvn &      # once, in background
-  $ ./editor-ctl.py out/ctl.gdvn 'KeyPress("window1.editorFrame.m_editorWidget" "Key_X" "x")'
+  $ ./editor.exe -uisServer=out/key.uisk &      # once, in background
+  $ ./editor-ui-shell-client.py out/key.uisk 'KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_X" "x")'
   Ok(null)
-  $ ./editor-ctl.py out/ctl.gdvn 'QueryLabel("window1.m_statusArea.m_filename")'
+  $ ./editor-ui-shell-client.py out/key.uisk 'QueryLabel("window1.m_statusArea.m_filename")'
   Ok("untitled.txt *")
-  $ ./editor-ctl.py out/ctl.gdvn 'Screenshot("window1" "out/shot.png")'
+  $ ./editor-ui-shell-client.py out/key.uisk 'Screenshot("window1" "out/shot.png")'
   Ok(null)
 
-The argument to -controlServer names an "access file" that the editor
-writes when the server starts.  It holds what a client needs to connect
+The argument to -uisServer names an "access file" (conventional
+extension ".uisk", for "UI shell key") that the editor writes when the
+server starts.  It holds what a client needs to connect
 and authenticate (see "Transport and authentication").
 
 Server side (editor)
 --------------------
 
-New command line option, "-controlServer=FILE".  When present, the
-editor starts normally (it may also be given files to open) and
-additionally creates a ControlServer object, which writes the access
-file FILE.
+New command line option, "-uisServer=FILE".  When present, the editor
+starts normally (it may also be given files to open) and additionally
+creates a UIShellServer object, which writes the access file FILE.
 
-ControlServer (new module control-server.{h,cc}, a QObject):
+UIShellServer (new module ui-shell-server.{h,cc}, a QObject):
 
   * Listens on a QTcpServer bound to 127.0.0.1 with port 0, so the OS
     picks a free port, and writes the access file (see "Transport and
@@ -104,7 +109,7 @@ ControlServer (new module control-server.{h,cc}, a QObject):
     previous one is still waiting for quiescence, it waits its turn.
   * The server runs until the app exits, or until a Quit() command.
   * On startup, the server prints one line to stdout, such as
-      control server listening on 127.0.0.1:PORT, pid N
+      UI shell server listening on 127.0.0.1:PORT, pid N
     so the agent learns the process ID even if no command ever
     succeeds.
 
@@ -129,7 +134,7 @@ Binding to 127.0.0.1 keeps other machines out.  It does not keep out
 other local processes, including those of other users on a shared
 machine, so every request must carry the access key.
 
-The access file, written by the server at startup:
+The access file (.uisk), written by the server at startup:
 
   {
     port: 54321
@@ -173,9 +178,10 @@ line.
 Executing a command:
 
   1. Parse the GDVN.  A syntax error produces Error(...).
-  2. Run it through the same dispatcher used by event replay (see
-     "Refactoring EventReplay" below), catching any exception and
-     turning it into Error(...).  An error does not end the session.
+  2. Run it through the same dispatcher used by UIS scripts (see
+     "Refactoring UIShellScriptRunner" below), catching any exception
+     and turning it into Error(...).  An error does not end the
+     session.
   3. Wait for quiescence using the existing QuiescenceEvent /
      aboutToBlock mechanism, then send the reply.  For an action, the
      reply therefore means "the action was delivered and the app has
@@ -192,10 +198,11 @@ reason for the shell.
 Client side
 -----------
 
-editor-ctl.py, a small Python 3 script (Python is already a build
-dependency):
+editor-ui-shell-client.py, a small Python 3 script (Python is already
+a build dependency):
 
-  editor-ctl.py ACCESS-FILE COMMAND     (or "-" to read COMMAND from stdin)
+  editor-ui-shell-client.py ACCESS-FILE COMMAND
+                                    (or "-" to read COMMAND from stdin)
 
 It reads the port and key from ACCESS-FILE, connects to
 127.0.0.1:PORT, sends the framed {key cmd} map, prints the reply, and
@@ -211,29 +218,29 @@ token.  Alternatively, the access file could also be written in JSON
 next to the GDVN version, but a second format adds little.
 
 The fallback, if a Python client becomes cumbersome, is a small C++
-client, editor-ctl.exe, using smbase's GDValue parser and either
-QtNetwork (QTcpSocket) or plain sockets.
+client, editor-ui-shell-client.exe, using smbase's GDValue parser and
+either QtNetwork (QTcpSocket) or plain sockets.
 
-Refactoring EventReplay
------------------------
+Refactoring UIShellScriptRunner
+-------------------------------
 
-Today EventReplay owns both the command dispatcher and the test driver
-(the command sequence, the event loop, pass/fail).  Split it:
+Today UIShellScriptRunner owns both the command dispatcher and the test
+driver (the command sequence, the event loop, pass/fail).  Split it:
 
-  * EventReplayExecutor (or keep the name EventReplay for the executor
-    and add a new class for the driver): replayCall and the helpers it
-    uses, the queued FocusKeySequence characters, and the quiescence
-    detection.  It executes one command and signals when the app is
-    quiescent afterward.
-  * The .ev test driver: iterates over m_testCommands, calls the
-    executor, and stops at the first failure, as now.
-  * ControlServer: another client of the executor.
+  * UIShellExecutor (new): executeCommand and the helpers it uses, the
+    queued FocusKeySequence characters, and the quiescence detection.
+    It executes one command and signals when the app is quiescent
+    afterward.
+  * UIShellScriptRunner (what remains): the .uis test driver.  It
+    iterates over m_testCommands, calls the executor, and stops at the
+    first failure, as now.
+  * UIShellServer: another client of the executor.
 
-FocusKeySequence queues characters that are replayed one per
+FocusKeySequence queues characters that are executed one per
 quiescence cycle.  The executor must report completion only after the
 queue drains, for both clients.
 
-The existing .ev tests are the regression suite for this refactoring:
+The existing .uis tests are the regression suite for this refactoring:
 `make check` must pass before anything else is added.
 
 Queries
@@ -277,7 +284,7 @@ New commands
   * Screenshot(path filename): QWidget::grab() on the widget, saved as
     a PNG.  This lets the agent see layout and rendering problems that
     a tree dump cannot show.  It is similar to what CheckImage and
-    eventReplayImage already do.
+    uiShellImage already do.
 
   * Quit(): close the application cleanly, running the normal
     shutdown checks (object counts and so on).
@@ -289,9 +296,9 @@ New commands
 
 Optional:
 
-  * Session logging: -controlServerLog=FILE appends each successful
+  * Session logging: -uisServerLog=FILE appends each successful
     action, and each query as the corresponding Check* with the
-    observed value, in .ev syntax.  A useful session can then be edited
+    observed value, in .uis syntax.  A useful session can then be edited
     into a regression test.  Given that most features should be tested
     with unit tests instead, this is a convenience, not a goal.
 
@@ -369,11 +376,11 @@ Steps
 
 Each step is a commit that builds and passes `make check`.
 
-  1. Refactor EventReplay into an executor and the .ev driver, with no
-     behavior change.
+  1. Split UIShellExecutor out of UIShellScriptRunner, leaving the
+     latter as the .uis driver, with no behavior change.
 
-  2. Add ControlServer, -controlServer, and editor-ctl.py, running
-     commands through the executor with Ok/Error replies after
+  2. Add UIShellServer, -uisServer, and editor-ui-shell-client.py,
+     running commands through the executor with Ok/Error replies after
      quiescence, plus the access file, key checking, Ping(), Quit(),
      and the startup PID line.  Verify by hand: open a modal dialog, then drive it; try
      QT_QPA_PLATFORM=offscreen; and confirm that the agent can detect
@@ -386,7 +393,7 @@ Each step is a commit that builds and passes `make check`.
      QueryFocusWidget, QueryFocusWindowTitle, and Query, re-expressing
      the corresponding Check* in terms of them.
 
-  5. Update doc/event-replay.txt to describe the shell and the new
+  5. Update doc/ui-shell.txt to describe the server and the new
      commands, and add a paragraph to CLAUDE.md saying when the agent
      may use the shell (for example, "only with
      QT_QPA_PLATFORM=offscreen" or "only when asked").  CLAUDE.md
@@ -403,7 +410,8 @@ Testing:
     tested without a GUI if they are factored as pure functions
     (GDValue in, bytes out and back).
   * An automated end-to-end test would start the editor with
-    -controlServer, run a few editor-ctl.py commands, and Quit().  It
+    -uisServer, run a few editor-ui-shell-client.py commands, and
+    Quit().  It
     pops up a window unless offscreen works, so it belongs with the GUI
     tests in `make check`, not in the `make` default target.
 
@@ -428,7 +436,7 @@ Alternatives considered
   * Existing tools: GammaRay (inspection, GUI-oriented), Squish
     (commercial automation), QtTest (in-process, compiled tests).  None
     is designed to be driven by one-shot shell commands, and none
-    reuses the existing .ev vocabulary.
+    reuses the existing UI Shell Language vocabulary.
 
 
 Open questions
@@ -436,7 +444,7 @@ Open questions
 
   * QtNetwork dependency.  QTcpServer lives in QtNetwork, which the
     editor does not currently link (it uses Widgets, Gui, Core).
-    Options: link QtNetwork (only the control server uses it); use
+    Options: link QtNetwork (only the UI shell server uses it); use
     plain BSD/Winsock sockets with a QSocketNotifier; or use the
     file-polling alternative.  Linking QtNetwork is the simplest.
 
@@ -451,9 +459,6 @@ Open questions
     works with the real application.  The alternative is a separate
     test build, which seems unnecessary given that it is off by
     default.
-
-  * Whether to keep a single name, EventReplay, for the executor, and
-    name the .ev driver something like EventReplayTest.
 
 
 EOF
