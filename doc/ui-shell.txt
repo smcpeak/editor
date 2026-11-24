@@ -1,21 +1,30 @@
-event-replay.txt
-----------------
+ui-shell.txt
+Explanation of mechanism and usage of UI shell subsystem
 
-This document explains how the event replay system works.
 
-Event replay executes events, and checks application state, based on
-instructions in an "events" file.  The conventional extension is ".ev".
+Usage
+=====
 
-The syntax of an events file uses GDVN (see smbase/gdvalue-design.txt).
-It has an outer map with keys `args` and `cmds`.  The former specifies
-the command line arguments for that test (usually the name of a file to
-open).  The latter is a sequence of tagged tuples where the tag is the
-name of an event elements provide its details.
+The UI shell executes commands, and checks application state, based on
+instructions in a "UI Shell Language" (UIS) file.  The conventional
+extension is ".uis".
 
-The "-record" command line switch can create a sequence of input events
-to start with.  Checks are then inserted manually.
+A UIS file can be executed in the editor by passing the
+"-uisCmds=file.uis" command line argument.  There is also the
+"-testCommands=cmds.gdvn" argument that can execute many UIS files
+within a single process for improved efficiency.
 
-Example (from test/read-only1.ev):
+The syntax of a UIS file uses GDVN (see smbase/gdvalue-design.txt).  It
+has an outer map with keys `args` and `cmds`.  The former specifies the
+command line arguments for that test (usually the name of a file to
+open).  The latter is a sequence of tagged containers where the tag is
+the command name and the container elements provide its arguments.
+
+The "-record" command line switch can create a sequence of input event
+commands (keystrokes, etc.) to start with.  Checks are then inserted
+manually.
+
+Example (from test/read-only1.uis):
 
   // Verify we can make a change and undo it.
   KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_X" "x")
@@ -23,28 +32,41 @@ Example (from test/read-only1.ev):
   Shortcut("window1.m_menuBar.editMenu.editUndo" "Alt+Backspace")
   CheckLabel("window1.m_statusArea.m_filename" "untitled.txt")
 
-Event actions are replayed by posting them to the Qt event queue,
+UI input commands are simulated by posting them to the Qt event queue,
 usually with the receiver object indicated by a QObject name path.
 
-Checks usually work by identifying an object (by path) and querying
-it somehow to yield a string that is then compared to what is in the
-test script.
+Checks usually work by identifying an object (by path) and querying it
+somehow to yield a GDV value (usually a string) that is then compared to
+what is in the test script.
 
-The main question is how to properly synchronize actions and checks with
-the application.  We can't just post all the events at the start, among
-other reasons because the receivers won't exist yet.  A simple approach
-is to post them using a fixed timer, but that leads to tension between
-reliability (long timer) and test speed (short timer).  The event replay
-system can be instructed to use a timer via the REPLAY_DELAY_MS
-environment variable, but that is mainly for debugging.
+
+Quiescence detection mechanism
+==============================
+
+The main technical challenge is to properly synchronize commands and
+checks with the application.  We can't just post all the events at the
+start, among other reasons because the receivers won't exist yet.  A
+simple approach is to post them using a fixed timer, but that leads to
+tension between reliability (long timer) and test speed (short timer).
+The UI shell system can be instructed to use a timer via the
+UI_SHELL_DELAY_MS environment variable, but that is mainly for
+debugging.
 
 Instead, the basic idea of the normal mechanism is to post an event or
 do a check, then wait for the application to reach quiescence, then post
-the next, etc.  But how to detect quiescence?  My first approach was to
-replace the top-level event loop ("exec()" call) with something like:
+the next, etc.
+
+But how do we detect quiescence?
+
+
+Failed attempt 1: Single event loop
+-----------------------------------
+
+My first approach was to replace the top-level event loop ("exec()"
+call) with something like:
 
   while (events) {
-    dequeue and post replay event;
+    dequeue and post input event;
     QCoreApplication::processEvents();   // drain event queue
   }
 
@@ -52,10 +74,14 @@ This does not work because if event processing starts a modal dialog,
 control never returns to the loop since the modal dialog starts its own
 event loop.
 
+
+Failed attempt 2: Low-priority event
+------------------------------------
+
 The next approach was to post a low-priority "quiescence" event.  Then
 the event handler was basically:
 
-  dequeue and post replay event;
+  dequeue and post input event;
   post QuiescenceEvent;
 
 This fails for a more subtle reason.  Anywhere in the guts of Qt,
@@ -63,17 +89,25 @@ something could drain the event queue on its own by calling
 processEvents(), which would trigger the QuiescenceEvent, even though
 the app wasn't actually quiescent because whatever was meant to happen
 after processEvents() was still pending.  This turns out to happen when
-QMessageBox closes.  The effect is I would replay the next event before
-the dialog has exited, which fails of course.
+QMessageBox closes.  The effect is I would execute the next command
+before the dialog has exited, which fails of course.
 
-Aside: The documentation QObject::startTimer says, "If interval is 0,
-then the timer event occurs once every time there are no more window
-system events to process."  The meaning of this statement is unclear
-(what exactly is a "window system event" in this context?), but
-empirically, getting a timer notification with a zero interval does
-*not* imply the application is quiescent, so that's out too.
 
-So, the current approach is to hook into the
+Failed attempt 3: Timer with zero interval
+------------------------------------------
+
+The documentation QObject::startTimer says, "If interval is 0, then the
+timer event occurs once every time there are no more window system
+events to process."  The meaning of this statement is unclear (what
+exactly is a "window system event" in this context?), but empirically,
+getting a timer notification with a zero interval does *not* imply the
+application is quiescent, so that's out too.
+
+
+What works: aboutToBlock
+------------------------
+
+The current approach is to hook into the
 QAbstractEventDispatcher::aboutToBlock signal.  For illustration of its
 behavior, here is the Windows implementation of emitting that signal, in
 qeventdispatcher_win.cpp:
@@ -87,46 +121,60 @@ qeventdispatcher_win.cpp:
     waitRet = MsgWaitForMultipleObjectsEx(..., INFINITE, ...);
     emit awake();
 
-We can see that 'aboutToBlock' is only called if the innermost event
-loop hasn't exited ('!d->interrupt') and we are processing events with
-the intent to block if there are none ('QEventLoop::WaitForMoreEvents').
+We can see that `aboutToBlock` is only called if the innermost event
+loop hasn't exited (`!d->interrupt`) and we are processing events with
+the intent to block if there are none (`QEventLoop::WaitForMoreEvents`).
 The latter eliminates the problem with a random processEvents() call
 somewhere in the Qt guts, since that won't block.
 
-This suggests doing replay and checking in 'aboutToBlock', but that has
-a subtle problem: if nothing adds anything to the OS event queue, then
-'emit aboutToBlock()' will return and drop straight into WaitFor, which
-will block, hanging the test until an OS event happens to arrive.
-Furthermore, it seems like a bad idea to do a lot of work, especially
-replaying events synchronously (like what "TriggerAction" does), inside
-the 'aboutToBlock' signal handler, since it is called from a weird spot
-in the guts in the Qt event handler.
+This suggests doing event posting and checking in `aboutToBlock`, but
+that has a subtle problem: if nothing adds anything to the OS event
+queue, then `emit aboutToBlock()` will return and drop straight into
+WaitFor, which will block, hanging the test until an OS event happens to
+arrive.  Furthermore, it seems like a bad idea to do a lot of work,
+especially sending events synchronously (like what "TriggerAction"
+does), inside the `aboutToBlock` signal handler, since it is called from
+a weird spot in the guts in the Qt event handler.
 
-Therefore, 'slot_aboutToBlock' merely posts QuiescenceEvent and calls
+Therefore, `slot_aboutToBlock` merely posts QuiescenceEvent and calls
 QAbstractEventDispatcher::instance()->wakeUp().  The latter posts an OS
 event so that WaitFor will return immediately.  Then the QuiescenceEvent
 will be dispatched in the normal way from whatever is the innermost
-event loop, and that is where we do event replay and checking.  When
-that is finished and the app returns to quiescence, 'aboutToBlock' will
-again be invoked, repeating the cycle.
+event loop, and that is where we do command execution and checking.
+When that is finished and the app returns to quiescence, `aboutToBlock`
+will again be invoked, repeating the cycle.
 
-When the test is done, we simply disconnect 'aboutToBlock'.
+When the test is done, we simply disconnect `aboutToBlock`.
+
+Portability note: On Windows, the `aboutToBlock` and `awake` signals are
+emitted as shown in the code snippet above.  But on Linux, the `awake`
+is not emitted right after calling `poll`, but instead only just before
+events are dequeued and dispatched (Windows also emits `awake` there; it
+does so in two places).  This means that a lot can happen in the app
+before `awake` fires, including terminating and starting new event
+loops.  This is why the `os-wait-timer` module only works on Windows; in
+this respect, the Linux implementation of Qt is deficient.
 
 
-g_waitingCounter
-----------------
+IPC and g_waitingCounter
+------------------------
 
 The above isn't quite sufficient to detect quiescence when an operation
 has to wait for interprocess communication and pumps the event queue
 while waiting (e.g., RFA_AsyncMultiClient).  In that case, the event
-queue entirely drains and we block, but event replay should not continue
-because we expect the other process to respond fairly quickly, thus
-delivering new events to process.
+queue entirely drains and we block, but UI shell command execution
+should not continue because we intend to wait for the other process to
+respond.
 
-The solution is the global `g_waitingCounter` declared in
-`waiting-counter.h`, and usually manipulated with the
+The solution to the IPC problem is the global `g_waitingCounter`
+declared in `waiting-counter.h`, and usually manipulated with the
 `IncDecWaitingCounter` class.  When that counter is non-zero, quiescence
-events are ignored rather than triggering the next replay event.
+events are ignored rather than triggering the next command execution.
+
+Code that awaits IPC must manually arrange to increment
+`g_waitingCounter`.  Fortunately, when that is not done, the result is
+usually a deterministic test failure due to the UI shell executing the
+next command before the IPC has a chance to respond, rather than a race.
 
 
 EOF
