@@ -1578,8 +1578,7 @@ bool UIShellExecutor::event(QEvent *ev)
   if (ev->type() == s_quiescenceEventType) {
     TRACE2("received QuiescenceEvent");
 
-    // TODO: Change to `m_watchingAboutToBlock`.
-    if (!m_busy) {
+    if (!m_watchingAboutToBlock) {
       // This can happen if the event was posted before we stopped
       // watching for quiescence.
       TRACE2("ignoring QuiescenceEvent because no command is active");
