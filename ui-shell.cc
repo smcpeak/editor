@@ -39,6 +39,7 @@
 #include "smbase/string-util.h"                  // doubleQuote
 #include "smbase/stringb.h"                      // stringb
 #include "smbase/syserr.h"                       // xsyserror
+#include "smbase/xassert.h"                      // xassert, xassertPrecondition
 
 // Qt
 #include <QAbstractButton>
@@ -72,6 +73,7 @@
 #include <string>                                // std::string, getline
 #include <tuple>                                 // std::tuple
 #include <typeinfo>                              // typeid
+#include <utility>                               // std::move
 
 // libc
 #include <stdlib.h>                              // getenv, atoi
@@ -83,30 +85,30 @@ using namespace smbase;
 INIT_TRACE("ui-shell");
 
 
-// ------------------------ UIShellScriptRunner ------------------------
-int UIShellScriptRunner::s_quiescenceEventType = 0;
+// -------------------------- UIShellExecutor --------------------------
+int UIShellExecutor::s_quiescenceEventType = 0;
 
 
-UIShellScriptRunner::QuiescenceEvent::QuiescenceEvent()
+UIShellExecutor::QuiescenceEvent::QuiescenceEvent()
   : QEvent((QEvent::Type)s_quiescenceEventType)
 {}
 
-UIShellScriptRunner::QuiescenceEvent::~QuiescenceEvent()
+UIShellExecutor::QuiescenceEvent::~QuiescenceEvent()
 {}
 
 
-UIShellScriptRunner::UIShellScriptRunner(
-  std::vector<gdv::GDValue> const &testCommands,
+UIShellExecutor::UIShellExecutor(
   std::function<void ()> globalSelfCheck)
 :
-  IMEMBFP(testCommands),
-  m_nextTestCommandIndex(0),
+  IMEMBFP(globalSelfCheck),
+  m_busy(false),
+  m_pendingCommand(),
+  m_commandResult(),
+  m_reply(),
   m_queuedFocusKeySequence(),
-  m_testResult(),
-  m_eventLoop(),
   m_uiShellDelayMS(0),
   m_timerId(0),
-  IMEMBFP(globalSelfCheck)
+  m_watchingAboutToBlock(false)
 {
   if (s_quiescenceEventType == 0) {
     s_quiescenceEventType = QEvent::registerEventType();
@@ -121,8 +123,10 @@ UIShellScriptRunner::UIShellScriptRunner(
 }
 
 
-UIShellScriptRunner::~UIShellScriptRunner()
+UIShellExecutor::~UIShellExecutor()
 {
+  this->killTimerIf();
+
   // See doc/signals-and-dtors.txt.
   //
   // It is possible we already disconnected, or never connected in the
@@ -132,11 +136,46 @@ UIShellScriptRunner::~UIShellScriptRunner()
 }
 
 
+bool UIShellExecutor::isBusy() const
+{
+  return m_busy;
+}
+
+
+void UIShellExecutor::startCommand(GDValue const &command)
+{
+  xassertPrecondition(!m_busy);
+
+  m_reply.reset();
+  m_pendingCommand = command;
+  m_commandResult = GDValue();
+  m_busy = true;
+
+  this->startWatching();
+}
+
+
+bool UIShellExecutor::hasCommandReply() const
+{
+  return m_reply.has_value();
+}
+
+
+GDValue UIShellExecutor::takeCommandReply()
+{
+  xassertPrecondition(hasCommandReply());
+
+  GDValue ret(std::move(*m_reply));
+  m_reply.reset();
+  return ret;
+}
+
+
 // Throw an `XMessage` exception built using `stringb`.
 #define xmessagesb(msg) xmessage(stringb(msg))
 
 
-void UIShellScriptRunner::resizeChildWidget(
+void UIShellExecutor::resizeChildWidget(
   QWidget *widget, QSize const &targetSize)
 {
   // How much should the target widget's size change?
@@ -288,7 +327,7 @@ static UIShellQueryable *getQueryableFromPath(string const &path)
 }
 
 
-QWidget *UIShellScriptRunner::getFocusWidget(QString const &funcName)
+QWidget *UIShellExecutor::getFocusWidget(QString const &funcName)
 {
   QWidget *focusWidget = QApplication::focusWidget();
   if (!focusWidget) {
@@ -516,7 +555,7 @@ static QPointF toQPointF(QPoint const &pt)
   }
 
 
-void UIShellScriptRunner::executeCommand(GDValue const &command)
+GDValue UIShellExecutor::executeCommand(GDValue const &command)
 {
   GDValueParser parser(command);
   parser.checkIsTuple();
@@ -643,11 +682,11 @@ void UIShellScriptRunner::executeCommand(GDValue const &command)
     // continue immediately.  If the effect of clicking the button is to
     // pop up a modal dialog, then 'click()' would wait for it to be
     // dismissed.
-    QObject::connect(this, &UIShellScriptRunner::signal_clickButton,
+    QObject::connect(this, &UIShellExecutor::signal_clickButton,
                      button, &QAbstractButton::click,
                      Qt::QueuedConnection);
     Q_EMIT signal_clickButton();
-    QObject::disconnect(this, &UIShellScriptRunner::signal_clickButton,
+    QObject::disconnect(this, &UIShellExecutor::signal_clickButton,
                         button, &QAbstractButton::click);
   }
 
@@ -1077,10 +1116,13 @@ void UIShellScriptRunner::executeCommand(GDValue const &command)
   else {
     xmessagesb("unrecognized function: " << doubleQuote(funcName));
   }
+
+  // None of the existing commands produce a value.
+  return GDValue();
 }
 
 
-void UIShellScriptRunner::sleepForMS(int ms)
+void UIShellExecutor::sleepForMS(int ms)
 {
   TRACE1("sleeping for " << ms << " ms");
   IncDecWaitingCounter idwc;
@@ -1089,7 +1131,7 @@ void UIShellScriptRunner::sleepForMS(int ms)
 }
 
 
-void UIShellScriptRunner::executeShortcut(
+void UIShellExecutor::executeShortcut(
   std::string const &receiverPath,
   std::string const &keys)
 {
@@ -1133,7 +1175,7 @@ void UIShellScriptRunner::executeShortcut(
 // nested.
 //
 // TODO: Debug and fix.
-void UIShellScriptRunner::checkFocusWorkaround()
+void UIShellExecutor::checkFocusWorkaround()
 {
   if (!PLATFORM_IS_WINDOWS) {
     sleepForMS(100);
@@ -1158,7 +1200,7 @@ static QKeyEvent *charToKeyEvent(QEvent::Type eventType, char c)
 }
 
 
-void UIShellScriptRunner::executeFocusKey(char c)
+void UIShellExecutor::executeFocusKey(char c)
 {
   QWidget *focusWidget = getFocusWidget("executeFocusKey");
 
@@ -1172,57 +1214,92 @@ void UIShellScriptRunner::executeFocusKey(char c)
 }
 
 
-bool UIShellScriptRunner::executeNextCommand()
+void UIShellExecutor::executeNextStep()
 {
+  xassert(m_busy);
+
+  // If set, the command failed, and this describes how.
+  std::optional<std::string> errorMessage;
+
   try {
-    // Process any queued focus keys first.
+    // Execute the pending command, if any.
+    if (m_pendingCommand) {
+      GDValue command(std::move(*m_pendingCommand));
+      m_pendingCommand.reset();
+
+      TRACE1("executing: " << command.sourceLocationIndicator() <<
+             command);
+      TRACE3("command dump: " << command.dumpToString());
+
+      // Use the location of `command` as context.  A command that was
+      // not read from a file might not have one.
+      EXN_CONTEXT_STRING(command.hasSourceLocation()?
+        stringb(command.sourceLocation()) :
+        std::string("(no source location)"));
+
+      m_commandResult = this->executeCommand(command);
+      m_globalSelfCheck();
+      return;
+    }
+
+    // Process any queued focus keys.
     if (!m_queuedFocusKeySequence.isEmpty()) {
       // Note that the error reporting in the 'catch' blocks is
       // appropriate since the file and line number are still correct
       // when we get here.
       this->executeFocusKey(m_queuedFocusKeySequence.pop());
       m_globalSelfCheck();
-      return true;
+      return;
     }
 
-    // Get the next command.
-    if (m_nextTestCommandIndex < m_testCommands.size()) {
-      GDValue const &command =
-        m_testCommands.at(m_nextTestCommandIndex++);
-
-      TRACE1("executing: " << command.sourceLocationIndicator() <<
-             command);
-      TRACE3("command dump: " << command.dumpToString());
-
-      // Use the location of `command` as context.
-      EXN_CONTEXT(command.sourceLocation());
-
-      this->executeCommand(command);
-      m_globalSelfCheck();
-      return true;
-    }
-    else {
-      // EOF.
-      TRACE1("end of commands reached");
-      return false;
-    }
+    // Nothing remains, so the command has finished successfully.
   }
   catch (string const &msg) {
-    m_testResult = msg;
+    errorMessage = msg;
   }
   catch (std::exception &x) {
-    m_testResult = x.what();
+    errorMessage = x.what();
   }
   catch (...) {
-    m_testResult = "caught unknown exception!";
+    errorMessage = std::string("caught unknown exception!");
   }
 
-  // Test failed.
-  return false;
+  if (errorMessage) {
+    // Discard whatever remains of the failed command.
+    m_queuedFocusKeySequence.clear();
+    this->finishCommand(UIShellQueryable::errorTuple(*errorMessage));
+  }
+  else {
+    GDValue result(std::move(m_commandResult));
+    m_commandResult = GDValue();
+    this->finishCommand(GDVTaggedTuple("Ok"_sym,
+                                       GDVTuple({std::move(result)})));
+  }
 }
 
 
-void UIShellScriptRunner::waitUntilCheckQuery(
+void UIShellExecutor::finishCommand(GDValue &&reply)
+{
+  TRACE2("command finished: " << reply);
+
+  this->stopWatching();
+  m_busy = false;
+  m_reply = std::move(reply);
+
+  Q_EMIT signal_hasCommandReply();
+
+  if (m_busy && m_pendingCommand) {
+    // The signal handler started another command.  Execute it during
+    // this same quiescence cycle, rather than waiting for the next,
+    // so each command runs at the first quiescence after the previous
+    // one finished.
+    TRACE2("executing the next command immediately");
+    this->executeNextStep();
+  }
+}
+
+
+void UIShellExecutor::waitUntilCheckQuery(
   long durationMS,
   string const &receiver,
   string const &state,
@@ -1236,7 +1313,7 @@ void UIShellScriptRunner::waitUntilCheckQuery(
 }
 
 
-void UIShellScriptRunner::waitUntilCheckGDValueFunction(
+void UIShellExecutor::waitUntilCheckGDValueFunction(
   long durationMS,
   std::function<GDValue ()> gdvFunc,
   GDValue const &expect)
@@ -1284,13 +1361,48 @@ void UIShellScriptRunner::waitUntilCheckGDValueFunction(
 }
 
 
-void UIShellScriptRunner::postQuiescenceEvent()
+void UIShellExecutor::startWatching()
+{
+  if (m_uiShellDelayMS) {
+    // Use timer-based notification.
+    if (m_timerId == 0) {
+      TRACE1("installing first timer");
+      this->installTimer();
+    }
+  }
+  else if (!m_watchingAboutToBlock) {
+    // Arrange to get notified just before the event dispatcher yields
+    // control to the OS.  See doc/ui-shell.txt.
+    TRACE2("connecting slot_aboutToBlock");
+    QObject::connect(QAbstractEventDispatcher::instance(),
+                     &QAbstractEventDispatcher::aboutToBlock,
+                     this, &UIShellExecutor::slot_aboutToBlock);
+    m_watchingAboutToBlock = true;
+  }
+}
+
+
+void UIShellExecutor::stopWatching()
+{
+  this->killTimerIf();
+
+  if (m_watchingAboutToBlock) {
+    // Disconnect from the event dispatcher to stop getting signals.
+    TRACE2("disconnecting slot_aboutToBlock");
+    QObject::disconnect(QAbstractEventDispatcher::instance(), NULL,
+                        this, NULL);
+    m_watchingAboutToBlock = false;
+  }
+}
+
+
+void UIShellExecutor::postQuiescenceEvent()
 {
   QCoreApplication::postEvent(this, new QuiescenceEvent());
 }
 
 
-void UIShellScriptRunner::installTimer()
+void UIShellExecutor::installTimer()
 {
   xassert(m_uiShellDelayMS);
   TRACE1("starting timer");
@@ -1301,7 +1413,7 @@ void UIShellScriptRunner::installTimer()
 }
 
 
-void UIShellScriptRunner::killTimerIf()
+void UIShellExecutor::killTimerIf()
 {
   if (m_timerId != 0) {
     TRACE1("killing timer");
@@ -1311,24 +1423,55 @@ void UIShellScriptRunner::killTimerIf()
 }
 
 
+// ------------------------ UIShellScriptRunner ------------------------
+UIShellScriptRunner::UIShellScriptRunner(
+  std::vector<gdv::GDValue> const &testCommands,
+  std::function<void ()> globalSelfCheck)
+:
+  IMEMBFP(testCommands),
+  m_nextTestCommandIndex(0),
+  m_testResult(),
+  m_eventLoop(),
+  m_globalSelfCheck(globalSelfCheck),
+  m_executor(globalSelfCheck)
+{
+  // The connection must be direct so that, when the slot starts the
+  // next command, the executor runs it in the same quiescence cycle.
+  QObject::connect(&m_executor, &UIShellExecutor::signal_hasCommandReply,
+                   this, &UIShellScriptRunner::slot_hasCommandReply,
+                   Qt::DirectConnection);
+}
+
+
+UIShellScriptRunner::~UIShellScriptRunner()
+{
+  // See doc/signals-and-dtors.txt.
+  QObject::disconnect(&m_executor, nullptr, this, nullptr);
+}
+
+
+void UIShellScriptRunner::startNextCommand()
+{
+  xassertPrecondition(m_nextTestCommandIndex < m_testCommands.size());
+
+  m_executor.startCommand(m_testCommands.at(m_nextTestCommandIndex++));
+}
+
+
 string UIShellScriptRunner::runTest()
 {
   // Do one self-check at the start so a later failure is known to be
   // caused by something that happened while executing.
   m_globalSelfCheck();
 
-  if (m_uiShellDelayMS) {
-    // Use timer-based notification.
-    TRACE1("installing first timer");
-    this->installTimer();
+  if (m_testCommands.empty()) {
+    // Even with no commands, run the event loop until the app is first
+    // quiescent, so it gets to finish starting up.  `Sleep(0)` is
+    // effectively a no-op command.
+    m_executor.startCommand(GDValue::readFromString("Sleep(0)"));
   }
   else {
-    // Arrange to get notified just before the event dispatcher yields
-    // control to the OS.  See doc/ui-shell.txt.
-    TRACE2("connecting slot_aboutToBlock");
-    QObject::connect(QAbstractEventDispatcher::instance(),
-                     &QAbstractEventDispatcher::aboutToBlock,
-                     this, &UIShellScriptRunner::slot_aboutToBlock);
+    this->startNextCommand();
   }
 
   // Process events until the test completes.
@@ -1345,47 +1488,59 @@ string UIShellScriptRunner::runTest()
 }
 
 
-bool UIShellScriptRunner::callExecuteNextCommand()
+void UIShellScriptRunner::slot_hasCommandReply() NOEXCEPT
 {
-  bool ret = this->executeNextCommand();
+  GENERIC_CATCH_BEGIN
 
-  if (!ret) {
-    // Test is complete (pass or fail).  Stop the event loop we started
-    // in 'runTest'.
-    if (!m_testResult.empty()) {
-      // Our event loop might not be the innermost event loop at the
-      // moment, e.g., if we're running a modal dialog.  So, print the
-      // result to the console now so the user can see that the test has
-      // failed.  (Otherwise it looks like the test fails when the
-      // dialog is closed, which is misleading.)
-      cout << "test FAILED: " << m_testResult << endl;
-    }
-    TRACE2("test complete, stopping UI shell event loop");
-    m_eventLoop.exit(0);
+  GDValue reply(m_executor.takeCommandReply());
+
+  if (reply.taggedContainerGetTag() == "Error"_sym) {
+    m_testResult = reply.tupleGetValueAt(0).stringGet();
+
+    // Our event loop might not be the innermost event loop at the
+    // moment, e.g., if we're running a modal dialog.  So, print the
+    // result to the console now so the user can see that the test has
+    // failed.  (Otherwise it looks like the test fails when the dialog
+    // is closed, which is misleading.)
+    cout << "test FAILED: " << m_testResult << endl;
+  }
+  else if (m_nextTestCommandIndex < m_testCommands.size()) {
+    // Test is continuing.
+    this->startNextCommand();
+    return;
+  }
+  else {
+    TRACE1("end of commands reached");
   }
 
-  TRACE2("callExecuteNextCommand returning " << ret);
-  return ret;
+  // Test is complete (pass or fail).  Stop the event loop we started in
+  // 'runTest'.
+  TRACE2("test complete, stopping UI shell event loop");
+  m_eventLoop.exit(0);
+
+  GENERIC_CATCH_END
 }
 
 
-bool UIShellScriptRunner::event(QEvent *ev)
+// -------------------- UIShellExecutor (continued) --------------------
+bool UIShellExecutor::event(QEvent *ev)
 {
   if (ev->type() == s_quiescenceEventType) {
     TRACE2("received QuiescenceEvent");
-    if (g_waitingCounter) {
+    if (!m_busy) {
+      // This can happen if the event was posted before we stopped
+      // watching for quiescence.
+      TRACE2("ignoring QuiescenceEvent because no command is active");
+    }
+    else if (g_waitingCounter) {
       TRACE2("ignoring QuiescenceEvent because g_waitingCounter is " <<
              g_waitingCounter);
     }
-    else if (this->callExecuteNextCommand()) {
-      // Test is continuing.  We don't have to do anything to keep
-      // receiving 'aboutToBlock' and hence enqueueing QuiescenceEvents.
-    }
     else {
-      // Disconnect from the event dispatcher to stop getting signals.
-      TRACE2("disconnecting slot_aboutToBlock");
-      QObject::disconnect(QAbstractEventDispatcher::instance(), NULL,
-                          this, NULL);
+      // If this finishes the command, it also stops watching, unless
+      // another command gets started.  Otherwise, we will continue to
+      // receive 'aboutToBlock' and hence enqueue QuiescenceEvents.
+      this->executeNextStep();
     }
 
     TRACE2("finished with QuiescenceEvent");
@@ -1396,13 +1551,17 @@ bool UIShellScriptRunner::event(QEvent *ev)
     TRACE2("received TimerEvent");
     this->killTimerIf();
 
-    // Post the next event.
-    if (this->callExecuteNextCommand()) {
-      // Test is continuing.  Arrange to receive another event.
+    if (m_busy) {
+      this->executeNextStep();
+    }
+
+    if (m_busy && m_timerId == 0) {
+      // The command is continuing.  Arrange to receive another event.
+      // (If the command finished and the handler started another,
+      // `startWatching` has already installed a timer.)
       this->installTimer();
     }
     else {
-      // The timer has been killed so we will not get any more events.
       TRACE2("refraining from installing another timer");
     }
 
@@ -1416,7 +1575,7 @@ bool UIShellScriptRunner::event(QEvent *ev)
 }
 
 
-void UIShellScriptRunner::slot_aboutToBlock() NOEXCEPT
+void UIShellExecutor::slot_aboutToBlock() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
