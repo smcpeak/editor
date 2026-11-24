@@ -103,12 +103,10 @@ private:     // instance data
   // signal.
   //
   // Invariant:
-  //   if m_uiShellDelayMS == 0:
+  //   if m_uiShellDelayMS != 0:
   //     m_watchingAboutToBlock == false
   //   else:
   //     m_watchingAboutToBlock == m_busy
-  //
-  // TODO: Enforce that in a selfCheck.
   //
   // Although they are normally equal, `m_busy` is meant to reflect the
   // client's externally-visible model of our state, while
@@ -205,6 +203,9 @@ public:      // funcs
 
   // Disconnects from the event dispatcher and kills any timer.
   ~UIShellExecutor();
+
+  // Assert invariants.
+  void selfCheck() const;
 
   // True from `startCommand` until just before
   // `signal_hasCommandReply` is emitted.

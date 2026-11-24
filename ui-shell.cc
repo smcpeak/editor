@@ -40,7 +40,7 @@
 #include "smbase/string-util.h"                  // doubleQuote
 #include "smbase/stringb.h"                      // stringb
 #include "smbase/syserr.h"                       // xsyserror
-#include "smbase/xassert.h"                      // xassert, xassertPrecondition
+#include "smbase/xassert.h"                      // xassert, xassertPrecondition, xassertInvariant
 
 // Qt
 #include <QAbstractButton>
@@ -122,6 +122,8 @@ UIShellExecutor::UIShellExecutor(
     // Use the timer instead of the 'aboutToBlock' signal.
     m_uiShellDelayMS = atoi(d);
   }
+
+  selfCheck();
 }
 
 
@@ -140,6 +142,22 @@ UIShellExecutor::~UIShellExecutor()
 }
 
 
+void UIShellExecutor::selfCheck() const
+{
+  xassertInvariant(
+    !(m_commandSuccessResult.has_value() &&
+      m_commandResult.has_value())
+  );
+
+  if (m_uiShellDelayMS != 0) {
+    xassertInvariant(m_watchingAboutToBlock == false);
+  }
+  else {
+    xassertInvariant(m_watchingAboutToBlock == m_busy);
+  }
+}
+
+
 bool UIShellExecutor::isBusy() const
 {
   return m_busy;
@@ -149,6 +167,7 @@ bool UIShellExecutor::isBusy() const
 void UIShellExecutor::startCommand(GDValue const &command)
 {
   xassertPrecondition(!m_busy);
+  selfCheck();
 
   m_commandSuccessResult.reset();
   m_commandResult.reset();
@@ -156,6 +175,8 @@ void UIShellExecutor::startCommand(GDValue const &command)
   m_busy = true;
 
   this->startWatching();
+
+  selfCheck();
 }
 
 
@@ -168,6 +189,7 @@ bool UIShellExecutor::hasCommandReply() const
 UIShellResult UIShellExecutor::takeCommandReply()
 {
   xassertPrecondition(hasCommandReply());
+  selfCheck();
 
   // TODO: Use std::exchange?
   UIShellResult ret(std::move(*m_commandResult));
@@ -565,6 +587,8 @@ static QPointF toQPointF(QPoint const &pt)
 
 GDValue UIShellExecutor::executeCommand(GDValue const &command)
 {
+  selfCheck();
+
   GDValueParser parser(command);
   parser.checkIsTuple();
 
@@ -1114,6 +1138,8 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
     xmessagesb("unrecognized function: " << doubleQuote(funcName));
   }
 
+  selfCheck();
+
   // None of the existing commands produce a value.
   return GDValue();
 }
@@ -1225,6 +1251,7 @@ void UIShellExecutor::executeFocusKey(char c)
 void UIShellExecutor::executeNextStep()
 {
   xassertPrecondition(m_busy);
+  selfCheck();
 
   // If set, the command failed, and this describes how.
   std::optional<std::string> errorMessage;
@@ -1253,6 +1280,7 @@ void UIShellExecutor::executeNextStep()
 
       m_commandSuccessResult = this->executeCommand(command);
       m_globalSelfCheck();
+      selfCheck();
       return;
     }
 
@@ -1267,6 +1295,7 @@ void UIShellExecutor::executeNextStep()
       // EXN_CONTEXT_STRING call.
       this->executeFocusKey(m_queuedFocusKeySequence.pop());
       m_globalSelfCheck();
+      selfCheck();
       return;
     }
 
@@ -1313,7 +1342,13 @@ void UIShellExecutor::finishCommand(UIShellResult &&reply)
   m_commandSuccessResult.reset();
   m_commandResult = std::move(reply);
 
+  // Check before we send the signal, since sending it effectively
+  // publishes our state.
+  selfCheck();
+
   Q_EMIT signal_hasCommandReply();
+
+  selfCheck();
 
   if (m_busy && m_pendingCommand) {
     // The signal handler started another command.  Execute it during
