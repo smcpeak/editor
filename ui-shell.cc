@@ -23,7 +23,7 @@
 // smbase
 #include "smbase/c-string-reader.h"              // parseQuotedCString
 #include "smbase/chained-cond.h"                 // smbase::cc::z_le_lt
-#include "smbase/exc.h"                          // smbase::{XBase, XMessage}, EXN_CONTEXT
+#include "smbase/exc.h"                          // smbase::{XBase, XMessage}, EXN_CONTEXT, GENERIC_CATCH_BEGIN/END
 #include "smbase/gdvalue-parser.h"               // gdv::{GDValueParser, gdvpTo}
 #include "smbase/gdvalue-tuple.h"                // gdv::gdvpToTuple
 #include "smbase/gdvalue-vector.h"               // gdv::toGDValue(std::vector)
@@ -76,7 +76,7 @@
 #include <utility>                               // std::move
 
 // libc
-#include <stdlib.h>                              // getenv, atoi
+#include <stdlib.h>                              // getenv, atoi    // TODO: use sm-env.h
 
 using namespace gdv;
 using namespace smbase;
@@ -100,6 +100,7 @@ UIShellExecutor::QuiescenceEvent::~QuiescenceEvent()
 UIShellExecutor::UIShellExecutor(
   std::function<void ()> globalSelfCheck)
 :
+  QObject(),
   IMEMBFP(globalSelfCheck),
   m_busy(false),
   m_pendingCommand(),
@@ -131,6 +132,8 @@ UIShellExecutor::~UIShellExecutor()
   //
   // It is possible we already disconnected, or never connected in the
   // first place, but this is still safe.
+  //
+  // TODO: "NULL" -> "nullptr"
   QObject::disconnect(QAbstractEventDispatcher::instance(), NULL,
                       this, NULL);
 }
@@ -165,6 +168,7 @@ GDValue UIShellExecutor::takeCommandReply()
 {
   xassertPrecondition(hasCommandReply());
 
+  // TODO: Use std::exchange?
   GDValue ret(std::move(*m_reply));
   m_reply.reset();
   return ret;
@@ -172,6 +176,8 @@ GDValue UIShellExecutor::takeCommandReply()
 
 
 // Throw an `XMessage` exception built using `stringb`.
+//
+// TODO: Why is this here?
 #define xmessagesb(msg) xmessage(stringb(msg))
 
 
@@ -1216,7 +1222,7 @@ void UIShellExecutor::executeFocusKey(char c)
 
 void UIShellExecutor::executeNextStep()
 {
-  xassert(m_busy);
+  xassertPrecondition(m_busy);
 
   // If set, the command failed, and this describes how.
   std::optional<std::string> errorMessage;
@@ -1224,6 +1230,7 @@ void UIShellExecutor::executeNextStep()
   try {
     // Execute the pending command, if any.
     if (m_pendingCommand) {
+      // TODO: Use std::exchange or a dedicated helper for this.
       GDValue command(std::move(*m_pendingCommand));
       m_pendingCommand.reset();
 
@@ -1233,6 +1240,11 @@ void UIShellExecutor::executeNextStep()
 
       // Use the location of `command` as context.  A command that was
       // not read from a file might not have one.
+      //
+      // TODO: Create EXN_CONTEXT_STRING_IF to handle this better.
+      //
+      // TODO: Also use `sourceLocationIndicator` rather than the GDVN
+      // of the location.
       EXN_CONTEXT_STRING(command.hasSourceLocation()?
         stringb(command.sourceLocation()) :
         std::string("(no source location)"));
@@ -1247,6 +1259,10 @@ void UIShellExecutor::executeNextStep()
       // Note that the error reporting in the 'catch' blocks is
       // appropriate since the file and line number are still correct
       // when we get here.
+      //
+      // TODO: I don't think the above is true.  Where did file/line get
+      // set?  I think this comment is from before I added the
+      // EXN_CONTEXT_STRING call.
       this->executeFocusKey(m_queuedFocusKeySequence.pop());
       m_globalSelfCheck();
       return;
@@ -1255,6 +1271,7 @@ void UIShellExecutor::executeNextStep()
     // Nothing remains, so the command has finished successfully.
   }
   catch (string const &msg) {
+    // TODO: Am I still throwing strings somewhere?
     errorMessage = msg;
   }
   catch (std::exception &x) {
@@ -1267,9 +1284,13 @@ void UIShellExecutor::executeNextStep()
   if (errorMessage) {
     // Discard whatever remains of the failed command.
     m_queuedFocusKeySequence.clear();
+
+    // TODO: Move `errorTuple` to a new `ui-shell-tuples` module.
     this->finishCommand(UIShellQueryable::errorTuple(*errorMessage));
   }
   else {
+    // TODO: std::exchange
+    // TODO: Make `okTuple`.
     GDValue result(std::move(m_commandResult));
     m_commandResult = GDValue();
     this->finishCommand(GDVTaggedTuple("Ok"_sym,
@@ -1293,6 +1314,12 @@ void UIShellExecutor::finishCommand(GDValue &&reply)
     // this same quiescence cycle, rather than waiting for the next,
     // so each command runs at the first quiescence after the previous
     // one finished.
+    //
+    // This (I think!) isn't necessary for correctness, but is how the
+    // code worked prior to splitting `UIShellExecutor` off, and is a
+    // slight efficiency win.
+    //
+    // TODO: Test if it is necessary.
     TRACE2("executing the next command immediately");
     this->executeNextStep();
   }
@@ -1428,15 +1455,18 @@ UIShellScriptRunner::UIShellScriptRunner(
   std::vector<gdv::GDValue> const &testCommands,
   std::function<void ()> globalSelfCheck)
 :
+  QObject(),
   IMEMBFP(testCommands),
   m_nextTestCommandIndex(0),
   m_testResult(),
   m_eventLoop(),
-  m_globalSelfCheck(globalSelfCheck),
+  IMEMBFP(globalSelfCheck),
   m_executor(globalSelfCheck)
 {
   // The connection must be direct so that, when the slot starts the
   // next command, the executor runs it in the same quiescence cycle.
+  //
+  // TODO: Clarify how necessary that is.
   QObject::connect(&m_executor, &UIShellExecutor::signal_hasCommandReply,
                    this, &UIShellScriptRunner::slot_hasCommandReply,
                    Qt::DirectConnection);
@@ -1494,7 +1524,12 @@ void UIShellScriptRunner::slot_hasCommandReply() NOEXCEPT
 
   GDValue reply(m_executor.takeCommandReply());
 
-  if (reply.taggedContainerGetTag() == "Error"_sym) {
+  // TODO: Use a pair.
+  bool isOk = (reply.taggedContainerGetTagName() == "Ok");
+  bool isError = (reply.taggedContainerGetTagName() == "Error");
+  xassert(isOk != isError);
+
+  if (isError) {
     m_testResult = reply.tupleGetValueAt(0).stringGet();
 
     // Our event loop might not be the innermost event loop at the
@@ -1527,6 +1562,8 @@ bool UIShellExecutor::event(QEvent *ev)
 {
   if (ev->type() == s_quiescenceEventType) {
     TRACE2("received QuiescenceEvent");
+
+    // TODO: Change to `m_watchingAboutToBlock`.
     if (!m_busy) {
       // This can happen if the event was posted before we stopped
       // watching for quiescence.
@@ -1568,9 +1605,9 @@ bool UIShellExecutor::event(QEvent *ev)
     return true;
   }
 
-  // This object should only be receiving TimerEvents, and I don't
-  // think QObject::event does anything (besides return false), but I
-  // will do this just for overall cleanliness.
+  // This object should only be receiving the above two events, and I
+  // don't think QObject::event does anything with them (besides return
+  // false), but I will do this just for overall cleanliness.
   return QObject::event(ev);
 }
 

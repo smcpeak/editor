@@ -12,8 +12,8 @@
 #include "smbase/refct-serf.h"         // SerfRefCount
 #include "smbase/sm-noexcept.h"        // NOEXCEPT
 #include "smbase/sm-override.h"        // OVERRIDE
-#include "smbase/std-vector-fwd.h"     // std::vector
-#include "smbase/str.h"                // string
+#include "smbase/std-vector-fwd.h"     // std::vector [f]
+#include "smbase/str.h"                // string    // TODO: std::string
 
 // Qt
 #include <QEvent>
@@ -23,9 +23,7 @@
 #include <cstddef>                     // std::size_t
 #include <functional>                  // std::function
 #include <optional>                    // std::optional
-#include <vector>                      // std::vector
 
-class QImage;
 class QWidget;
 
 
@@ -67,10 +65,16 @@ private:     // instance data
 
   // Result of the command that was executed most recently, to be
   // wrapped in `Ok` once the command finishes.
+  //
+  // TODO: Make optional?
   gdv::GDValue m_commandResult;
 
   // Reply for the most recently finished command, if it has not yet
   // been taken.
+  //
+  // TODO: Change this to a pair where the first element is a "success"
+  // boolean rather than relying on the GDValue tag.  Or, in the error
+  // case, something that requires a string.
   std::optional<gdv::GDValue> m_reply;
 
   // Queue of ordinary typing characters to execute before the current
@@ -80,13 +84,31 @@ private:     // instance data
   // If non-zero, use a delay timer *instead* of the quiescence
   // mechanism.  A timer is less reliable but can help during debugging.
   // Currently this can only be set with an envvar.
+  //
+  // TODO: Make this `const`.
   int m_uiShellDelayMS;
 
   // Active timer ID, or 0 if none.
+  //
+  // TODO: Make optional?
   int m_timerId;
 
   // True if we are connected to the event dispatcher's `aboutToBlock`
   // signal.
+  //
+  // Invariant:
+  //   if m_uiShellDelayMS == 0:
+  //     m_watchingAboutToBlock == false
+  //   else:
+  //     m_watchingAboutToBlock == m_busy
+  //
+  // TODO: Enforce that in a selfCheck.
+  //
+  // Although they are normally equal, `m_busy` is meant to reflect the
+  // client's externally-visible model of our state, while
+  // `m_watchingAboutToBlock` is more about our internal,
+  // non-client-visible state.
+  //
   bool m_watchingAboutToBlock;
 
 private:     // funcs
@@ -124,6 +146,10 @@ private:     // funcs
   // focus key, or, if neither remains, finish the command.
   //
   // Requires: m_busy
+  //
+  // Ensures that, if there was something left to do, we have made
+  // progress toward doing it, either by consuming `m_pendingCommand`,
+  // or by taking an element from `m_queuedFocusKeySequence`.
   void executeNextStep();
 
   // Store `reply`, stop watching for quiescence, and emit
