@@ -180,15 +180,15 @@ void UIShellExecutor::startCommand(GDValue const &command)
 }
 
 
-bool UIShellExecutor::hasCommandReply() const
+bool UIShellExecutor::hasCommandResult() const
 {
   return m_commandResult.has_value();
 }
 
 
-UIShellResult UIShellExecutor::takeCommandReply()
+UIShellResult UIShellExecutor::takeCommandResult()
 {
-  xassertPrecondition(hasCommandReply());
+  xassertPrecondition(hasCommandResult());
   selfCheck();
 
   // TODO: Use std::exchange?
@@ -1333,20 +1333,20 @@ void UIShellExecutor::executeNextStep()
 }
 
 
-void UIShellExecutor::finishCommand(UIShellResult &&reply)
+void UIShellExecutor::finishCommand(UIShellResult &&result)
 {
-  TRACE2("command finished: " << toGDValue(reply));
+  TRACE2("command finished: " << toGDValue(result));
 
   this->stopWatching();
   m_busy = false;
   m_commandSuccessResult.reset();
-  m_commandResult = std::move(reply);
+  m_commandResult = std::move(result);
 
   // Check before we send the signal, since sending it effectively
   // publishes our state.
   selfCheck();
 
-  Q_EMIT signal_hasCommandReply();
+  Q_EMIT signal_hasCommandResult();
 
   selfCheck();
 
@@ -1508,8 +1508,8 @@ UIShellScriptRunner::UIShellScriptRunner(
   // next command, the executor runs it in the same quiescence cycle.
   //
   // TODO: Clarify how necessary that is.
-  QObject::connect(&m_executor, &UIShellExecutor::signal_hasCommandReply,
-                   this, &UIShellScriptRunner::slot_hasCommandReply,
+  QObject::connect(&m_executor, &UIShellExecutor::signal_hasCommandResult,
+                   this, &UIShellScriptRunner::slot_hasCommandResult,
                    Qt::DirectConnection);
 }
 
@@ -1559,14 +1559,14 @@ std::string UIShellScriptRunner::runTest()
 }
 
 
-void UIShellScriptRunner::slot_hasCommandReply() NOEXCEPT
+void UIShellScriptRunner::slot_hasCommandResult() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
-  UIShellResult reply(m_executor.takeCommandReply());
+  UIShellResult result(m_executor.takeCommandResult());
 
-  if (reply.isRight()) {
-    m_testResult = reply.right();
+  if (result.isRight()) {
+    m_testResult = result.right();
 
     // Our event loop might not be the innermost event loop at the
     // moment, e.g., if we're running a modal dialog.  So, print the

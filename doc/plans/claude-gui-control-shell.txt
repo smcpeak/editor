@@ -8,6 +8,11 @@ Revised 2026-11-23 to use the names from
 doc/plans/rename-event-replay-to-ui-shell.txt ("event replay" became
 "UI shell").
 
+2026-11-24: Changed to use "result" for the name of the success-or-error
+object used internally by the ui-shell module, and "reply" for the name
+of the object that is passed over the wire to the client of the UI shell
+server protocol.
+
 
 Motivation
 ==========
@@ -226,10 +231,6 @@ either QtNetwork (QTcpSocket) or plain sockets.
 Refactoring UIShellScriptRunner
 -------------------------------
 
-2026-11-24: This step has been completed, although the interface has
-changed a little, including using UIShellResult instead of the Ok/Error
-tuples here.  (Those will only appear in the shell server protocol.)
-
 Today UIShellScriptRunner owns both the command dispatcher and the test
 driver (the command sequence, the event loop, pass/fail).  Split it
 into UIShellExecutor, which executes one command at a time and reports
@@ -237,154 +238,14 @@ when the app has settled afterward, and UIShellScriptRunner, which
 feeds it the commands of a .uis script.  UIShellServer will be a
 second client of the executor.
 
-Modules: For the initial refactoring at least, both classes remain in
-ui-shell.{h,cc}, with the method implementations in the .cc file staying
-where they are so that the resulting diff isn't polluted with extra code
-movement.  (We might move the code afterward; to be determined.)
-
-UIShellExecutor, public interface:
-
-  class UIShellExecutor : public QObject {
-    Q_OBJECT
-
-  public:      // funcs
-    // `globalSelfCheck` is called after each command, and after each
-    // queued FocusKeySequence character.  It should throw to indicate
-    // a failure, which then becomes the command's Error reply.
-    explicit UIShellExecutor(std::function<void ()> globalSelfCheck);
-
-    // Disconnects from the event dispatcher and kills any timer.
-    ~UIShellExecutor();
-
-    // True from `startCommand` until just before
-    // `signal_hasCommandReply` is emitted.
-    bool isBusy() const;
-
-    // Execute `command`, a UI Shell Language tagged tuple, the next
-    // time the app is quiescent.  See "Execution sequence" below.
-    //
-    // If there is a reply that hasn't been taken, it is discarded.
-    //
-    // Requires: !isBusy()
-    //
-    // Ensures: isBusy() && !hasCommandReply()
-    void startCommand(gdv::GDValue const &command);
-
-    // True if a reply from a prior command is ready and has not been
-    // retrieved yet.
-    bool hasCommandReply() const;
-
-    // Take the reply out of this executor object.
-    //
-    // The reply is either Ok(<result>), where <result> is null for an
-    // action or the value of a query, or Error("<message>").
-    //
-    // Requires: hasCommandReply()
-    //
-    // Ensures: !hasCommandReply()
-    gdv::GDValue takeCommandReply();
-
-  Q_SIGNALS:
-    // Emitted, at a quiescence point, when the command passed to
-    // `startCommand` has finished, the app has settled, and
-    // `hasCommandReply()` is true.  The slot handler may call
-    // `startCommand` to begin the next command.
-    void signal_hasCommandReply();
-
-    // Internal: temporarily connected to a button's slot to enqueue a
-    // click (ClickButton).  It is public only because Qt makes all
-    // signals public.
-    void signal_clickButton();
-  };
-
-Execution sequence:
-
-  1. `startCommand` stores the command and starts watching for
-     quiescence: it connects to aboutToBlock, or, if UI_SHELL_DELAY_MS
-     is set, starts the timer.
-  2. At the next quiescence, the executor executes the command
-     (`executeCommand`), then calls the self-check.
-  3. At each following quiescence, if FocusKeySequence characters are
-     queued, it delivers one and calls the self-check.
-  4. At the first quiescence with nothing queued, it stops watching
-     for quiescence, clears the busy flag, stores Ok(...) as the reply,
-     and finally emits `signal_hasCommandReply`.
-
-  An exception in step 2 or 3 discards any queued characters, sets
-  Error(...) as the reply, clears the busy flag, and emits
-  `signal_hasCommandReply`.
-
-  If the `signal_hasCommandReply` handler calls `startCommand`, and the
-  connection is direct rather than queued, the executor executes the new
-  command during the same quiescence cycle, rather than waiting for the
-  next one.  That preserves today's timing, where each command runs at
-  the first quiescence after the previous one finished, so the split
-  does not slow down or otherwise change the tests.
-
-  Watching for quiescence only while busy matters for the server:
-  slot_aboutToBlock posts an event and wakes up the dispatcher, so
-  staying connected while idle would make the process spin.
-
-  Implementation note: the reply is stored as a
-  `std::optional<gdv::GDValue>`, and `hasCommandReply()` tests whether
-  it holds a value.
-
-Moved from UIShellScriptRunner to UIShellExecutor, all private:
-
-  * executeCommand and its helpers: executeShortcut, executeFocusKey,
-    getFocusWidget, resizeChildWidget, sleepForMS,
-    checkFocusWorkaround, waitUntilCheckQuery, and
-    waitUntilCheckGDValueFunction.
-  * The quiescence machinery: QuiescenceEvent, s_quiescenceEventType,
-    postQuiescenceEvent, installTimer, killTimerIf, event(), and
-    slot_aboutToBlock.
-  * The state m_queuedFocusKeySequence, m_uiShellDelayMS, m_timerId,
-    and m_globalSelfCheck.
-
-executeCommand's return type changes from void to gdv::GDValue (null
-for every existing command), ready for the Query* commands below.  The
-executor also takes over the EXN_CONTEXT for the command's source
-location, so errors from a .uis file still name the file and line.
-
-UIShellScriptRunner, public interface:
-
-  class UIShellScriptRunner : public QObject {
-    Q_OBJECT
-
-  public:      // funcs
-    // Unchanged from today.
-    explicit UIShellScriptRunner(
-      std::vector<gdv::GDValue> const &testCommands,
-      std::function<void ()> globalSelfCheck);
-    ~UIShellScriptRunner();
-
-    // Unchanged from today: execute all of the commands, stopping at
-    // the first failure.  Return "" on success, or else a description
-    // of the failure.
-    string runTest();
-  };
-
-Its private state is m_testCommands, m_nextTestCommandIndex,
-m_testResult, m_eventLoop, and a UIShellExecutor member constructed
-with the same globalSelfCheck.  It also has a private slot,
-slot_hasCommandReply(), connected to the executor's signal.
-
-  * runTest does the initial self-check, starts the first command, and
-    runs m_eventLoop.
-  * The slot calls `takeCommandReply`; on Error(...) it records it in
-    m_testResult and prints "test FAILED" right away, as now, then exits
-    m_eventLoop.  Otherwise it starts the next command, or, after the
-    last one, exits m_eventLoop.
-  * With no commands, runTest still runs the event loop until the first
-    quiescence, as now, so the app gets to start up.
-
-Since the public interface of UIShellScriptRunner does not change,
-innerMain in editor-global.cc should be unchanged.
+2026-11-24: See ui-shell.h for the UIShellExecutor and
+UIShellScriptRunner interface, and the execution sequence within the
+executor (as that split has been completed).
 
 UIShellServer handles the commands about the session itself, Ping() and
 Quit(), without the executor.  It passes everything else to
-`startCommand`, and sends the reply from `takeCommandReply` (called in
-the slot handler for `signal_hasCommandReply`) back to the client.  Only
+`startCommand`, and sends the result from `takeCommandResult` (called in
+the slot handler for `signal_hasCommandResult`) back to the client.  Only
 one executor client is active at a time: using -uisCmds and -uisServer
 together is not possible.
 
@@ -527,6 +388,8 @@ Each step is a commit that builds and passes `make check`.
   1. Split UIShellExecutor out of UIShellScriptRunner, leaving the
      latter as the .uis driver, with no behavior change.  See
      "Refactoring UIShellScriptRunner".
+
+     2026-11-24: This step is complete.
 
   2. Add UIShellServer, -uisServer, and editor-ui-shell-client.py,
      running commands through the executor with Ok/Error replies after

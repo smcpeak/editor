@@ -15,10 +15,6 @@
 #include "smbase/std-string-fwd.h"     // std::string [f]
 
 
-/*
-  Either a GDValue representing the result of a successful command or
-  query, or a string carrying an error message.
-*/
 using UIShellResult = smbase::Either<gdv::GDValue, std::string>;
 
 

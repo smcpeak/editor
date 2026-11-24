@@ -32,7 +32,7 @@ class QWidget;
 
 
 // Execute UI shell commands one at a time.  Each command is executed
-// when the app is quiescent, and its reply becomes available once the
+// when the app is quiescent, and its result becomes available once the
 // app has become quiescent again afterward.
 //
 // See doc/ui-shell.txt for theory of operation.
@@ -60,8 +60,8 @@ private:     // instance data
   // failure.
   std::function<void ()> m_globalSelfCheck;
 
-  // True from `startCommand` until just before `signal_hasCommandReply`
-  // is emitted.
+  // True from `startCommand` until just before
+  // `signal_hasCommandResult` is emitted.
   bool m_busy;
 
   // Command passed to `startCommand` that has not been executed yet.
@@ -161,10 +161,10 @@ private:     // funcs
   // or by taking an element from `m_queuedFocusKeySequence`.
   void executeNextStep();
 
-  // Store `reply`, stop watching for quiescence, and emit
-  // `signal_hasCommandReply`.  If the signal handler starts another
+  // Store `result`, stop watching for quiescence, and emit
+  // `signal_hasCommandResult`.  If the signal handler starts another
   // command, execute it now.
-  void finishCommand(UIShellResult &&reply);
+  void finishCommand(UIShellResult &&result);
 
   // Execute the "WaitUntilCheckQuery" command.
   void waitUntilCheckQuery(
@@ -208,32 +208,46 @@ public:      // funcs
   void selfCheck() const;
 
   // True from `startCommand` until just before
-  // `signal_hasCommandReply` is emitted.
+  // `signal_hasCommandResult` is emitted.
   bool isBusy() const;
 
-  // Execute `command`, a UI Shell Language tagged tuple, the next time
-  // the app is quiescent.  See doc/plans/claude-gui-control-shell.txt,
-  // "Execution sequence".
-  //
-  // If there is a reply that hasn't been taken, it is discarded.
-  //
-  // Requires: !isBusy()
-  //
-  // Ensures: isBusy() && !hasCommandReply()
+  /* Execute `command`, a UI Shell Language tagged tuple, the next time
+     the app is quiescent:
+
+       1. `startCommand` stores the command and starts watching for
+          quiescence: it connects to aboutToBlock, or, if
+          UI_SHELL_DELAY_MS is set, starts the timer.
+
+       2. At the next quiescence, the executor executes the command
+          (`executeCommand`), then calls the self-check.
+
+       3. At each following quiescence, if FocusKeySequence characters
+          are queued, it delivers one and calls the self-check.
+
+       4. At the first quiescence with nothing queued, it stops watching
+          for quiescence, clears the busy flag, stores `null` as the
+          successful result, and finally emits
+          `signal_hasCommandResult`.
+
+     When this is called, if there is a result that hasn't been taken,
+     it is discarded.
+
+     Requires: !isBusy()
+
+     Ensures: isBusy() && !hasCommandResult()
+  */
   void startCommand(gdv::GDValue const &command);
 
-  // True if a reply from a prior command is ready and has not been
+  // True if a result from a prior command is ready and has not been
   // retrieved yet.
-  bool hasCommandReply() const;
+  bool hasCommandResult() const;
 
-  // Take the reply out of this executor object.
+  // Take the result out of this executor object.
   //
-  // TODO: Call this a "command result" instead of a "reply".
+  // Requires: hasCommandResult()
   //
-  // Requires: hasCommandReply()
-  //
-  // Ensures: !hasCommandReply()
-  UIShellResult takeCommandReply();
+  // Ensures: !hasCommandResult()
+  UIShellResult takeCommandResult();
 
   // QObject methods.
   virtual bool event(QEvent *ev) OVERRIDE;
@@ -241,9 +255,9 @@ public:      // funcs
 Q_SIGNALS:
   // Emitted, at a quiescence point, when the command passed to
   // `startCommand` has finished, the app has settled, and
-  // `hasCommandReply()` is true.  The slot handler may call
+  // `hasCommandResult()` is true.  The slot handler may call
   // `startCommand` to begin the next command.
-  void signal_hasCommandReply();
+  void signal_hasCommandResult();
 
   // Internal: temporarily connected to a button's slot to enqueue a
   // click (ClickButton).  It is public only because Qt makes all
@@ -304,8 +318,8 @@ public:      // funcs
   std::string runTest();
 
 private Q_SLOTS:
-  // Called when `m_executor` has a reply for the current command.
-  void slot_hasCommandReply() NOEXCEPT;
+  // Called when `m_executor` has a result for the current command.
+  void slot_hasCommandResult() NOEXCEPT;
 };
 
 
