@@ -151,7 +151,7 @@ abstract, because of the object lookup.
   // `hasPendingStep()`, calls `executePendingStep` once per
   // subsequent quiescence point.  Any of these may throw to indicate
   // failure, in which case the executor calls `discardPendingSteps`.
-  class UIShellCommandHandler {
+  class UIShellCommandHandler : public SerfRefCount {
     NO_OBJECT_COPIES(UIShellCommandHandler);
 
   protected:   // funcs
@@ -272,10 +272,10 @@ Everything else is unchanged: `selfCheck`, `isBusy`, `startCommand`,
 `signal_hasCommandResult`.  `signal_clickButton` moves to the GUI
 handler.
 
-Optionally, `UIShellCommandHandler` could inherit `SerfRefCount` and
-the executor hold an `RCSerf`, to catch the handler being destroyed
-first.  Ordinary member order in the runner (handler declared before
-executor) makes that unlikely, so this is not required.
+`UIShellCommandHandler` inherits `SerfRefCount` and the holds a private
+`NNRCSerf` pointing to it to catch the handler being destroyed first.
+(That is unlikely to happen, but the cost of a little extra safety is
+trivial.)
 
 Private state that stays: `QuiescenceEvent`, `s_quiescenceEventType`,
 `m_globalSelfCheck`, `m_busy`, `m_pendingCommand`,
@@ -283,7 +283,7 @@ Private state that stays: `QuiescenceEvent`, `s_quiescenceEventType`,
 `m_timerId`, and `m_watchingAboutToBlock`.  Added:
 
   // Interprets the commands.
-  UIShellCommandHandler &m_handler;
+  NNRCSerf<UIShellCommandHandler> m_handler;
 
 Private methods that stay: `executeNextStep`, `finishCommand`,
 `startWatching`, `stopWatching`, `postQuiescenceEvent`,
@@ -292,10 +292,10 @@ Private methods that stay: `executeNextStep`, `finishCommand`,
 `executeNextStep` changes only where it touches the handler:
 
   * pending command:  m_commandSuccessResult =
-                        m_handler.executeCommand(command);
-  * else if m_handler.hasPendingStep():
-                      m_handler.executePendingStep();
-  * on error:         m_handler.discardPendingSteps();
+                        m_handler->executeCommand(command);
+  * else if m_handler->hasPendingStep():
+                      m_handler->executePendingStep();
+  * on error:         m_handler->discardPendingSteps();
                       (instead of m_queuedFocusKeySequence.clear())
 
 The `EXN_CONTEXT_STRING_OPT` for the source location stays in
@@ -373,8 +373,7 @@ Moved here from `UIShellExecutor`, all private:
 The "no dependencies on the editor per se" note at the top of today's
 ui-shell-executor.cc applies to both handler .cc files.
 
-TRACE key: "ui-shell-gui-command-handler".  doc/ui-shell.txt should
-say which key traces what.
+TRACE key: "ui-shell-gui-command-handler".
 
 
 UIShellScriptRunner
@@ -408,9 +407,10 @@ point, so none are in unit-tests.exe.  Therefore:
     the latter's .moc.o go where the ui-shell objects are now, next
     to the script runner.
   * Add ui-shell-command-handler-test.o and ui-shell-executor-test.o
-    to `UNIT_TESTS_OBJS`, plus a .moc.o for either one only if it
-    defines a `Q_OBJECT` class.  (Connecting signals to lambdas
-    avoids that.)
+    to `UNIT_TESTS_OBJS`, plus a .moc.o for either one if it defines a
+    `Q_OBJECT` class.  (smcpeak: Connecting signals to lambdas could
+    avoid that, but I prefer connecting to proper slots whenever that
+    is not excessively disruptive.)
 
 Run `make remake-extradep` if the generated-file dependencies change
 (they should not, but `make check` verifies it).
@@ -431,8 +431,8 @@ Test fixtures:
   * `TestCommandHandler : UIShellCommandHandler`, with a map from path
     names to queryables.  `getQueryableFromPath` throws for unknown
     names.
-  * A scratch directory under out/ (e.g.
-    out/ui-shell-command-handler-test/), created at the start and
+  * A scratch directory out/uscht/ (abbreviates
+    ui-shell-command-handler-test), created at the start and
     removed at the end.  Relative paths are needed for
     RecursivelyRemoveFilePath, which rejects absolute ones.
 
@@ -457,7 +457,8 @@ Cases, each checking both success and the expected failure message
     retry in TouchFile.)
 
 CheckImage, like the other GUI commands, remains covered only by the
-.uis tests.
+.uis tests.  (smcpeak: My intention is to add dedicated tests for them
+in a subsequent step with its own plan.)
 
 
 Unit test: ui-shell-executor-test.cc
@@ -507,11 +508,7 @@ Cases:
      it, start a command, use a `QTimer` to decrement it after ~50 ms,
      and check the command did not run before that.
 
-Timer mode (`UI_SHELL_DELAY_MS`) is read from the environment in the
-constructor, so testing it means setting the variable around the
-constructor call.  Optionally, add a constructor parameter instead
-(with the script runner passing `envAsIntOr(0, "UI_SHELL_DELAY_MS")`);
-not required for this plan.
+Timer mode (`UI_SHELL_DELAY_MS`) is not tested as a part of this plan.
 
 Register both tests in the usual way: `test_ui_shell_command_handler`
 and `test_ui_shell_executor` in unit-tests.h, `RUN_TEST` lines in
@@ -519,8 +516,8 @@ unit-tests.cc (the handler test before the executor test), and the
 Makefile entries above.
 
 
-Git history
------------
+Implementation steps
+--------------------
 
 Most of the code by volume (roughly 900 of the 1540 lines of
 ui-shell-executor.cc) goes to the GUI handler, so, as with the
@@ -536,7 +533,7 @@ earlier renames, do the rename as its own commit:
      #includes.  `make check` passes.
   4. Add ui-shell-command-handler-test.cc.
   5. Add ui-shell-executor-test.cc.
-  6. Update doc/ui-shell.txt (theory of operation, trace keys) and
+  6. Update doc/ui-shell.txt (theory of operation) and
      doc/plans/claude-gui-control-shell.txt (the server owns a
      `UIShellGUICommandHandler` too).
 
