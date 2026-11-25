@@ -187,7 +187,7 @@ GDValue UIShellCommandHandler::executeCommand(GDValue const &command)
       gdvpToTuple<std::string, std::string>(parser);
 
     std::string actual = SMFileUtil().readFileAsString(fname);
-    CHECK_EQ("CheckFileContentsSize " << doubleQuote(fname));
+    CHECK_EQ("CheckFileContents " << doubleQuote(fname));
   }
 
   else if (funcName == "WriteFileContents") {
