@@ -14,10 +14,8 @@
 #include "smbase/gdvalue-fwd.h"                  // gdv::GDValue [f]
 #include "smbase/gdvalue-parser-fwd.h"           // gdv::GDValueParser [f]
 #include "smbase/sm-override.h"                  // OVERRIDE
-
-// libc++
-#include <string>                                // std::string
-#include <vector>                                // std::vector
+#include "smbase/std-string-fwd.h"               // std::string [f]
+#include "smbase/std-vector-fwd.h"               // stdfwd::vector [f]
 
 
 /* UIShellCommandHandler for tests.  Records calls in a log and adds
@@ -34,7 +32,7 @@
 class SequencingTestHandler : public UIShellCommandHandler {
 public:      // data
   // Log of calls, shared with the test.
-  std::vector<std::string> &m_log;
+  stdfwd::vector<std::string> &m_log;
 
   // Number of the next pending step to perform, 1-based.
   int m_nextStep;
@@ -52,7 +50,7 @@ protected:   // funcs
     gdv::GDValueParser const &parser) OVERRIDE;
 
 public:      // funcs
-  explicit SequencingTestHandler(std::vector<std::string> &log);
+  explicit SequencingTestHandler(stdfwd::vector<std::string> &log);
   ~SequencingTestHandler();
 
   // UIShellCommandHandler methods.

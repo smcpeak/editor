@@ -10,8 +10,13 @@
 #include "smbase/gdvalue-parser.h"               // gdv::GDValueParser
 #include "smbase/gdvalue-tuple.h"                // gdv::gdvpToTuple
 #include "smbase/gdvalue.h"                      // gdv::GDValue
+#include "smbase/sm-macros.h"                    // IMEMBFP
 #include "smbase/stringb.h"                      // stringb
 #include "smbase/xassert.h"                      // xassertPrecondition
+
+// libc++
+#include <string>                                // std::string
+#include <vector>                                // std::vector
 
 using namespace gdv;
 using namespace smbase;
@@ -21,7 +26,7 @@ SequencingTestHandler::SequencingTestHandler(
   std::vector<std::string> &log)
 :
   UIShellCommandHandler(),
-  m_log(log),
+  IMEMBFP(log),
   m_nextStep(1),
   m_numSteps(0),
   m_throwAtStep(0)
