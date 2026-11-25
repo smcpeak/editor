@@ -16,6 +16,12 @@ server protocol.
 2026-11-25: The `ui-shell` module has been split into
 `ui-shell-executor` and `ui-shell-script-runner`.
 
+2026-11-25: The executor has been further split into
+`ui-shell-executor` (sequencing), `ui-shell-command-handler` (the
+commands that do not need widgets), and `ui-shell-gui-command-handler`
+(the widget commands).  See
+doc/plans/claude-split-ui-shell-executor.txt.
+
 
 Motivation
 ==========
@@ -32,7 +38,8 @@ the pieces:
   * A command language, the UI Shell Language: GDVN tagged tuples
     such as
       KeyPress("window1.frame1.editorFrame.m_editorWidget" "Key_X" "x")
-    dispatched by UIShellScriptRunner::executeCommand.
+    dispatched by UIShellCommandHandler::executeCommand, with the
+    widget commands in UIShellGUICommandHandler.
   * Addressing of widgets by QObject name path (getObjectFromPath).
   * Input synthesis: KeyPress, FocusKeySequence, Shortcut,
     TriggerAction, ClickButton, mouse events, ResizeEvent, and so on.
@@ -242,6 +249,10 @@ feeds it the commands of a .uis script.  UIShellServer will be a
 second client of the executor.
 
 2026-11-24: UIShellExecutor and UIShellScriptRunner have been split.
+
+Like UIShellScriptRunner, UIShellServer owns a UIShellGUICommandHandler,
+declared before its UIShellExecutor (so it is constructed first and
+destroyed last), and constructs the executor with it.
 
 UIShellServer handles the commands about the session itself, Ping() and
 Quit(), without the executor.  It passes everything else to
