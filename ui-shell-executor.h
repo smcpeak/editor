@@ -1,10 +1,10 @@
-// ui-shell.h
+// ui-shell-executor.h
 // Classes that implement the "UI shell".  See doc/ui-shell.txt.
 
 // See license.txt for copyright and terms of use.
 
-#ifndef EDITOR_UI_SHELL_H
-#define EDITOR_UI_SHELL_H
+#ifndef EDITOR_UI_SHELL_EXECUTOR_H
+#define EDITOR_UI_SHELL_EXECUTOR_H
 
 // editor
 #include "ui-shell-result.h"           // UIShellResult
@@ -319,4 +319,4 @@ private Q_SLOTS:
 };
 
 
-#endif // EDITOR_UI_SHELL_H
+#endif // EDITOR_UI_SHELL_EXECUTOR_H

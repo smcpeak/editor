@@ -32,7 +32,7 @@
 #include "rfa-gui-sync-multi-client.h"           // RFA_GUISyncMultiClient
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics (implicit)
 #include "textinput.h"                           // TextInputDialog
-#include "ui-shell.h"                            // UIShellScriptRunner
+#include "ui-shell-executor.h"                   // UIShellScriptRunner
 #include "uri-util.h"                            // getFileURIPath
 
 // smqtutil

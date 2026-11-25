@@ -56,7 +56,7 @@ that that function is called with a non-zero timeout, and hence can
 block.  Those two `aboutToBlock` and `awake` signals are always paired,
 and immediately surround the blocking call.  Therefore, no other
 processing will take place between them, except for any other code that
-also reacts to these two signals.  (`ui-shell.cc` reacts to
+also reacts to these two signals.  (`ui-shell-executor.cc` reacts to
 `aboutToBlock`, but does not do significant work there.)
 
 However, there is also an `emit awake` near the top that is unpaired

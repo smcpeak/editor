@@ -1,7 +1,7 @@
-// ui-shell.cc
-// code for ui-shell.h
+// ui-shell-executor.cc
+// code for ui-shell-executor.h
 
-#include "ui-shell.h"                            // this module
+#include "ui-shell-executor.h"                   // this module
 
 // NOTE: There should not be any dependencies here on the editor per se.
 // If you want to, say, query an EditorWidget from a test script, use
@@ -82,7 +82,7 @@ using namespace gdv;
 using namespace smbase;
 
 
-INIT_TRACE("ui-shell");
+INIT_TRACE("ui-shell-executor");
 
 
 // -------------------------- UIShellExecutor --------------------------
