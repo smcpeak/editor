@@ -7,8 +7,8 @@
 #define EDITOR_UI_SHELL_SCRIPT_RUNNER_H
 
 // editor
+#include "ui-shell-command-handler-fwd.h"        // UIShellCommandHandler [f]
 #include "ui-shell-executor.h"                   // UIShellExecutor
-#include "ui-shell-gui-command-handler.h"        // UIShellGUICommandHandler
 
 // smbase
 #include "smbase/gdvalue-fwd.h"                  // gdv::GDValue [f]
@@ -55,10 +55,6 @@ private:     // instance data
   // executor calls it after each command.)
   std::function<void ()> m_globalSelfCheck;
 
-  // Interprets the commands for `m_executor`.  This is declared before
-  // `m_executor` so that it is constructed first and destroyed last.
-  UIShellGUICommandHandler m_commandHandler;
-
   // Executes the commands.
   UIShellExecutor m_executor;
 
@@ -69,7 +65,10 @@ private:     // funcs
   void startNextCommand();
 
 public:      // funcs
-  explicit UIShellScriptRunner(
+  // `handler` interprets the commands.  It and `testCommands` must
+  // outlive this object.
+  UIShellScriptRunner(
+    UIShellCommandHandler &handler,
     std::vector<gdv::GDValue> const &testCommands,
     std::function<void ()> globalSelfCheck);
   ~UIShellScriptRunner();

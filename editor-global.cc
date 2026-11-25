@@ -32,6 +32,7 @@
 #include "rfa-gui-sync-multi-client.h"           // RFA_GUISyncMultiClient
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics (implicit)
 #include "textinput.h"                           // TextInputDialog
+#include "ui-shell-gui-command-handler.h"        // UIShellGUICommandHandler
 #include "ui-shell-script-runner.h"              // UIShellScriptRunner
 #include "uri-util.h"                            // getFileURIPath
 
@@ -1946,7 +1947,11 @@ static int innerMain(int argc, char **argv)
         // to while the automated tests run.
         SilentMessageBoxFilter silentFilter(&app);
 
-        UIShellScriptRunner runner(app.m_uiShellCommands, selfCheck);
+        // Declared first so it is destroyed after `runner`.
+        UIShellGUICommandHandler commandHandler;
+
+        UIShellScriptRunner runner(
+          commandHandler, app.m_uiShellCommands, selfCheck);
         runner.m_printFailureToStdout = true;
         std::optional<std::string> error = runner.runTest();
         if (!error.has_value()) {

@@ -46,17 +46,18 @@ Classes
 Dependencies (arrows point at what is used):
 
   UIShellScriptRunner ---> UIShellExecutor
-        |                        |
-        |                        v
-        |              UIShellCommandHandler --> UIShellQueryable
-        |                        ^                     ^
-        |                        | (inherits)          | (inherits)
-        +----------> UIShellGUICommandHandler --> UIShellGUIQueryable
+                                 |
+                                 v
+                       UIShellCommandHandler --> UIShellQueryable
+                                 ^                     ^
+                                 | (inherits)          | (inherits)
+                       UIShellGUICommandHandler --> UIShellGUIQueryable
 
 UIShellScriptRunner handles reading the test/*.uis scripts and executing
-all of its commands in sequence.  It owns a UIShellGUICommandHandler and
-a UIShellExecutor that uses it.  It runs its own top-level Qt event
-loop, taking the place of the usual application top-level loop.
+all of its commands in sequence.  It is given a UIShellCommandHandler
+(in the editor, a UIShellGUICommandHandler owned by the caller), and
+owns a UIShellExecutor that uses it.  It runs its own top-level Qt
+event loop, taking the place of the usual application top-level loop.
 
 UIShellExecutor is responsible for executing commands one at a time and
 waiting for the app to become quiescent between them (see below).  It

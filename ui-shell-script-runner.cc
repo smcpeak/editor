@@ -7,6 +7,7 @@
 #include "ui-shell-result.h"           // UIShellResult
 
 // smbase
+#include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
 #include "smbase/gdvalue.h"            // gdv::GDValue
 #include "smbase/sm-macros.h"          // IMEMBFP
 #include "smbase/sm-trace.h"           // INIT_TRACE, etc.
@@ -15,6 +16,7 @@
 
 // libc++
 #include <functional>                  // std::function
+#include <iostream>                    // std::cout
 #include <optional>                    // std::optional
 #include <string>                      // std::string
 
@@ -26,6 +28,7 @@ INIT_TRACE("ui-shell-script-runner");
 
 
 UIShellScriptRunner::UIShellScriptRunner(
+  UIShellCommandHandler &handler,
   std::vector<gdv::GDValue> const &testCommands,
   std::function<void ()> globalSelfCheck)
 :
@@ -36,8 +39,7 @@ UIShellScriptRunner::UIShellScriptRunner(
   m_testFailureMessage(),
   m_eventLoop(),
   IMEMBFP(globalSelfCheck),
-  m_commandHandler(),
-  m_executor(m_commandHandler, globalSelfCheck)
+  m_executor(handler, globalSelfCheck)
 {
   // We use a direct (rather than queued) connection so that, when the
   // slot starts the next command, the executor runs it in the same

@@ -250,9 +250,9 @@ second client of the executor.
 
 2026-11-24: UIShellExecutor and UIShellScriptRunner have been split.
 
-Like UIShellScriptRunner, UIShellServer owns a UIShellGUICommandHandler,
-declared before its UIShellExecutor (so it is constructed first and
-destroyed last), and constructs the executor with it.
+Like UIShellScriptRunner, UIShellServer is given a
+UIShellCommandHandler (in the editor, a UIShellGUICommandHandler owned
+by the caller), and constructs its UIShellExecutor with it.
 
 UIShellServer handles the commands about the session itself, Ping() and
 Quit(), without the executor.  It passes everything else to
