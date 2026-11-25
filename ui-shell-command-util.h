@@ -3,8 +3,10 @@
 
 // See license.txt for copyright and terms of use.
 
-// This file defines macros with generic names, so it should only be
-// included by .cc files that implement UI shell commands.
+// This file defines macros with generic names (i.e., they are not
+// prefixed with the module name or some other unique identifier), so it
+// should only be included by .cc files that implement UI shell
+// commands.
 
 #ifndef EDITOR_UI_SHELL_COMMAND_UTIL_H
 #define EDITOR_UI_SHELL_COMMAND_UTIL_H

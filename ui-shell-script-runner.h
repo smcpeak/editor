@@ -7,22 +7,22 @@
 #define EDITOR_UI_SHELL_SCRIPT_RUNNER_H
 
 // editor
-#include "ui-shell-executor.h"         // UIShellExecutor
-#include "ui-shell-gui-command-handler.h"  // UIShellGUICommandHandler
+#include "ui-shell-executor.h"                   // UIShellExecutor
+#include "ui-shell-gui-command-handler.h"        // UIShellGUICommandHandler
 
 // smbase
-#include "smbase/gdvalue-fwd.h"        // gdv::GDValue [f]
-#include "smbase/sm-noexcept.h"        // NOEXCEPT
-#include "smbase/std-vector-fwd.h"     // std::vector [f]
+#include "smbase/gdvalue-fwd.h"                  // gdv::GDValue [f]
+#include "smbase/sm-noexcept.h"                  // NOEXCEPT
+#include "smbase/std-vector-fwd.h"               // std::vector [f]
 
 // Qt
 #include <QEventLoop>
 #include <QObject>
 
 // libc++
-#include <cstddef>                     // std::size_t
-#include <functional>                  // std::function
-#include <optional>                    // std::optional
+#include <cstddef>                               // std::size_t
+#include <functional>                            // std::function
+#include <optional>                              // std::optional
 
 
 // Read events and test assertions from a file.  Synthesize the events

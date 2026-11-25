@@ -16,29 +16,29 @@
 #include "smbase/gdvalue-fwd.h"                  // gdv::GDValue [f]
 #include "smbase/refct-serf.h"                   // SerfRefCount
 #include "smbase/sm-macros.h"                    // NO_OBJECT_COPIES
-
-// libc++
-#include <functional>                            // std::function
-#include <string>                                // std::string
+#include "smbase/std-functional-fwd.h"           // std::function [f]
+#include "smbase/std-string-fwd.h"               // std::string [f]
 
 
-// Executes UI shell commands for `UIShellExecutor`.
-//
-// This class implements the commands that do not need widgets.  A
-// derived class supplies object lookup, and may add commands.
-//
-// A command is executed in one or more steps.  `UIShellExecutor`
-// calls `executeCommand` at one quiescence point, then, while
-// `hasPendingStep()`, calls `executePendingStep` once per subsequent
-// quiescence point.  Any of these may throw to indicate failure, in
-// which case the executor calls `discardPendingSteps`.
+/*
+  Executes UI shell commands for `UIShellExecutor`.
+
+  This class implements the commands that do not need widgets.  A
+  derived class supplies object lookup, and may add commands.
+
+  A command is executed in one or more steps.  `UIShellExecutor` calls
+  `executeCommand` at one quiescence point, then, while
+  `hasPendingStep()`, calls `executePendingStep` once per subsequent
+  quiescence point.  Any of these may throw to indicate failure, in
+  which case the executor calls `discardPendingSteps`.
+*/
 class UIShellCommandHandler : public SerfRefCount {
   NO_OBJECT_COPIES(UIShellCommandHandler);
 
 protected:   // funcs
   // Execute a command that this class does not recognize.  `funcName`
-  // is its tag, and `parser` is positioned at it.  Return its result,
-  // which is null for an action.
+  // is its tag, and `parser` is positioned at it to inspect the
+  // arguments.  Return its result, which is null for an action.
   //
   // The default throws "unrecognized function: $funcName".
   virtual gdv::GDValue executeDerivedCommand(

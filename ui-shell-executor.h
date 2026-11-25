@@ -7,31 +7,36 @@
 #define EDITOR_UI_SHELL_EXECUTOR_H
 
 // editor
-#include "ui-shell-command-handler-fwd.h"  // UIShellCommandHandler [f]
-#include "ui-shell-result.h"           // UIShellResult
+#include "ui-shell-command-handler-fwd.h"        // UIShellCommandHandler [f]
+#include "ui-shell-result.h"                     // UIShellResult
 
 // smbase
-#include "smbase/gdvalue.h"            // gdv::GDValue
-#include "smbase/refct-serf.h"         // NNRCSerf
-#include "smbase/sm-noexcept.h"        // NOEXCEPT
-#include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
-#include "smbase/sm-override.h"        // OVERRIDE
+#include "smbase/gdvalue.h"                      // gdv::GDValue
+#include "smbase/refct-serf.h"                   // NNRCSerf
+#include "smbase/sm-noexcept.h"                  // NOEXCEPT
+#include "smbase/sm-macros.h"                    // NO_OBJECT_COPIES
+#include "smbase/sm-override.h"                  // OVERRIDE
 
 // Qt
 #include <QEvent>
 #include <QObject>
 
 // libc++
-#include <functional>                  // std::function
-#include <optional>                    // std::optional
-#include <string>                      // std::string
+#include <functional>                            // std::function
+#include <optional>                              // std::optional
 
 
-// Execute UI shell commands one at a time.  Each command is executed
-// when the app is quiescent, and its result becomes available once the
-// app has become quiescent again afterward.
-//
-// See doc/ui-shell.txt for theory of operation.
+/*
+  Execute UI shell commands one at a time.  Each command is executed
+  when the app is quiescent, and its result becomes available once the
+  app has become quiescent again afterward.
+
+  The semantics of individual commands is provided by
+  `UIShellCommandHandler` (or a subclass thereof), which is accessed via
+  the `m_handler` member.
+
+  See doc/ui-shell.txt for theory of operation.
+*/
 class UIShellExecutor : public QObject {
   Q_OBJECT
   NO_OBJECT_COPIES(UIShellExecutor);

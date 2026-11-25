@@ -16,21 +16,22 @@
 #include "smbase/gdvalue-parser-fwd.h" // gdv::GDValueParser [f]
 #include "smbase/sm-macros.h"          // NO_OBJECT_COPIES
 #include "smbase/sm-override.h"        // OVERRIDE
+#include "smbase/std-string-fwd.h"     // std::string [f]
 
 // Qt
 #include <QObject>
 #include <QString>
-
-// libc++
-#include <string>                      // std::string
 
 class QAbstractButton;
 class QSize;
 class QWidget;
 
 
-// Executes the UI shell commands that synthesize input events for, or
-// inspect the state of, the application's widgets.
+/*
+  This class executes the UI shell commands that synthesize input events
+  for, or inspect the state of, the application's widgets.  Non-GUI
+  commands are handled by the base class.
+*/
 class UIShellGUICommandHandler : public QObject,
                                  public UIShellCommandHandler {
   Q_OBJECT
@@ -71,6 +72,9 @@ private:     // funcs
 
 protected:   // funcs
   // UIShellCommandHandler methods.
+  //
+  // This function has the "meat" of this class, checking for and
+  // executing all of the GUI-related UI shell commands.
   virtual gdv::GDValue executeDerivedCommand(
     std::string const &funcNameString,
     gdv::GDValueParser const &parser) OVERRIDE;
