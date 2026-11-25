@@ -15,6 +15,29 @@ happens in editor-global.cc, not in the runner, so it is not covered
 here.
 
 
+Printing failures to stdout
+===========================
+
+When a command fails, `slot_hasCommandResult` prints "test FAILED:
+..." to stdout right away, because the runner's loop might not be the
+innermost one (e.g., a modal dialog is up), and otherwise the failure
+would only show up once the dialog closed.  That is right for
+editor.exe, but in the unit test, where failures are expected, it
+would put misleading "test FAILED" lines into out/unit-tests.out.
+
+Change: add a public field, initially false, and print only when it
+is set:
+
+  public:      // data
+    // If true, print a failure to stdout as soon as it happens.
+    // Initially false.
+    bool m_printFailureToStdout;
+
+editor-global.cc sets it to true after constructing the runner, so
+editor.exe behaves as before.  The failure message is still returned
+from `runTest` either way.
+
+
 The obstacle: the runner owns a GUI handler
 ===========================================
 
@@ -188,9 +211,9 @@ Cases (each also checks `m_log`):
      executor's registered event type, and the dispatcher connection,
      are reused correctly).
 
-Cases 3, 4 and 6 make the runner print "test FAILED: ..." to stdout.
-That ends up in out/unit-tests.out, which is acceptable, but the test
-should print a line first saying the failures are expected.
+Cases 3, 4 and 6 fail on purpose.  The test leaves
+`m_printFailureToStdout` false (see below), so they do not print
+"test FAILED: ..." into out/unit-tests.out.
 
 Registration: `test_ui_shell_script_runner` in unit-tests.h,
 `RUN_TEST(ui_shell_script_runner)` after `ui_shell_executor` in
@@ -201,13 +224,16 @@ ui-shell-script-runner-test.o in `UNIT_TESTS_OBJS`.
 Implementation steps
 ====================
 
-  1. Make the runner take a `UIShellCommandHandler &`, update
+  1. Add `UIShellScriptRunner::m_printFailureToStdout`, initially
+     false, and have editor-global.cc set it to true.  `make check`
+     passes, with the same output as before.
+  2. Make the runner take a `UIShellCommandHandler &`, update
      editor-global.cc, move the runner's objects before the snapshot
      in the Makefile, and update doc/ui-shell.txt.  `make check`
      passes.
-  2. Move `SequencingTestHandler` into ui-shell-test-handler.{h,cc}
+  3. Move `SequencingTestHandler` into ui-shell-test-handler.{h,cc}
      and add Mark.  The executor test passes unchanged.
-  3. Add ui-shell-script-runner-test.{h,cc} and register it.
+  4. Add ui-shell-script-runner-test.{h,cc} and register it.
 
 
 EOF
