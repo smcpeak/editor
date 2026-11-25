@@ -1,0 +1,340 @@
+claude-split-ui-shell-executor.txt
+Plan to split UIShellExecutor into Qt-core and Qt-GUI parts
+2026-11-25
+
+Written by Claude Code.
+
+
+Motivation
+----------
+
+`UIShellExecutor` (ui-shell-executor.{h,cc}) currently does two
+things:
+
+  * Sequencing: accept one command at a time, run it at the next
+    quiescence point, run any follow-up steps at the following
+    quiescence points, then publish the result and emit
+    `signal_hasCommandResult`.  This needs only Qt core:
+    `QObject`, `QEvent`, `QCoreApplication`, and
+    `QAbstractEventDispatcher`.
+
+  * Interpreting the commands: KeyPress, ClickButton, CheckLabel, and
+    so on, nearly all of which manipulate or inspect widgets.  This
+    needs QtGui and QtWidgets.
+
+Splitting them allows the sequencing logic, which is the subtle part
+(quiescence, busy state, follow-up steps, errors, chaining from the
+signal handler), to be tested in unit-tests.exe with a fake command
+interpreter and a `QCoreApplication`, with no windows.
+
+
+New structure
+-------------
+
+Three pieces:
+
+  ui-shell-command-handler.{h,cc}   UIShellCommandHandler
+    Abstract interface: execute one command, and perform any
+    follow-up steps.  No Qt dependencies at all.
+
+  ui-shell-executor.{h,cc}          UIShellExecutor
+    The sequencer.  Keeps its current name and client-facing API, so
+    UIShellScriptRunner (and later UIShellServer) use it as now.
+    Depends only on Qt core.
+
+  ui-shell-gui-command-handler.{h,cc}  UIShellGUICommandHandler
+    Implements `UIShellCommandHandler` for the real app: everything
+    in today's `executeCommand`.  Depends on QtGui and QtWidgets.
+
+Dependencies:
+
+  UIShellScriptRunner ---> UIShellExecutor ---> UIShellCommandHandler
+          |                                              ^
+          +-----------> UIShellGUICommandHandler --------+
+
+The executor knows nothing about widgets; the GUI handler knows
+nothing about quiescence.
+
+
+UIShellCommandHandler
+---------------------
+
+  // Interprets UI shell commands for `UIShellExecutor`.
+  //
+  // A command is executed in one or more steps.  `UIShellExecutor`
+  // calls `executeCommand` at one quiescence point, then, while
+  // `hasPendingStep()`, calls `executePendingStep` once per subsequent
+  // quiescence point.  Any of these may throw to indicate failure, in
+  // which case the executor calls `discardPendingSteps`.
+  class UIShellCommandHandler {
+  public:      // funcs
+    virtual ~UIShellCommandHandler();
+
+    // Execute the first (often only) step of `command`, a UI Shell
+    // Language tagged tuple.  Return its result, which is null for an
+    // action.  Throw to indicate an error.
+    virtual gdv::GDValue executeCommand(gdv::GDValue const &command) = 0;
+
+    // True if the most recent command has steps that remain to be
+    // performed.
+    virtual bool hasPendingStep() const = 0;
+
+    // Perform the next remaining step.  Throw to indicate an error.
+    //
+    // Requires: hasPendingStep()
+    virtual void executePendingStep() = 0;
+
+    // Discard any remaining steps, after an error.
+    //
+    // Ensures: !hasPendingStep()
+    virtual void discardPendingSteps() = 0;
+  };
+
+The .cc file exists only to hold the out-of-line destructor (which
+anchors the vtable).  It could instead be header-only with an inline
+`= default` destructor.
+
+Today the only multi-step command is FocusKeySequence, whose queued
+characters become the pending steps.  The interface does not mention
+keys, so the executor no longer knows about them.
+
+Whether the result of a command can depend on its follow-up steps:
+not for now.  The result is what `executeCommand` returns.  If a
+future query needs to report something computed in later steps, add
+a method such as `takeFinalResult()` then.
+
+
+UIShellExecutor (Qt core only)
+------------------------------
+
+Public interface, changes only:
+
+  // `handler` interprets the commands, and must outlive this object.
+  // `globalSelfCheck` is called after each step, as now.
+  UIShellExecutor(UIShellCommandHandler &handler,
+                  std::function<void ()> globalSelfCheck);
+
+Everything else is unchanged: `selfCheck`, `isBusy`, `startCommand`,
+`hasCommandResult`, `takeCommandResult`, `event`, and
+`signal_hasCommandResult`.  `signal_clickButton` moves to the GUI
+handler.
+
+Optionally, `UIShellCommandHandler` could inherit `SerfRefCount` and
+the executor hold an `RCSerf`, to catch the handler being destroyed
+first.  Ordinary member order in the runner (handler declared before
+executor) makes that unlikely, so this is not required.
+
+Private state that stays: `QuiescenceEvent`, `s_quiescenceEventType`,
+`m_globalSelfCheck`, `m_busy`, `m_pendingCommand`,
+`m_commandSuccessResult`, `m_commandResult`, `m_uiShellDelayMS`,
+`m_timerId`, and `m_watchingAboutToBlock`.  Added:
+
+  // Interprets the commands.
+  UIShellCommandHandler &m_handler;
+
+Private methods that stay: `executeNextStep`, `finishCommand`,
+`startWatching`, `stopWatching`, `postQuiescenceEvent`,
+`installTimer`, `killTimerIf`, and `slot_aboutToBlock`.
+
+`executeNextStep` changes only where it touches the handler:
+
+  * pending command:  m_commandSuccessResult =
+                        m_handler.executeCommand(command);
+  * else if m_handler.hasPendingStep():
+                      m_handler.executePendingStep();
+  * on error:         m_handler.discardPendingSteps();
+                      (instead of m_queuedFocusKeySequence.clear())
+
+The `EXN_CONTEXT_STRING_OPT` for the source location stays in
+`executeNextStep`, since it applies to whatever the handler does.
+
+Includes: the header drops the forward declarations of
+`QAbstractButton` and `QWidget`, and `smbase/array.h`.  The .cc file
+keeps only `<QAbstractEventDispatcher>`, `<QCoreApplication>`,
+`<QEvent>`, and `<QObject>` from Qt, plus `waiting-counter.h`,
+`ui-shell-result.h`, `debug-values.h`, and the smbase headers it
+actually uses (exc, gdvalue, optional-util, sm-env, sm-macros,
+sm-trace, stringb, xassert).  It must not include
+`ui-shell-queryable.h`, since that interface mentions `QImage`
+(QtGui).
+
+TRACE key: keep "ui-shell-executor" for the executor.
+
+
+UIShellGUICommandHandler (Qt GUI)
+---------------------------------
+
+  // Executes UI shell commands by synthesizing input events for, and
+  // inspecting the state of, the application's widgets.
+  class UIShellGUICommandHandler : public QObject,
+                                   public UIShellCommandHandler {
+    Q_OBJECT
+    NO_OBJECT_COPIES(UIShellGUICommandHandler);
+
+  public:      // funcs
+    UIShellGUICommandHandler();
+    ~UIShellGUICommandHandler();
+
+    // UIShellCommandHandler methods.
+    virtual gdv::GDValue executeCommand(
+      gdv::GDValue const &command) override;
+    virtual bool hasPendingStep() const override;
+    virtual void executePendingStep() override;
+    virtual void discardPendingSteps() override;
+
+  Q_SIGNALS:
+    // Internal: temporarily connected to a button's slot to enqueue
+    // a click (ClickButton).  Public only because Qt makes all
+    // signals public.
+    void signal_clickButton();
+  };
+
+It must be a `QObject` because of `signal_clickButton`.  It takes no
+self-check function, since self-checks are the executor's job.
+
+Moved here from `UIShellExecutor`, all private:
+
+  * `executeCommand` (body unchanged, except that FocusKeySequence's
+    comment refers to `executePendingStep`).
+  * Its helpers: `resizeChildWidget`, `getFocusWidget`,
+    `checkFocusWorkaround`, `postClickButton`, `sleepForMS`,
+    `executeShortcut`, `executeFocusKey`, `waitUntilCheckQuery`, and
+    `waitUntilCheckGDValueFunction`.
+  * The file-scope helpers in ui-shell-executor.cc
+    (`getQObjectFromPath`, `getObjectFromPath`, `getQueryableFromPath`,
+    `checkString`, the table-widget helpers, `charToKeyEvent`, the
+    `BIND_*` and `CHECK_*` macros, etc.).
+  * `m_queuedFocusKeySequence`.  `hasPendingStep` is
+    `!m_queuedFocusKeySequence.isEmpty()`, `executePendingStep` is
+    `executeFocusKey(m_queuedFocusKeySequence.pop())`, and
+    `discardPendingSteps` clears it.
+
+A few commands (Sleep, TouchFile, CheckFileContents, and the other
+file commands) do not need GUI, but stay here for now; there is no
+current reason to separate them.  The "no dependencies on the editor
+per se" note at the top of today's ui-shell-executor.cc moves here.
+
+TRACE key: "ui-shell-gui-command-handler" (or something shorter,
+such as "ui-shell-gui").  Either way, doc/ui-shell.txt should say
+which key traces what.
+
+
+UIShellScriptRunner
+-------------------
+
+Its public interface is unchanged.  It gains a member declared before
+`m_executor` (so it is constructed first and destroyed last):
+
+  // Interprets the commands for `m_executor`.
+  UIShellGUICommandHandler m_commandHandler;
+
+and constructs `m_executor(m_commandHandler, globalSelfCheck)`.
+
+UIShellServer (doc/plans/claude-gui-control-shell.txt) will do the
+same.
+
+
+Makefile
+--------
+
+`UNIT_TESTS_OBJS := $(EDITOR_OBJS)` snapshots the list part way
+through, and the ui-shell objects are currently added after that
+point, so they are not in unit-tests.exe.  Therefore:
+
+  * ui-shell-command-handler.o, ui-shell-executor.o,
+    ui-shell-executor.moc.o, and ui-shell-result.o move up into the
+    part of `EDITOR_OBJS` before the snapshot.  (ui-shell-result has
+    no Qt dependencies, and waiting-counter.o is already there.)
+  * ui-shell-gui-command-handler.o and its .moc.o go where the
+    ui-shell objects are now, along with ui-shell-queryable.o and the
+    script runner.
+  * Add ui-shell-executor-test.o to `UNIT_TESTS_OBJS`, and a .moc.o if
+    the test defines a `Q_OBJECT` class.  (Connecting the signal to a
+    lambda avoids that.)
+
+Run `make remake-extradep` if the generated-file dependencies change
+(they should not, but `make check` verifies it).
+
+unit-tests.exe links with `GUI_LDFLAGS`, so a successful link does not
+prove the executor avoids QtGui.  The include list is the check: the
+executor's files should include only the QtCore headers listed above.
+
+
+Unit test: ui-shell-executor-test.cc
+------------------------------------
+
+unit-tests.cc already creates a `QCoreApplication`, and
+`QAbstractEventDispatcher::aboutToBlock` works with it, so the real
+quiescence mechanism is exercised.
+
+Fake handler, `TestCommandHandler`, records each call in a log
+(e.g. a `std::vector<std::string>`) and interprets a tiny language:
+
+  Return(v)       return v
+  Throw("msg")    throw XMessage("msg")
+  Steps(n)        return null and leave n pending steps
+  StepThrows(n k) like Steps(n), but step k throws
+
+A helper runs one command: connect `signal_hasCommandResult` to a
+lambda that exits a local `QEventLoop`, call `startCommand`, start a
+`QTimer` that fails the test after a few seconds (so a bug hangs no
+longer than that), `exec()` the loop, then `takeCommandResult()`.
+
+Cases:
+
+  1. Return(3): result is left 3; `isBusy()` is true after
+     `startCommand` and false in the handler; signal emitted once.
+  2. Throw("x"): result is right "x".
+  3. Steps(3): the log shows `executeCommand` then three
+     `executePendingStep` calls, all before the signal; the global
+     self-check ran four times.
+  4. StepThrows(3 1): result is right; `discardPendingSteps` was
+     called; step 2 never ran.
+  5. Global self-check throws after the command: result is right.
+  6. Chaining: the signal handler takes the result and starts a
+     second command; both results arrive, in order, from a single
+     `exec()`.
+  7. An untaken result is discarded by the next `startCommand`
+     (`hasCommandResult()` false right after it).
+  8. Idle: after a command finishes, run `processEvents` a few times
+     and check that the handler was not called again (the executor is
+     not watching while idle).
+  9. Optionally, `g_waitingCounter` > 0 defers execution: increment
+     it, start a command, use a `QTimer` to decrement it after ~50 ms,
+     and check the command did not run before that.
+
+Timer mode (`UI_SHELL_DELAY_MS`) is read from the environment in the
+constructor, so testing it means setting the variable around the
+constructor call.  Optionally, add a constructor parameter instead
+(with the script runner passing `envAsIntOr(0, "UI_SHELL_DELAY_MS")`);
+not required for this plan.
+
+Register the test in the usual way: `test_ui_shell_executor` in
+unit-tests.h, `RUN_TEST(ui_shell_executor)` in unit-tests.cc (after
+its dependencies), and the Makefile entry above.
+
+
+Git history
+-----------
+
+Most of the code by volume (about 1200 of the 1540 lines of
+ui-shell-executor.cc) moves to the GUI handler, so, as with the
+earlier renames, do the rename as its own commit:
+
+  1. `git mv ui-shell-executor.h ui-shell-gui-command-handler.h` and
+     likewise for the .cc.  Files only; does not compile.
+  2. Create the new ui-shell-executor.{h,cc} and
+     ui-shell-command-handler.{h,cc}, moving the sequencing code out
+     of the GUI handler files, and update the runner, the Makefile,
+     and the #includes.  `make check` passes.
+  3. Add ui-shell-executor-test.cc.
+  4. Update doc/ui-shell.txt (theory of operation, trace keys) and
+     doc/plans/claude-gui-control-shell.txt (the server owns a
+     `UIShellGUICommandHandler` too).
+
+`git log --follow ui-shell-gui-command-handler.cc` then keeps the
+history of the command interpreter.  The new ui-shell-executor.cc
+starts a fresh history; `git blame -C` can still trace its lines back.
+
+
+EOF
