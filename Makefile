@@ -464,6 +464,8 @@ EDITOR_OBJS += ui-shell-executor.moc.o
 EDITOR_OBJS += ui-shell-executor.o
 EDITOR_OBJS += ui-shell-queryable.o
 EDITOR_OBJS += ui-shell-result.o
+EDITOR_OBJS += ui-shell-script-runner.moc.o
+EDITOR_OBJS += ui-shell-script-runner.o
 
 GUI_TESTS_OBJS := $(EDITOR_OBJS)
 GUI_TESTS_OBJS += completions-dialog-test.o

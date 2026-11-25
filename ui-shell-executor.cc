@@ -17,12 +17,11 @@
 // smqtutil
 #include "smqtutil/gdvalue-qt.h"                 // gdvpTo(QSize)
 #include "smqtutil/qstringb.h"                   // qstringb
-#include "smqtutil/qtguiutil.h"                  // getKeyPressFromString, showRaiseAndActivateWindow
+#include "smqtutil/qtguiutil.h"                  // showRaiseAndActivateWindow
 #include "smqtutil/qtutil.h"                     // operator<<(QString)
 #include "smqtutil/timer-event-loop.h"           // sleepWhilePumpingEvents
 
 // smbase
-#include "smbase/c-string-reader.h"              // parseQuotedCString
 #include "smbase/chained-cond.h"                 // smbase::cc::z_le_lt
 #include "smbase/exc.h"                          // smbase::{XBase, XMessage}, xmessagesb, EXN_CONTEXT, GENERIC_CATCH_BEGIN/END
 #include "smbase/gdvalue-parser.h"               // gdv::{GDValueParser, gdvpTo}
@@ -41,7 +40,6 @@
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
 #include "smbase/string-util.h"                  // doubleQuote
 #include "smbase/stringb.h"                      // stringb
-#include "smbase/syserr.h"                       // xsyserror
 #include "smbase/xassert.h"                      // xassert, xassertPrecondition, xassertInvariant
 
 // Qt
@@ -69,12 +67,11 @@
 
 // libc++
 #include <exception>                             // std::exception
-#include <fstream>                               // std::ofstream
 #include <functional>                            // std::function
 #include <optional>                              // std::optional
 #include <regex>                                 // std::regex_search
 #include <string>                                // std::string, getline
-#include <tuple>                                 // std::tuple
+#include <tuple>                                 // std::tuple [h]
 #include <typeinfo>                              // typeid
 #include <utility>                               // std::move
 
@@ -85,7 +82,6 @@ using namespace smbase;
 INIT_TRACE("ui-shell-executor");
 
 
-// -------------------------- UIShellExecutor --------------------------
 int UIShellExecutor::s_quiescenceEventType = 0;
 
 
@@ -951,7 +947,8 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
   else if (funcName == "CheckClipboard") {
     BIND_STRING_ARGS1(expect);
 
-    std::string actual = toString(QApplication::clipboard()->text());
+    QClipboard *cb = QApplication::clipboard();
+    std::string actual = toString(cb->text());
     CHECK_EQ("CheckClipboard");
   }
 
@@ -1456,120 +1453,6 @@ void UIShellExecutor::killTimerIf()
 }
 
 
-// ------------------------ UIShellScriptRunner ------------------------
-UIShellScriptRunner::UIShellScriptRunner(
-  std::vector<gdv::GDValue> const &testCommands,
-  std::function<void ()> globalSelfCheck)
-:
-  QObject(),
-  IMEMBFP(testCommands),
-  m_nextTestCommandIndex(0),
-  m_testFailureMessage(),
-  m_eventLoop(),
-  IMEMBFP(globalSelfCheck),
-  m_executor(globalSelfCheck)
-{
-  // We use a direct (rather than queued) connection so that, when the
-  // slot starts the next command, the executor runs it in the same
-  // quiescence cycle.  But this makes no measurable difference in
-  // performance.
-  QObject::connect(&m_executor, &UIShellExecutor::signal_hasCommandResult,
-                   this, &UIShellScriptRunner::slot_hasCommandResult,
-                   Qt::DirectConnection);
-}
-
-
-UIShellScriptRunner::~UIShellScriptRunner()
-{
-  // See doc/signals-and-dtors.txt.
-  QObject::disconnect(&m_executor, nullptr, this, nullptr);
-}
-
-
-void UIShellScriptRunner::startNextCommand()
-{
-  xassertPrecondition(m_nextTestCommandIndex < m_testCommands.size());
-
-  m_executor.startCommand(m_testCommands.at(m_nextTestCommandIndex++));
-}
-
-
-std::optional<std::string> UIShellScriptRunner::runTest()
-{
-  // Do one self-check at the start so a later failure is known to be
-  // caused by something that happened while executing.
-  m_globalSelfCheck();
-
-  if (m_testCommands.empty()) {
-    // Even with no commands, run the event loop until the app is first
-    // quiescent, so it gets to finish starting up.  `Sleep(0)` is
-    // effectively a no-op command.
-    m_executor.startCommand(GDValue::readFromString("Sleep(0)"));
-  }
-  else {
-    this->startNextCommand();
-  }
-
-  // Process events until the test completes.
-  //
-  // NOTE: This is simply the substitute for the top-level application
-  // event loop.  While the test runs, the app may start other event
-  // loops, e.g., for modal dialogs.  Thus, it would not work to simply
-  // unpack this loop and execute commands here.
-  TRACE1("runTest starting top-level event loop");
-  m_eventLoop.exec();
-
-  if (m_testFailureMessage) {
-    TRACE1("runTest finished with error: " <<
-           doubleQuote(*m_testFailureMessage));
-  }
-  else {
-    TRACE1("runTest finished successfully");
-  }
-  return m_testFailureMessage;
-}
-
-
-void UIShellScriptRunner::slot_hasCommandResult() NOEXCEPT
-{
-  GENERIC_CATCH_BEGIN
-
-  UIShellResult result(m_executor.takeCommandResult());
-
-  if (result.isRight()) {
-    m_testFailureMessage = result.right();
-
-    // Our event loop might not be the innermost event loop at the
-    // moment, e.g., if we're running a modal dialog.  So, print the
-    // result to the console now so the user can see that the test has
-    // failed.  (Otherwise it looks like the test fails when the dialog
-    // is closed, which is misleading.)
-    cout << "test FAILED: " << *m_testFailureMessage << endl;
-  }
-  else if (m_nextTestCommandIndex < m_testCommands.size()) {
-    // Test is continuing.
-    this->startNextCommand();
-    return;
-  }
-  else {
-    TRACE1("end of commands reached");
-
-    // In the context of the script runner, which is not interactive, we
-    // just discard the successful `result`, which is normally just the
-    // `null` GDValue.  The UI shell server will return it to the
-    // client.
-  }
-
-  // Test is complete (pass or fail).  Stop the event loop we started in
-  // 'runTest'.
-  TRACE2("test complete, stopping UI shell event loop");
-  m_eventLoop.exit(0);
-
-  GENERIC_CATCH_END
-}
-
-
-// -------------------- UIShellExecutor (continued) --------------------
 bool UIShellExecutor::event(QEvent *ev)
 {
   if (ev->type() == s_quiescenceEventType) {
