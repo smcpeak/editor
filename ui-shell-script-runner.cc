@@ -30,6 +30,7 @@ UIShellScriptRunner::UIShellScriptRunner(
   std::function<void ()> globalSelfCheck)
 :
   QObject(),
+  m_printFailureToStdout(false),
   IMEMBFP(testCommands),
   m_nextTestCommandIndex(0),
   m_testFailureMessage(),
@@ -113,7 +114,9 @@ void UIShellScriptRunner::slot_hasCommandResult() NOEXCEPT
     // result to the console now so the user can see that the test has
     // failed.  (Otherwise it looks like the test fails when the dialog
     // is closed, which is misleading.)
-    std::cout << "test FAILED: " << *m_testFailureMessage << std::endl;
+    if (m_printFailureToStdout) {
+      std::cout << "test FAILED: " << *m_testFailureMessage << std::endl;
+    }
   }
   else if (m_nextTestCommandIndex < m_testCommands.size()) {
     // Test is continuing.

@@ -1947,6 +1947,7 @@ static int innerMain(int argc, char **argv)
         SilentMessageBoxFilter silentFilter(&app);
 
         UIShellScriptRunner runner(app.m_uiShellCommands, selfCheck);
+        runner.m_printFailureToStdout = true;
         std::optional<std::string> error = runner.runTest();
         if (!error.has_value()) {
           cout << "test passed" << endl;
@@ -1960,7 +1961,7 @@ static int innerMain(int argc, char **argv)
         }
         else {
           // In the failure case, UIShellScriptRunner prints the
-          // failure.
+          // failure due to setting its `m_printFailureToStdout`.
           ret = 2;
         }
 

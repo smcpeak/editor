@@ -32,6 +32,11 @@
 class UIShellScriptRunner : public QObject {
   Q_OBJECT
 
+public:      // data
+  // If true, print a failure to stdout as soon as it happens.
+  // Initially false.
+  bool m_printFailureToStdout;
+
 private:     // instance data
   // Sequence of UI shell commands to execute.
   std::vector<gdv::GDValue> const &m_testCommands;
