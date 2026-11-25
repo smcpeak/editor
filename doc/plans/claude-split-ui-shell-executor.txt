@@ -4,9 +4,9 @@ Plan to split UIShellExecutor into GUI-less and GUI parts
 
 Written by Claude Code.
 
-Revised 2026-11-25 to move the query, image, Sleep, and file commands
-into the GUI-less command handler, and to split UIShellImageQueryable
-off from UIShellQueryable.
+Revised 2026-11-25 to move the query, Sleep, and file commands into
+the GUI-less command handler, and to split UIShellGUIQueryable off
+from UIShellQueryable.  CheckImage stays in the GUI command handler.
 
 
 Motivation
@@ -24,8 +24,8 @@ things:
 
   * Interpreting the commands: KeyPress, ClickButton, CheckLabel, and
     so on.  Most of them manipulate or inspect widgets, and so need
-    QtWidgets.  But some do not: Sleep, the query commands, CheckImage,
-    and the file commands.
+    QtWidgets.  But some do not: Sleep, the query commands, and the
+    file commands.
 
 The goal is to test as much of this as possible in unit-tests.exe,
 with a `QCoreApplication` and no windows:
@@ -44,15 +44,15 @@ New structure
   ui-shell-queryable.{h,cc}         UIShellQueryable
     As now, minus `uiShellImage`.  No Qt dependencies.
 
-  ui-shell-image-queryable.{h,cc}   UIShellImageQueryable
-    New.  Inherits UIShellQueryable and adds `uiShellImage`.  Depends
-    on QtGui for `QImage`.
+  ui-shell-gui-queryable.{h,cc}     UIShellGUIQueryable
+    New.  Inherits UIShellQueryable and adds the query methods that
+    involve GUI concepts, currently just `uiShellImage`.  Depends on
+    QtGui for `QImage`.
 
   ui-shell-command-handler.{h,cc}   UIShellCommandHandler
-    Executes the commands that do not need widgets, and declares the
-    hooks the executor and the GUI handler use.  Depends on QtCore,
-    plus `QImage` from QtGui for CheckImage (see "Qt dependencies"
-    below).
+    Executes the commands that do not need the GUI, and declares the
+    hooks the executor and the GUI handler use.  Depends only on
+    QtCore.
 
   ui-shell-executor.{h,cc}          UIShellExecutor
     The sequencer.  Keeps its current name and client-facing API, so
@@ -69,49 +69,46 @@ New structure
 
 Dependencies (arrows point at what is used):
 
-  UIShellScriptRunner --> UIShellExecutor --> UIShellCommandHandler
-          |                                     ^         |
-          |                                     |         v
-          +------------> UIShellGUICommandHandler   UIShellImageQueryable
-                                                          |
-                                                          v
-                                                    UIShellQueryable
+  UIShellScriptRunner ---> UIShellExecutor
+        |                        |
+        |                        v
+        |              UIShellCommandHandler --> UIShellQueryable
+        |                        ^                     ^
+        |                        | (inherits)          | (inherits)
+        +----------> UIShellGUICommandHandler --> UIShellGUIQueryable
+
+There is no edge from UIShellCommandHandler to UIShellGUIQueryable:
+the GUI-less handler knows only about UIShellQueryable.
 
 
 Qt dependencies
 ---------------
-
-CheckImage needs `QImage`, which is in QtGui.  `QImage` (unlike
-`QPixmap`) does not need a `QGuiApplication` or a windowing system,
-and PNG support is built into QtGui, so loading, saving, and
-comparing images works in unit-tests.exe under its
-`QCoreApplication`.  So the command handler is GUI-less in the sense
-that matters (no windows, no widgets), but does link QtGui.  The
-executor itself stays QtCore only.
 
 unit-tests.exe already links with `GUI_LDFLAGS`, so none of this
 needs Makefile link changes, and a successful link does not prove
 which libraries a module uses.  The #include lists are the check:
 
   * ui-shell-queryable: no Qt headers.
-  * ui-shell-image-queryable: `<QImage>` only.
-  * ui-shell-command-handler: QtCore headers plus `<QImage>`.
+  * ui-shell-command-handler: QtCore headers only.
   * ui-shell-executor: QtCore headers only.
+  * ui-shell-gui-queryable: `<QImage>` (QtGui).
+  * ui-shell-gui-command-handler: QtGui and QtWidgets.
 
 
-UIShellQueryable and UIShellImageQueryable
-------------------------------------------
+UIShellQueryable and UIShellGUIQueryable
+----------------------------------------
 
 UIShellQueryable keeps `uiShellQuery`, `tryUIShellQuery`, and
 `wantResizeEventsRecorded`.  `uiShellImage` and the forward
 declaration of `QImage` move out, so ui-shell-queryable.{h,cc} include
 no Qt headers.
 
-  // ui-shell-image-queryable.h
+  // ui-shell-gui-queryable.h
 
-  // A `UIShellQueryable` that can also supply images, for the
-  // CheckImage command.
-  class UIShellImageQueryable : public UIShellQueryable {
+  // A `UIShellQueryable` with additional queries that involve GUI
+  // concepts, such as images.  These are used by
+  // `UIShellGUICommandHandler`.
+  class UIShellGUIQueryable : public UIShellQueryable {
   public:      // funcs
     // Return an app-specific image, identified by `what`.
     //
@@ -125,11 +122,17 @@ compares a null image against the expected one, and reports a
 mismatch; now it reports "unknown image" instead.
 
 EditorWidget, the only class that overrides `uiShellImage`, inherits
-`UIShellImageQueryable` instead of `UIShellQueryable`, and its
-fallback call becomes `UIShellImageQueryable::uiShellImage(what)`.
+`UIShellGUIQueryable` instead of `UIShellQueryable`, and its
+fallback call becomes `UIShellGUIQueryable::uiShellImage(what)`.
 The dialogs that inherit `UIShellQueryable` do not change.
 `event-recorder.cc` only uses `wantResizeEventsRecorded`, so it does
 not change either.
+
+`wantResizeEventsRecorded` arguably concerns a GUI concept too, and
+could move to UIShellGUIQueryable for consistency with the name.  It
+involves no Qt types, and FilenameInputDialog (which overrides it)
+would then have to switch base classes as well, so this plan leaves
+it in UIShellQueryable.
 
 
 UIShellCommandHandler
@@ -203,9 +206,6 @@ today's `executeCommand` except as noted:
   * WaitUntilCheckQuery
   * CheckQuery
   * CheckQueryMatches
-  * CheckImage: it finds the object with `getQueryableFromPath`, then
-    `dynamic_cast`s it to `UIShellImageQueryable`, throwing if that
-    fails ("object at $path does not provide images").
   * TouchFile, RemoveFileIfExists, RecursivelyRemoveFilePath,
     CheckPathExists, CheckFileContents, and WriteFileContents.
 
@@ -350,6 +350,11 @@ commands that moved to the base class.  It ends by calling
 `UIShellCommandHandler::executeDerivedCommand`, which throws
 "unrecognized function".
 
+That includes CheckImage, whose body is unchanged except that it
+finds the object with a private helper that `dynamic_cast`s the
+result of `getQueryableFromPath` to `UIShellGUIQueryable`, throwing
+if that fails ("object at $path is not a UIShellGUIQueryable").
+
 Moved here from `UIShellExecutor`, all private:
 
   * The widget command helpers: `resizeChildWidget`, `getFocusWidget`,
@@ -395,13 +400,13 @@ through, and the ui-shell objects are currently added after that
 point, so none are in unit-tests.exe.  Therefore:
 
   * Move these up into the part of `EDITOR_OBJS` before the snapshot:
-    ui-shell-result.o, ui-shell-queryable.o,
-    ui-shell-image-queryable.o, ui-shell-command-util.o,
+    ui-shell-result.o, ui-shell-queryable.o, ui-shell-command-util.o,
     ui-shell-command-handler.o, ui-shell-executor.o, and
     ui-shell-executor.moc.o.  (Their other dependencies, such as
     file-mod-time.o and waiting-counter.o, are already there.)
-  * ui-shell-gui-command-handler.o and its .moc.o go where the
-    ui-shell objects are now, next to the script runner.
+  * ui-shell-gui-queryable.o, ui-shell-gui-command-handler.o, and
+    the latter's .moc.o go where the ui-shell objects are now, next
+    to the script runner.
   * Add ui-shell-command-handler-test.o and ui-shell-executor-test.o
     to `UNIT_TESTS_OBJS`, plus a .moc.o for either one only if it
     defines a `Q_OBJECT` class.  (Connecting signals to lambdas
@@ -419,13 +424,10 @@ exercises each command without the quiescence machinery.
 
 Test fixtures:
 
-  * `FakeQueryable : UIShellImageQueryable`, holding a map from state
-    names to GDValues and a map from image names to `QImage`s.  Its
-    `uiShellQuery` and `uiShellImage` look them up and otherwise
-    defer to the base class (which throws).  A state can also be set
-    to throw, to test query errors.
-  * `FakeTextQueryable : UIShellQueryable`, the same but without
-    images, to test CheckImage's "does not provide images" error.
+  * `FakeQueryable : UIShellQueryable`, holding a map from state
+    names to GDValues.  Its `uiShellQuery` looks them up and
+    otherwise defers to the base class (which throws).  A state can
+    also be set to throw, to test query errors.
   * `TestCommandHandler : UIShellCommandHandler`, with a map from path
     names to queryables.  `getQueryableFromPath` throws for unknown
     names.
@@ -445,11 +447,6 @@ Cases, each checking both success and the expected failure message
   * CheckQueryMatches: match; mismatch; actual value not a string.
   * WaitUntilCheckQuery: already true; becomes true after a
     `QTimer::singleShot` changes the fake's value; times out.
-  * CheckImage: build a small `QImage` in memory, save it as a PNG in
-    the scratch directory, then check equal; different; expected file
-    missing; unknown image name; receiver without images.  The
-    mismatch case writes failing-actual-image.png in the current
-    directory, as today; the test deletes it afterward.
   * WriteFileContents then CheckFileContents: match; mismatch.
   * CheckPathExists: true and false cases.
   * RemoveFileIfExists: file present; file absent.
@@ -458,6 +455,9 @@ Cases, each checking both success and the expected failure message
   * TouchFile: creates a missing file; changes the modification time
     of an existing one.  (This may take a second, because of the
     retry in TouchFile.)
+
+CheckImage, like the other GUI commands, remains covered only by the
+.uis tests.
 
 
 Unit test: ui-shell-executor-test.cc
@@ -526,7 +526,7 @@ Most of the code by volume (roughly 900 of the 1540 lines of
 ui-shell-executor.cc) goes to the GUI handler, so, as with the
 earlier renames, do the rename as its own commit:
 
-  1. Split `UIShellImageQueryable` off from `UIShellQueryable`, and
+  1. Split `UIShellGUIQueryable` off from `UIShellQueryable`, and
      switch EditorWidget to it.  Compiles; `make check` passes.
   2. `git mv ui-shell-executor.h ui-shell-gui-command-handler.h` and
      likewise for the .cc.  Files only; does not compile.
