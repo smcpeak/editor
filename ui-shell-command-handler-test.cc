@@ -14,8 +14,10 @@
 // smbase
 #include "smbase/exc.h"                          // smbase::XBase, xmessagesb
 #include "smbase/gdvalue.h"                      // gdv::fromGDVN
+#include "smbase/map-util.h"                     // smbase::mapFindValuePtrOptC
 #include "smbase/nonport.h"                      // getMilliseconds
 #include "smbase/run-process.h"                  // RunProcess
+#include "smbase/set-util.h"                     // smbase::setContains
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-test.h"                      // EXPECT_EQ, EXPECT_EXN_REGEX
@@ -51,13 +53,12 @@ FakeQueryable::~FakeQueryable()
 
 GDValue FakeQueryable::uiShellQuery(std::string const &state)
 {
-  if (m_throwingStates.count(state)) {
+  if (setContains(m_throwingStates, state)) {
     xmessagesb("query of " << doubleQuote(state) << " failed");
   }
 
-  auto it = m_values.find(state);
-  if (it != m_values.end()) {
-    return it->second;
+  if (GDValue const *value = mapFindValuePtrOptC(m_values, state)) {
+    return *value;
   }
 
   return UIShellQueryable::uiShellQuery(state);
@@ -74,6 +75,7 @@ void FakeQueryable::slot_applyDelayedSet() NOEXCEPT
 }
 
 
+// ------------------------ TestCommandHandler -------------------------
 OPEN_ANONYMOUS_NAMESPACE
 
 
@@ -97,11 +99,14 @@ public:      // funcs
   virtual UIShellQueryable *getQueryableFromPath(
     std::string const &path) OVERRIDE
   {
-    auto it = m_queryables.find(path);
-    if (it == m_queryables.end()) {
-      xmessagesb("unknown path: " << doubleQuote(path));
+    if (UIShellQueryable * const * q =
+          mapFindValuePtrOptC(m_queryables, path)) {
+      return *q;
     }
-    return it->second;
+    else {
+      xmessagesb("unknown path: " << doubleQuote(path));
+      return nullptr;   // Not reached.
+    }
   }
 
   // Parse `commandGDVN` and execute it.
@@ -115,6 +120,10 @@ public:      // funcs
 // Remove `path` and everything under it, if it exists.
 void removeTree(std::string const &path)
 {
+  // Currently this is only ever called with one argument, and I'm a bit
+  // paranoid about a runaway "rm -r".
+  xassert(path == scratchDir);
+
   if (SMFileUtil().pathExists(path)) {
     RunProcess::check_run(std::vector<std::string>{"rm", "-r", path});
   }
@@ -128,6 +137,7 @@ std::string scratch(std::string const &name)
 }
 
 
+// ------------------------------- tests -------------------------------
 void test_unrecognized()
 {
   TestCommandHandler handler;
@@ -149,7 +159,8 @@ void test_unrecognized()
     "2 passed but 1 required");
 
   // Not a tuple.
-  EXPECT_EXN(handler.exec("3"), XBase);
+  EXPECT_EXN_REGEX(handler.exec("3"), XBase,
+    "Expected tuple, not small integer");
 }
 
 
@@ -257,6 +268,8 @@ void test_waitUntilCheckQuery()
   // the slot keeps waiting until the next event, which here is the end
   // of the wait period.  The final check then succeeds.  So, this uses
   // a short period and does not check the elapsed time.
+  //
+  // TODO: I think this can be fixed.
   {
     fake.m_delayedState = "v";
     fake.m_delayedValue = 2;
