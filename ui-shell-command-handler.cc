@@ -268,11 +268,18 @@ void UIShellCommandHandler::waitUntilCheckGDValueFunction(
   while (true) {
     checkCount++;
     GDValue actual = gdvFunc();
+
+    long elapsedMS = getMilliseconds() - startMS;
+    long remainingMS = durationMS - elapsedMS;
+    TRACE2("gdvFunc returned: ct=" << checkCount <<
+           " elapsedMS=" << elapsedMS <<
+           " actual=" << actual.asString() <<
+           " expect=" << expect.asString());
+
     if (actual == expect) {
       break;
     }
-    long elapsedMS = getMilliseconds() - startMS;
-    long remainingMS = durationMS - elapsedMS;
+
     if (remainingMS <= 0) {
       xmessagesb("WaitUntilCheckQuery: Slept for " << elapsedMS <<
                  " ms but value is " << actual << ", not " <<
@@ -282,9 +289,28 @@ void UIShellCommandHandler::waitUntilCheckGDValueFunction(
     // Wait for something to happen.  This does not busy-wait.
     IncDecWaitingCounter idwc;
     QCoreApplication::processEvents(QEventLoop::WaitForMoreEvents);
+    TRACE2("processEvents returned: elapsedMS=" <<
+           (getMilliseconds() - startMS));
 
     // I tried using the 'processEvents' that accepts a timeout, but
     // that one appears to ignore the 'WaitForMoreEvents' flag.
+
+    /*
+      The documentation for `QCoreApplication::processEvents` explains:
+
+        Available events are events queued before the function call.
+        This means that events that are posted while the function runs
+        will be queued until a later round of event processing.
+
+      Thus, we need to explicitly trigger the posted Qt events to be
+      processed.  That includes Qt timer events that were posted because
+      an OS timer expired.  The need for this call is exposed by
+      `test_waitUntilCheckQuery` in `ui-shell-command-handler-test.cc`,
+      which otherwise hits the timeout.
+    */
+    QCoreApplication::sendPostedEvents();
+    TRACE2("sendPostedEvents returned: elapsedMS=" <<
+           (getMilliseconds() - startMS));
   }
 
   long elapsedMS = getMilliseconds() - startMS;

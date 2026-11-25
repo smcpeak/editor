@@ -21,6 +21,7 @@
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE
 #include "smbase/sm-test.h"                      // EXPECT_EQ, EXPECT_EXN_REGEX
+#include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
 #include "smbase/string-util.h"                  // doubleQuote
 #include "smbase/stringb.h"                      // stringb
 
@@ -34,6 +35,9 @@
 
 using namespace gdv;
 using namespace smbase;
+
+
+INIT_TRACE("ui-shell-command-handler-test");
 
 
 // --------------------------- FakeQueryable ---------------------------
@@ -69,6 +73,7 @@ void FakeQueryable::slot_applyDelayedSet() NOEXCEPT
 {
   GENERIC_CATCH_BEGIN
 
+  TRACE1("in slot_applyDelayedSet");
   m_values[m_delayedState] = m_delayedValue;
 
   GENERIC_CATCH_END
@@ -262,14 +267,6 @@ void test_waitUntilCheckQuery()
     "WaitUntilCheckQuery(1000 \"fake\" \"v\" 1)"), GDValue());
 
   // Becomes true after a timer fires.
-  //
-  // Ideally the wait would end right after the slot runs, but on
-  // Windows with `QCoreApplication`, the `processEvents` call that runs
-  // the slot keeps waiting until the next event, which here is the end
-  // of the wait period.  The final check then succeeds.  So, this uses
-  // a short period and does not check the elapsed time.
-  //
-  // TODO: I think this can be fixed.
   {
     fake.m_delayedState = "v";
     fake.m_delayedValue = 2;
@@ -279,7 +276,13 @@ void test_waitUntilCheckQuery()
     long startMS = getMilliseconds();
     EXPECT_EQ(handler.exec(
       "WaitUntilCheckQuery(500 \"fake\" \"v\" 2)"), GDValue());
-    VPVAL(getMilliseconds() - startMS);
+
+    long elapsedMS = getMilliseconds() - startMS;
+    VPVAL(elapsedMS);
+
+    // This should be plenty of time for the timer to fire and "WaitFor"
+    // to notice that without the 500ms timeout being hit.
+    xassert(elapsedMS < 250);
   }
 
   // Times out.
