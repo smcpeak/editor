@@ -145,6 +145,7 @@ static void entry(int argc, char **argv)
   RUN_TEST(rfa_async_multi_client);    // deps: host-name, rfa-msg, rfa-async-single-client
 
   RUN_TEST(ui_shell_command_handler);  // deps: file-mod-time, ui-shell-command-util, ui-shell-queryable, waiting-counter
+  RUN_TEST(ui_shell_executor);         // deps: ui-shell-command-handler, ui-shell-result, waiting-counter
 
   // This depends on `lsp_client`, but only in a fairly simple way, and
   // this test should be much faster.
