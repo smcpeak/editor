@@ -11,7 +11,7 @@ If your constructor calls QObject::connect, connecting other objects'
 signals to your slots, your destructor should *explicitly* call
 QObject::disconnect, for example:
 
-  QObject::disconnect(otherObject, NULL, this, NULL);
+  QObject::disconnect(otherObject, nullptr, this, nullptr);
 
 for each 'otherObject' that you connected in the constructor.
 
@@ -37,8 +37,8 @@ That fires CommandRunner::on_errorOccured, which calls 'setFailed',
 which sets 'm_errorMessage'.  But that object has already been
 destroyed, and its 'd' data member could therefore be pointing at
 deallocated storage, causing memory corruption when it tries to store
-the new string.  Alternatively, 'd' could be NULL (e.g., if nothing had
-previously been stored), so a new object will be allocated and then
+the new string.  Alternatively, 'd' could be nullptr (e.g., if nothing
+had previously been stored), so a new object will be allocated and then
 leaked (since the dtor already ran).
 
 Only after all of those fireworks does the embedded QObject destructor,
