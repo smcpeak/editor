@@ -1,0 +1,213 @@
+claude-ui-shell-script-runner-test.txt
+Plan for an automated unit test of `ui-shell-script-runner`
+
+
+Goal
+====
+
+Add ui-shell-script-runner-test.cc, which tests UIShellScriptRunner as
+part of unit-tests.exe: running a command list to completion, stopping
+at the first failure, the self-check calls, and continuing to run
+commands while a nested event loop (as for a modal dialog) is active.
+
+Reading .uis files (the `args`/`cmds` map, flattening, substitutions)
+happens in editor-global.cc, not in the runner, so it is not covered
+here.
+
+
+The obstacle: the runner owns a GUI handler
+===========================================
+
+UIShellScriptRunner has a `UIShellGUICommandHandler m_commandHandler`
+member.  That pulls in QtWidgets, and the object files come after the
+`UNIT_TESTS_OBJS := $(EDITOR_OBJS)` snapshot in the Makefile, so the
+runner is not linked into unit-tests.exe.  Even if it were, a test
+could not substitute its own commands.
+
+Change: the runner takes the handler by reference, as the executor
+already does, and the caller owns it.
+
+  // ui-shell-script-runner.h
+  #include "ui-shell-command-handler-fwd.h"   // UIShellCommandHandler [f]
+  (drop ui-shell-gui-command-handler.h)
+
+  class UIShellScriptRunner : public QObject {
+    ...
+    // (m_commandHandler removed)
+    UIShellExecutor m_executor;
+
+  public:
+    // `handler` interprets the commands, and must outlive this
+    // object.  `testCommands` must also outlive it.
+    UIShellScriptRunner(
+      UIShellCommandHandler &handler,
+      std::vector<gdv::GDValue> const &testCommands,
+      std::function<void ()> globalSelfCheck);
+
+The runner then only needs QtCore.  It does not store the handler
+itself; it just passes it to `m_executor`.
+
+editor-global.cc, at the one call site:
+
+  UIShellGUICommandHandler commandHandler;
+  UIShellScriptRunner runner(
+    commandHandler, app.m_uiShellCommands, selfCheck);
+
+(declared in that order, so the handler is destroyed after the runner).
+
+Makefile: move ui-shell-script-runner.moc.o and ui-shell-script-runner.o
+up into the part of `EDITOR_OBJS` before the snapshot, next to the
+other ui-shell objects.
+
+doc/ui-shell.txt: in the Classes diagram, the edge from
+UIShellScriptRunner to UIShellGUICommandHandler goes away, and the
+description says the runner is given a handler rather than owning a
+UIShellGUICommandHandler.  (The future UIShellServer in
+doc/plans/claude-gui-control-shell.txt should get its handler the same
+way; adjust the paragraph added there in the executor split.)
+
+
+Shared test handler
+===================
+
+ui-shell-executor-test.cc has `SequencingTestHandler`, in its
+anonymous namespace, which logs calls and adds the Return, Throw,
+Steps and StepThrows commands.  The runner test needs the same thing,
+so move it into a test-only module:
+
+  ui-shell-test-handler.h, ui-shell-test-handler.cc
+
+    // UIShellCommandHandler for tests.  Records calls in a log and
+    // adds commands for testing the executor and script runner.
+    class SequencingTestHandler : public UIShellCommandHandler { ... };
+
+It is unchanged, except for one added command:
+
+  Mark("a")       log "mark a" and return null
+
+so that a test can tell which of several commands ran without logging
+their arguments.
+
+ui-shell-test-handler.o goes in `UNIT_TESTS_OBJS` (after the snapshot,
+since only tests use it).  ui-shell-executor-test.cc includes the new
+header and otherwise stays the same.
+
+
+The test
+========
+
+Files:
+
+  ui-shell-script-runner-test.h    (Q_OBJECT helper classes, for moc)
+  ui-shell-script-runner-test.cc
+
+Fixture, in the style of the executor test:
+
+  * `std::vector<std::string> m_log`, shared with the handler.
+  * `RunnerTestHandler : SequencingTestHandler`, which adds the
+    nested-loop commands below through `executeDerivedCommand`, and
+    passes anything else to the base class.
+  * `int m_selfCheckCount` and `bool m_selfCheckThrows`, for the
+    global self-check, which logs "selfCheck" so its timing relative
+    to the commands is visible.
+  * A helper `std::optional<std::string> run(std::string gdvn)` that
+    parses a GDVN sequence of commands into a
+    `std::vector<GDValue>`, builds a runner over it, and returns
+    `runTest()`.  The vector and handler are fixture members, so they
+    outlive the runner.
+
+Hang protection.  `runTest` runs its own event loop with no way for
+the caller to stop it, so a bug would hang unit-tests.exe.  Before
+calling `runTest`, the helper starts a single-shot `QTimer` (a few
+seconds) connected to a slot `slot_timeout` on a helper QObject that
+calls `xfatal("runTest timed out")`.  Aborting is crude, but nothing
+else could run correctly after a stuck runner anyway.
+
+Nested loop support, in ui-shell-script-runner-test.h:
+
+  // Runs a nested event loop, as a modal dialog would.
+  class NestedLoopHelper : public QObject {
+    Q_OBJECT
+  public:
+    std::vector<std::string> &m_log;
+    QEventLoop m_nestedLoop;
+
+  public Q_SLOTS:
+    // Log "nested start", exec `m_nestedLoop`, log "nested end".
+    void slot_runNestedLoop() NOEXCEPT;
+
+    // xfatal (hang protection).
+    void slot_timeout() NOEXCEPT;
+  };
+
+  RunnerTestHandler commands:
+
+    StartNestedLoop()  Queue a call to `slot_runNestedLoop`, using
+                       `QMetaObject::invokeMethod(...,
+                       Qt::QueuedConnection)`.  Like ClickButton, it
+                       posts rather than running the loop directly,
+                       because a loop started inside `executeCommand`
+                       would block the executor.
+    ExitNestedLoop()   `m_nestedLoop.quit()`.
+
+Cases (each also checks `m_log`):
+
+  1. Success: [Mark("a") Mark("b") Mark("c")] returns no failure.  Log:
+     "selfCheck | mark a | selfCheck | mark b | selfCheck | mark c |
+     selfCheck", i.e., one self-check at the start from `runTest`, then
+     one after each command from the executor.
+  2. Empty list: [] returns no failure.  The runner substitutes
+     Sleep(0), which the base handler executes without logging, so the
+     log is "selfCheck | selfCheck".
+  3. Failure stops the script: [Mark("a") Throw("x") Mark("c")]
+     returns a message matching "funcName=Throw: x$", and "mark c" is
+     not in the log.
+  4. Failing pending step: [StepThrows(3 2) Mark("c")] fails with
+     "step 2 failed", the log shows steps 1 and 2 then "discard", and
+     "mark c" is absent.
+  5. Pending steps finish before the next command: [Steps(2)
+     Mark("c")] logs "step 1 | ... | step 2 | ... | mark c".
+  6. Self-check failing after a command: set `m_selfCheckThrows` after
+     the initial check (e.g., the self-check throws only once
+     `m_selfCheckCount` > 1), and [Mark("a") Mark("b")] fails with the
+     self-check's message, without running "mark b".
+  7. Self-check failing at the start: `runTest` calls it directly,
+     outside the executor, so the exception propagates out of
+     `runTest`.  Check that with `EXPECT_EXN_REGEX`, and that no
+     command ran.  (This documents the current behavior; if it should
+     instead become a failure message, change the runner and this
+     case together.)
+  8. Nested loop: [Mark("a") StartNestedLoop() Mark("b")
+     ExitNestedLoop() Mark("c")] returns no failure.  Log, without the
+     self-checks: "mark a | command StartNestedLoop | nested start |
+     mark b | command ExitNestedLoop | nested end | mark c".  This
+     shows commands keep running while the nested loop is the
+     innermost loop, which is the reason the runner has its own loop
+     instead of executing commands in a plain `for`.
+  9. Two runners in a row in the same fixture both work (the
+     executor's registered event type, and the dispatcher connection,
+     are reused correctly).
+
+Cases 3, 4 and 6 make the runner print "test FAILED: ..." to stdout.
+That ends up in out/unit-tests.out, which is acceptable, but the test
+should print a line first saying the failures are expected.
+
+Registration: `test_ui_shell_script_runner` in unit-tests.h,
+`RUN_TEST(ui_shell_script_runner)` after `ui_shell_executor` in
+unit-tests.cc, and ui-shell-script-runner-test.moc.o and
+ui-shell-script-runner-test.o in `UNIT_TESTS_OBJS`.
+
+
+Implementation steps
+====================
+
+  1. Make the runner take a `UIShellCommandHandler &`, update
+     editor-global.cc, move the runner's objects before the snapshot
+     in the Makefile, and update doc/ui-shell.txt.  `make check`
+     passes.
+  2. Move `SequencingTestHandler` into ui-shell-test-handler.{h,cc}
+     and add Mark.  The executor test passes unchanged.
+  3. Add ui-shell-script-runner-test.{h,cc} and register it.
+
+
+EOF
