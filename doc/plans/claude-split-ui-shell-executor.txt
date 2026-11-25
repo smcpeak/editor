@@ -1,8 +1,12 @@
 claude-split-ui-shell-executor.txt
-Plan to split UIShellExecutor into Qt-core and Qt-GUI parts
+Plan to split UIShellExecutor into GUI-less and GUI parts
 2026-11-25
 
 Written by Claude Code.
+
+Revised 2026-11-25 to move the query, image, Sleep, and file commands
+into the GUI-less command handler, and to split UIShellImageQueryable
+off from UIShellQueryable.
 
 
 Motivation
@@ -19,93 +23,242 @@ things:
     `QAbstractEventDispatcher`.
 
   * Interpreting the commands: KeyPress, ClickButton, CheckLabel, and
-    so on, nearly all of which manipulate or inspect widgets.  This
-    needs QtGui and QtWidgets.
+    so on.  Most of them manipulate or inspect widgets, and so need
+    QtWidgets.  But some do not: Sleep, the query commands, CheckImage,
+    and the file commands.
 
-Splitting them allows the sequencing logic, which is the subtle part
-(quiescence, busy state, follow-up steps, errors, chaining from the
-signal handler), to be tested in unit-tests.exe with a fake command
-interpreter and a `QCoreApplication`, with no windows.
+The goal is to test as much of this as possible in unit-tests.exe,
+with a `QCoreApplication` and no windows:
+
+  * the sequencing logic, which is the subtle part (quiescence, busy
+    state, follow-up steps, errors, chaining from the signal
+    handler), and
+
+  * every command that does not need widgets, invoked directly rather
+    than through the executor.
 
 
 New structure
 -------------
 
-Three pieces:
+  ui-shell-queryable.{h,cc}         UIShellQueryable
+    As now, minus `uiShellImage`.  No Qt dependencies.
+
+  ui-shell-image-queryable.{h,cc}   UIShellImageQueryable
+    New.  Inherits UIShellQueryable and adds `uiShellImage`.  Depends
+    on QtGui for `QImage`.
 
   ui-shell-command-handler.{h,cc}   UIShellCommandHandler
-    Abstract interface: execute one command, and perform any
-    follow-up steps.  No Qt dependencies at all.
+    Executes the commands that do not need widgets, and declares the
+    hooks the executor and the GUI handler use.  Depends on QtCore,
+    plus `QImage` from QtGui for CheckImage (see "Qt dependencies"
+    below).
 
   ui-shell-executor.{h,cc}          UIShellExecutor
     The sequencer.  Keeps its current name and client-facing API, so
     UIShellScriptRunner (and later UIShellServer) use it as now.
-    Depends only on Qt core.
+    Depends only on QtCore.
 
   ui-shell-gui-command-handler.{h,cc}  UIShellGUICommandHandler
-    Implements `UIShellCommandHandler` for the real app: everything
-    in today's `executeCommand`.  Depends on QtGui and QtWidgets.
+    Inherits UIShellCommandHandler and executes the widget commands.
+    Depends on QtGui and QtWidgets.
 
-Dependencies:
+  ui-shell-command-util.{h,cc}      (no class)
+    The argument-binding and checking macros and helpers shared by
+    the two handler .cc files.  Not included by any header.
 
-  UIShellScriptRunner ---> UIShellExecutor ---> UIShellCommandHandler
-          |                                              ^
-          +-----------> UIShellGUICommandHandler --------+
+Dependencies (arrows point at what is used):
 
-The executor knows nothing about widgets; the GUI handler knows
-nothing about quiescence.
+  UIShellScriptRunner --> UIShellExecutor --> UIShellCommandHandler
+          |                                     ^         |
+          |                                     |         v
+          +------------> UIShellGUICommandHandler   UIShellImageQueryable
+                                                          |
+                                                          v
+                                                    UIShellQueryable
+
+
+Qt dependencies
+---------------
+
+CheckImage needs `QImage`, which is in QtGui.  `QImage` (unlike
+`QPixmap`) does not need a `QGuiApplication` or a windowing system,
+and PNG support is built into QtGui, so loading, saving, and
+comparing images works in unit-tests.exe under its
+`QCoreApplication`.  So the command handler is GUI-less in the sense
+that matters (no windows, no widgets), but does link QtGui.  The
+executor itself stays QtCore only.
+
+unit-tests.exe already links with `GUI_LDFLAGS`, so none of this
+needs Makefile link changes, and a successful link does not prove
+which libraries a module uses.  The #include lists are the check:
+
+  * ui-shell-queryable: no Qt headers.
+  * ui-shell-image-queryable: `<QImage>` only.
+  * ui-shell-command-handler: QtCore headers plus `<QImage>`.
+  * ui-shell-executor: QtCore headers only.
+
+
+UIShellQueryable and UIShellImageQueryable
+------------------------------------------
+
+UIShellQueryable keeps `uiShellQuery`, `tryUIShellQuery`, and
+`wantResizeEventsRecorded`.  `uiShellImage` and the forward
+declaration of `QImage` move out, so ui-shell-queryable.{h,cc} include
+no Qt headers.
+
+  // ui-shell-image-queryable.h
+
+  // A `UIShellQueryable` that can also supply images, for the
+  // CheckImage command.
+  class UIShellImageQueryable : public UIShellQueryable {
+  public:      // funcs
+    // Return an app-specific image, identified by `what`.
+    //
+    // The default throws `XMessage("unknown image: $what")`.
+    virtual QImage uiShellImage(std::string const &what);
+  };
+
+The default changes from returning a null `QImage` to throwing,
+paralleling `uiShellQuery`.  Today, CheckImage with an unknown `what`
+compares a null image against the expected one, and reports a
+mismatch; now it reports "unknown image" instead.
+
+EditorWidget, the only class that overrides `uiShellImage`, inherits
+`UIShellImageQueryable` instead of `UIShellQueryable`, and its
+fallback call becomes `UIShellImageQueryable::uiShellImage(what)`.
+The dialogs that inherit `UIShellQueryable` do not change.
+`event-recorder.cc` only uses `wantResizeEventsRecorded`, so it does
+not change either.
 
 
 UIShellCommandHandler
 ---------------------
 
-  // Interprets UI shell commands for `UIShellExecutor`.
+Now a concrete base class rather than a pure interface, but still
+abstract, because of the object lookup.
+
+  // Executes UI shell commands for `UIShellExecutor`.
+  //
+  // This class implements the commands that do not need widgets.  A
+  // derived class supplies object lookup, and may add commands.
   //
   // A command is executed in one or more steps.  `UIShellExecutor`
   // calls `executeCommand` at one quiescence point, then, while
-  // `hasPendingStep()`, calls `executePendingStep` once per subsequent
-  // quiescence point.  Any of these may throw to indicate failure, in
-  // which case the executor calls `discardPendingSteps`.
+  // `hasPendingStep()`, calls `executePendingStep` once per
+  // subsequent quiescence point.  Any of these may throw to indicate
+  // failure, in which case the executor calls `discardPendingSteps`.
   class UIShellCommandHandler {
+    NO_OBJECT_COPIES(UIShellCommandHandler);
+
+  protected:   // funcs
+    // Execute a command that this class does not recognize.
+    // `funcName` is its tag, and `parser` is positioned at it.
+    // Return its result, which is null for an action.
+    //
+    // The default throws "unrecognized function: $funcName".
+    virtual gdv::GDValue executeDerivedCommand(
+      std::string const &funcName,
+      gdv::GDValueParser const &parser);
+
   public:      // funcs
+    UIShellCommandHandler();
     virtual ~UIShellCommandHandler();
 
     // Execute the first (often only) step of `command`, a UI Shell
     // Language tagged tuple.  Return its result, which is null for an
     // action.  Throw to indicate an error.
-    virtual gdv::GDValue executeCommand(gdv::GDValue const &command) = 0;
+    //
+    // This handles the commands listed below, and passes any other
+    // to `executeDerivedCommand`.
+    gdv::GDValue executeCommand(gdv::GDValue const &command);
+
+    // Find the queryable object at `path`, or throw if there is none.
+    virtual UIShellQueryable *getQueryableFromPath(
+      std::string const &path) = 0;
 
     // True if the most recent command has steps that remain to be
-    // performed.
-    virtual bool hasPendingStep() const = 0;
+    // performed.  The default returns false.
+    virtual bool hasPendingStep() const;
 
     // Perform the next remaining step.  Throw to indicate an error.
     //
     // Requires: hasPendingStep()
-    virtual void executePendingStep() = 0;
+    //
+    // The default fails an assertion, since by default there are no
+    // pending steps.
+    virtual void executePendingStep();
 
-    // Discard any remaining steps, after an error.
+    // Discard any remaining steps, after an error.  The default does
+    // nothing.
     //
     // Ensures: !hasPendingStep()
-    virtual void discardPendingSteps() = 0;
+    virtual void discardPendingSteps();
   };
 
-The .cc file exists only to hold the out-of-line destructor (which
-anchors the vtable).  It could instead be header-only with an inline
-`= default` destructor.
+Commands implemented here, with their bodies moved unchanged from
+today's `executeCommand` except as noted:
 
-Today the only multi-step command is FocusKeySequence, whose queued
-characters become the pending steps.  The interface does not mention
-keys, so the executor no longer knows about them.
+  * Sleep
+  * WaitUntilCheckQuery
+  * CheckQuery
+  * CheckQueryMatches
+  * CheckImage: it finds the object with `getQueryableFromPath`, then
+    `dynamic_cast`s it to `UIShellImageQueryable`, throwing if that
+    fails ("object at $path does not provide images").
+  * TouchFile, RemoveFileIfExists, RecursivelyRemoveFilePath,
+    CheckPathExists, CheckFileContents, and WriteFileContents.
 
-Whether the result of a command can depend on its follow-up steps:
-not for now.  The result is what `executeCommand` returns.  If a
-future query needs to report something computed in later steps, add
-a method such as `takeFinalResult()` then.
+Moved here as private methods: `sleepForMS`, `waitUntilCheckQuery`,
+and `waitUntilCheckGDValueFunction`.  `waitUntilCheckGDValueFunction`
+is also used by the GUI handler's WaitUntilCheckLabel, so it is
+`protected` instead.
+
+Dispatch uses a hook (`executeDerivedCommand`) rather than having the
+derived class override `executeCommand` and fall back to the base.
+That way the command is parsed once, `EXN_CONTEXT_EXPR(funcName)` is
+set in one place, and there is one "unrecognized function" error.  It
+also means a derived class cannot redefine a base command, which is
+fine.
+
+Object lookup is a pure virtual function because finding objects by
+path starts from `QApplication::topLevelWidgets()`, which needs
+QtWidgets.  The test handler implements it with a map from names to
+fake objects.
+
+No `QObject` base: nothing here uses signals.  `QTimer` and
+`QCoreApplication::processEvents` (used by WaitUntilCheckQuery) do
+not require one.
+
+TRACE key: "ui-shell-command-handler".
 
 
-UIShellExecutor (Qt core only)
-------------------------------
+ui-shell-command-util
+---------------------
+
+These are used by both handler .cc files, so they move out of
+today's ui-shell-executor.cc into ui-shell-command-util.h, with the
+non-template function bodies in the .cc:
+
+  * the macros CHECK_NUM_ARGS, GET_STRING_ARG, BIND_STRING_ARGS1..4,
+    CHECK_EQ, CHECK_RE_MATCH, and CHECK_EQUALITY.
+  * the functions the macros call: `regexSearch`, `checkRegexSearch`,
+    and `checkEquality` (a template, so it stays in the header).
+
+The macros refer to local variables named `parser`, `numArgs`, and
+`funcName`, so `executeDerivedCommand` overrides compute `numArgs`
+from `parser` the same way `executeCommand` does.
+
+Helpers used only by widget commands (`checkString`, the list- and
+table-widget helpers, `toQPointF`, `charToKeyEvent`, etc.) stay in
+the GUI handler's .cc file.
+
+Since the header defines macros with generic names, include it only
+from .cc files.
+
+
+UIShellExecutor (QtCore only)
+-----------------------------
 
 Public interface, changes only:
 
@@ -148,36 +301,37 @@ Private methods that stay: `executeNextStep`, `finishCommand`,
 The `EXN_CONTEXT_STRING_OPT` for the source location stays in
 `executeNextStep`, since it applies to whatever the handler does.
 
-Includes: the header drops the forward declarations of
-`QAbstractButton` and `QWidget`, and `smbase/array.h`.  The .cc file
-keeps only `<QAbstractEventDispatcher>`, `<QCoreApplication>`,
-`<QEvent>`, and `<QObject>` from Qt, plus `waiting-counter.h`,
-`ui-shell-result.h`, `debug-values.h`, and the smbase headers it
-actually uses (exc, gdvalue, optional-util, sm-env, sm-macros,
-sm-trace, stringb, xassert).  It must not include
-`ui-shell-queryable.h`, since that interface mentions `QImage`
-(QtGui).
+The header drops the forward declarations of `QAbstractButton` and
+`QWidget`, and `smbase/array.h`.  From Qt, the .cc file keeps only
+`<QAbstractEventDispatcher>`, `<QCoreApplication>`, `<QEvent>`, and
+`<QObject>`.
 
-TRACE key: keep "ui-shell-executor" for the executor.
+TRACE key: keep "ui-shell-executor".
 
 
-UIShellGUICommandHandler (Qt GUI)
----------------------------------
+UIShellGUICommandHandler (QtWidgets)
+------------------------------------
 
-  // Executes UI shell commands by synthesizing input events for, and
-  // inspecting the state of, the application's widgets.
+  // Executes the UI shell commands that synthesize input events for,
+  // or inspect the state of, the application's widgets.
   class UIShellGUICommandHandler : public QObject,
                                    public UIShellCommandHandler {
     Q_OBJECT
     NO_OBJECT_COPIES(UIShellGUICommandHandler);
+
+  protected:   // funcs
+    // UIShellCommandHandler methods.
+    virtual gdv::GDValue executeDerivedCommand(
+      std::string const &funcName,
+      gdv::GDValueParser const &parser) override;
 
   public:      // funcs
     UIShellGUICommandHandler();
     ~UIShellGUICommandHandler();
 
     // UIShellCommandHandler methods.
-    virtual gdv::GDValue executeCommand(
-      gdv::GDValue const &command) override;
+    virtual UIShellQueryable *getQueryableFromPath(
+      std::string const &path) override;
     virtual bool hasPendingStep() const override;
     virtual void executePendingStep() override;
     virtual void discardPendingSteps() override;
@@ -189,34 +343,33 @@ UIShellGUICommandHandler (Qt GUI)
     void signal_clickButton();
   };
 
-It must be a `QObject` because of `signal_clickButton`.  It takes no
-self-check function, since self-checks are the executor's job.
+It must be a `QObject` because of `signal_clickButton`.
+
+Its `executeDerivedCommand` is today's `executeCommand`, minus the
+commands that moved to the base class.  It ends by calling
+`UIShellCommandHandler::executeDerivedCommand`, which throws
+"unrecognized function".
 
 Moved here from `UIShellExecutor`, all private:
 
-  * `executeCommand` (body unchanged, except that FocusKeySequence's
-    comment refers to `executePendingStep`).
-  * Its helpers: `resizeChildWidget`, `getFocusWidget`,
-    `checkFocusWorkaround`, `postClickButton`, `sleepForMS`,
-    `executeShortcut`, `executeFocusKey`, `waitUntilCheckQuery`, and
-    `waitUntilCheckGDValueFunction`.
-  * The file-scope helpers in ui-shell-executor.cc
-    (`getQObjectFromPath`, `getObjectFromPath`, `getQueryableFromPath`,
-    `checkString`, the table-widget helpers, `charToKeyEvent`, the
-    `BIND_*` and `CHECK_*` macros, etc.).
+  * The widget command helpers: `resizeChildWidget`, `getFocusWidget`,
+    `checkFocusWorkaround`, `postClickButton`, `executeShortcut`, and
+    `executeFocusKey`.
+  * The file-scope path helpers (`getQObjectFromPath`,
+    `getObjectFromPath`, `getObjectFromPathDC`); the static
+    `getQueryableFromPath` becomes the override above.
+  * The widget-only file-scope helpers listed in the previous
+    section.
   * `m_queuedFocusKeySequence`.  `hasPendingStep` is
     `!m_queuedFocusKeySequence.isEmpty()`, `executePendingStep` is
     `executeFocusKey(m_queuedFocusKeySequence.pop())`, and
     `discardPendingSteps` clears it.
 
-A few commands (Sleep, TouchFile, CheckFileContents, and the other
-file commands) do not need GUI, but stay here for now; there is no
-current reason to separate them.  The "no dependencies on the editor
-per se" note at the top of today's ui-shell-executor.cc moves here.
+The "no dependencies on the editor per se" note at the top of today's
+ui-shell-executor.cc applies to both handler .cc files.
 
-TRACE key: "ui-shell-gui-command-handler" (or something shorter,
-such as "ui-shell-gui").  Either way, doc/ui-shell.txt should say
-which key traces what.
+TRACE key: "ui-shell-gui-command-handler".  doc/ui-shell.txt should
+say which key traces what.
 
 
 UIShellScriptRunner
@@ -239,25 +392,72 @@ Makefile
 
 `UNIT_TESTS_OBJS := $(EDITOR_OBJS)` snapshots the list part way
 through, and the ui-shell objects are currently added after that
-point, so they are not in unit-tests.exe.  Therefore:
+point, so none are in unit-tests.exe.  Therefore:
 
-  * ui-shell-command-handler.o, ui-shell-executor.o,
-    ui-shell-executor.moc.o, and ui-shell-result.o move up into the
-    part of `EDITOR_OBJS` before the snapshot.  (ui-shell-result has
-    no Qt dependencies, and waiting-counter.o is already there.)
+  * Move these up into the part of `EDITOR_OBJS` before the snapshot:
+    ui-shell-result.o, ui-shell-queryable.o,
+    ui-shell-image-queryable.o, ui-shell-command-util.o,
+    ui-shell-command-handler.o, ui-shell-executor.o, and
+    ui-shell-executor.moc.o.  (Their other dependencies, such as
+    file-mod-time.o and waiting-counter.o, are already there.)
   * ui-shell-gui-command-handler.o and its .moc.o go where the
-    ui-shell objects are now, along with ui-shell-queryable.o and the
-    script runner.
-  * Add ui-shell-executor-test.o to `UNIT_TESTS_OBJS`, and a .moc.o if
-    the test defines a `Q_OBJECT` class.  (Connecting the signal to a
-    lambda avoids that.)
+    ui-shell objects are now, next to the script runner.
+  * Add ui-shell-command-handler-test.o and ui-shell-executor-test.o
+    to `UNIT_TESTS_OBJS`, plus a .moc.o for either one only if it
+    defines a `Q_OBJECT` class.  (Connecting signals to lambdas
+    avoids that.)
 
 Run `make remake-extradep` if the generated-file dependencies change
 (they should not, but `make check` verifies it).
 
-unit-tests.exe links with `GUI_LDFLAGS`, so a successful link does not
-prove the executor avoids QtGui.  The include list is the check: the
-executor's files should include only the QtCore headers listed above.
+
+Unit test: ui-shell-command-handler-test.cc
+-------------------------------------------
+
+This calls `executeCommand` directly, outside the executor, and so
+exercises each command without the quiescence machinery.
+
+Test fixtures:
+
+  * `FakeQueryable : UIShellImageQueryable`, holding a map from state
+    names to GDValues and a map from image names to `QImage`s.  Its
+    `uiShellQuery` and `uiShellImage` look them up and otherwise
+    defer to the base class (which throws).  A state can also be set
+    to throw, to test query errors.
+  * `FakeTextQueryable : UIShellQueryable`, the same but without
+    images, to test CheckImage's "does not provide images" error.
+  * `TestCommandHandler : UIShellCommandHandler`, with a map from path
+    names to queryables.  `getQueryableFromPath` throws for unknown
+    names.
+  * A scratch directory under out/ (e.g.
+    out/ui-shell-command-handler-test/), created at the start and
+    removed at the end.  Relative paths are needed for
+    RecursivelyRemoveFilePath, which rejects absolute ones.
+
+Cases, each checking both success and the expected failure message
+(with `EXPECT_EXN_REGEX` or similar):
+
+  * Unrecognized command; wrong number of arguments.
+  * Sleep(50): at least 50 ms pass, and `g_waitingCounter` is back to
+    its original value afterward.
+  * CheckQuery: match; mismatch; unknown receiver; unknown state;
+    query that throws.
+  * CheckQueryMatches: match; mismatch; actual value not a string.
+  * WaitUntilCheckQuery: already true; becomes true after a
+    `QTimer::singleShot` changes the fake's value; times out.
+  * CheckImage: build a small `QImage` in memory, save it as a PNG in
+    the scratch directory, then check equal; different; expected file
+    missing; unknown image name; receiver without images.  The
+    mismatch case writes failing-actual-image.png in the current
+    directory, as today; the test deletes it afterward.
+  * WriteFileContents then CheckFileContents: match; mismatch.
+  * CheckPathExists: true and false cases.
+  * RemoveFileIfExists: file present; file absent.
+  * RecursivelyRemoveFilePath: directory with contents; nonexistent
+    path; absolute path and ".." are rejected.
+  * TouchFile: creates a missing file; changes the modification time
+    of an existing one.  (This may take a second, because of the
+    retry in TouchFile.)
 
 
 Unit test: ui-shell-executor-test.cc
@@ -267,13 +467,16 @@ unit-tests.cc already creates a `QCoreApplication`, and
 `QAbstractEventDispatcher::aboutToBlock` works with it, so the real
 quiescence mechanism is exercised.
 
-Fake handler, `TestCommandHandler`, records each call in a log
-(e.g. a `std::vector<std::string>`) and interprets a tiny language:
+`SequencingTestHandler : UIShellCommandHandler` records each call in
+a log (e.g. a `std::vector<std::string>`) and adds, through
+`executeDerivedCommand`, a few commands for testing:
 
   Return(v)       return v
   Throw("msg")    throw XMessage("msg")
   Steps(n)        return null and leave n pending steps
   StepThrows(n k) like Steps(n), but step k throws
+
+Its `getQueryableFromPath` just throws.
 
 A helper runs one command: connect `signal_hasCommandResult` to a
 lambda that exits a local `QEventLoop`, call `startCommand`, start a
@@ -299,7 +502,8 @@ Cases:
   8. Idle: after a command finishes, run `processEvents` a few times
      and check that the handler was not called again (the executor is
      not watching while idle).
-  9. Optionally, `g_waitingCounter` > 0 defers execution: increment
+  9. A base-class command, e.g. Sleep(0), works through the executor.
+ 10. Optionally, `g_waitingCounter` > 0 defers execution: increment
      it, start a command, use a `QTimer` to decrement it after ~50 ms,
      and check the command did not run before that.
 
@@ -309,32 +513,36 @@ constructor call.  Optionally, add a constructor parameter instead
 (with the script runner passing `envAsIntOr(0, "UI_SHELL_DELAY_MS")`);
 not required for this plan.
 
-Register the test in the usual way: `test_ui_shell_executor` in
-unit-tests.h, `RUN_TEST(ui_shell_executor)` in unit-tests.cc (after
-its dependencies), and the Makefile entry above.
+Register both tests in the usual way: `test_ui_shell_command_handler`
+and `test_ui_shell_executor` in unit-tests.h, `RUN_TEST` lines in
+unit-tests.cc (the handler test before the executor test), and the
+Makefile entries above.
 
 
 Git history
 -----------
 
-Most of the code by volume (about 1200 of the 1540 lines of
-ui-shell-executor.cc) moves to the GUI handler, so, as with the
+Most of the code by volume (roughly 900 of the 1540 lines of
+ui-shell-executor.cc) goes to the GUI handler, so, as with the
 earlier renames, do the rename as its own commit:
 
-  1. `git mv ui-shell-executor.h ui-shell-gui-command-handler.h` and
+  1. Split `UIShellImageQueryable` off from `UIShellQueryable`, and
+     switch EditorWidget to it.  Compiles; `make check` passes.
+  2. `git mv ui-shell-executor.h ui-shell-gui-command-handler.h` and
      likewise for the .cc.  Files only; does not compile.
-  2. Create the new ui-shell-executor.{h,cc} and
-     ui-shell-command-handler.{h,cc}, moving the sequencing code out
-     of the GUI handler files, and update the runner, the Makefile,
-     and the #includes.  `make check` passes.
-  3. Add ui-shell-executor-test.cc.
-  4. Update doc/ui-shell.txt (theory of operation, trace keys) and
+  3. Create the new ui-shell-executor, ui-shell-command-handler, and
+     ui-shell-command-util modules, moving code out of the GUI
+     handler files, and update the runner, the Makefile, and the
+     #includes.  `make check` passes.
+  4. Add ui-shell-command-handler-test.cc.
+  5. Add ui-shell-executor-test.cc.
+  6. Update doc/ui-shell.txt (theory of operation, trace keys) and
      doc/plans/claude-gui-control-shell.txt (the server owns a
      `UIShellGUICommandHandler` too).
 
 `git log --follow ui-shell-gui-command-handler.cc` then keeps the
-history of the command interpreter.  The new ui-shell-executor.cc
-starts a fresh history; `git blame -C` can still trace its lines back.
+history of the widget commands.  The new files start fresh
+histories; `git blame -C` can still trace their lines back.
 
 
 EOF
