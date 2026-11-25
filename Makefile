@@ -297,6 +297,12 @@ EDITOR_OBJS += textcategory.o
 EDITOR_OBJS += textlcoord.o
 EDITOR_OBJS += textmcoord-map.o
 EDITOR_OBJS += textmcoord.o
+EDITOR_OBJS += ui-shell-command-handler.o
+EDITOR_OBJS += ui-shell-command-util.o
+EDITOR_OBJS += ui-shell-executor.moc.o
+EDITOR_OBJS += ui-shell-executor.o
+EDITOR_OBJS += ui-shell-queryable.o
+EDITOR_OBJS += ui-shell-result.o
 EDITOR_OBJS += uri-util.o
 EDITOR_OBJS += waiting-counter.o
 
@@ -460,11 +466,9 @@ EDITOR_OBJS += list-choice-dialog.o
 EDITOR_OBJS += modal-dialog.moc.o
 EDITOR_OBJS += modal-dialog.o
 EDITOR_OBJS += pixmaps.o
-EDITOR_OBJS += ui-shell-executor.moc.o
-EDITOR_OBJS += ui-shell-executor.o
+EDITOR_OBJS += ui-shell-gui-command-handler.moc.o
+EDITOR_OBJS += ui-shell-gui-command-handler.o
 EDITOR_OBJS += ui-shell-gui-queryable.o
-EDITOR_OBJS += ui-shell-queryable.o
-EDITOR_OBJS += ui-shell-result.o
 EDITOR_OBJS += ui-shell-script-runner.moc.o
 EDITOR_OBJS += ui-shell-script-runner.o
 

@@ -8,6 +8,7 @@
 
 // editor
 #include "ui-shell-executor.h"         // UIShellExecutor
+#include "ui-shell-gui-command-handler.h"  // UIShellGUICommandHandler
 
 // smbase
 #include "smbase/gdvalue-fwd.h"        // gdv::GDValue [f]
@@ -48,6 +49,10 @@ private:     // instance data
   // Invariant check, called once before the first command.  (The
   // executor calls it after each command.)
   std::function<void ()> m_globalSelfCheck;
+
+  // Interprets the commands for `m_executor`.  This is declared before
+  // `m_executor` so that it is constructed first and destroyed last.
+  UIShellGUICommandHandler m_commandHandler;
 
   // Executes the commands.
   UIShellExecutor m_executor;

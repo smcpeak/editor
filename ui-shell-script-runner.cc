@@ -35,7 +35,8 @@ UIShellScriptRunner::UIShellScriptRunner(
   m_testFailureMessage(),
   m_eventLoop(),
   IMEMBFP(globalSelfCheck),
-  m_executor(globalSelfCheck)
+  m_commandHandler(),
+  m_executor(m_commandHandler, globalSelfCheck)
 {
   // We use a direct (rather than queued) connection so that, when the
   // slot starts the next command, the executor runs it in the same
