@@ -16,7 +16,7 @@
 #include "smbase/gdvalue-parser.h"               // gdv::GDValueParser
 #include "smbase/gdvalue-tuple.h"                // gdv::gdvpToTuple
 #include "smbase/gdvalue.h"                      // gdv::fromGDVN
-#include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE
+#include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE, IMEMBFP
 #include "smbase/sm-override.h"                  // OVERRIDE
 #include "smbase/sm-test.h"                      // EXPECT_EQ, EXPECT_MATCHES_REGEX
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
@@ -43,8 +43,8 @@ ExecutorTester::ExecutorTester(
   std::vector<std::string> &log)
 :
   QObject(),
-  m_executor(executor),
-  m_log(log),
+  IMEMBFP(executor),
+  IMEMBFP(log),
   m_eventLoop(),
   m_timeoutTimer(),
   m_signalCount(0),
