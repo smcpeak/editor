@@ -43,10 +43,25 @@ what is in the test script.
 Classes
 =======
 
-UIShellExecutor is the lowest-level class, responsible for executing
-commands one at a time and waiting for the app to become quiescent
-between them (see below).  It only depends on QtCore, and does not know
-what any command means; it passes each one to a UIShellCommandHandler.
+Dependencies (arrows point at what is used):
+
+  UIShellScriptRunner ---> UIShellExecutor
+        |                        |
+        |                        v
+        |              UIShellCommandHandler --> UIShellQueryable
+        |                        ^                     ^
+        |                        | (inherits)          | (inherits)
+        +----------> UIShellGUICommandHandler --> UIShellGUIQueryable
+
+UIShellScriptRunner handles reading the test/*.uis scripts and executing
+all of its commands in sequence.  It owns a UIShellGUICommandHandler and
+a UIShellExecutor that uses it.  It runs its own top-level Qt event
+loop, taking the place of the usual application top-level loop.
+
+UIShellExecutor is responsible for executing commands one at a time and
+waiting for the app to become quiescent between them (see below).  It
+only depends on QtCore, and does not know what any command means; it
+passes each one to a UIShellCommandHandler.
 
 UIShellCommandHandler interprets the commands that do not need widgets:
 Sleep, CheckQuery and the other query checks, and the file commands.
@@ -58,11 +73,6 @@ example, FocusKeySequence types one character per step.
 UIShellGUICommandHandler derives from UIShellCommandHandler and adds
 the commands that synthesize input for, or inspect, widgets, finding
 them by QObject name path.
-
-UIShellScriptRunner handles reading the test/*.uis scripts and executing
-all of its commands in sequence.  It owns a UIShellGUICommandHandler and
-a UIShellExecutor that uses it.  It runs its own top-level Qt event
-loop, taking the place of the usual application top-level loop.
 
 UIShellQueryable is an interface that widgets can implement to allow the
 UI shell to perform widget-specific queries.  This way, scripts can
