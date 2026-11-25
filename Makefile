@@ -462,6 +462,7 @@ EDITOR_OBJS += modal-dialog.o
 EDITOR_OBJS += pixmaps.o
 EDITOR_OBJS += ui-shell-executor.moc.o
 EDITOR_OBJS += ui-shell-executor.o
+EDITOR_OBJS += ui-shell-gui-queryable.o
 EDITOR_OBJS += ui-shell-queryable.o
 EDITOR_OBJS += ui-shell-result.o
 EDITOR_OBJS += ui-shell-script-runner.moc.o

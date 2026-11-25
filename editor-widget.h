@@ -35,7 +35,7 @@
 #include "td-editor.h"                           // TextDocumentEditor
 #include "text-search.h"                         // TextSearch
 #include "textcategory.h"                        // TextCategory, LineCategoryAOAs
-#include "ui-shell-queryable.h"                  // UIShellQueryable
+#include "ui-shell-gui-queryable.h"              // UIShellGUIQueryable
 #include "uri-util.h"                            // URIPathSemantics
 
 // smqtutil
@@ -80,7 +80,7 @@ class EditorWidget
       // Note: `TextDocumentObserver` inherits `SerfRefCount`, so that
       // allows `RCSerf`s to point to `EditorWidget`.
     public NamedTextDocumentListObserver,        // Watch the list of files.
-    public UIShellQueryable {     // Respond to test queries.
+    public UIShellGUIQueryable {  // Respond to test queries.
   Q_OBJECT
 
   // Currently, SAR needs access to m_editor, and I am torn about
@@ -844,7 +844,7 @@ public:      // funcs
   string applyCommandSubstitutions(string const &orig) const;
 
   // -------------------------- testing ----------------------------
-  // UIShellQueryable methods.
+  // UIShellGUIQueryable methods.
   virtual gdv::GDValue uiShellQuery(string const &state) OVERRIDE;
   virtual QImage uiShellImage(string const &what) OVERRIDE;
   virtual bool wantResizeEventsRecorded() OVERRIDE;

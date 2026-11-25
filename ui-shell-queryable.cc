@@ -12,9 +12,6 @@
 #include "smbase/string-util.h"        // doubleQuote
 #include "smbase/stringb.h"            // stringb
 
-// Qt
-#include <QImage>
-
 // libc++
 #include <exception>                   // std::exception
 
@@ -41,12 +38,6 @@ UIShellResult UIShellQueryable::tryUIShellQuery(std::string const &state)
   catch (...) {
     return UIShellResult::makeRight("caught unknown exception!");
   }
-}
-
-
-QImage UIShellQueryable::uiShellImage(std::string const &)
-{
-  return QImage();
 }
 
 

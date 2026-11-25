@@ -4149,7 +4149,7 @@ GDValue EditorWidget::uiShellQuery(string const &state)
     return "";
   }
   else {
-    return UIShellQueryable::uiShellQuery(state);
+    return UIShellGUIQueryable::uiShellQuery(state);
   }
 }
 
@@ -4160,7 +4160,7 @@ QImage EditorWidget::uiShellImage(string const &what)
     return this->getScreenshot();
   }
   else {
-    return UIShellQueryable::uiShellImage(what);
+    return UIShellGUIQueryable::uiShellImage(what);
   }
 }
 

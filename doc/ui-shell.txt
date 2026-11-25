@@ -54,8 +54,9 @@ loop, taking the place of the usual application top-level loop.
 UIShellQueryable is an interface that widgets can implement to allow the
 UI shell to perform widget-specific queries.  This way, scripts can
 directly interrogate application state rather than, say, primarily
-relying on screenshots.  However, it also offers a way for widgets to
-yield images (screenshots) when necessary.
+relying on screenshots.  UIShellGUIQueryable extends it with queries
+that involve GUI concepts, currently just a way for widgets to yield
+images (screenshots) when necessary.
 
 UIShellResult holds the result of a single command (success or error)
 for passing between UI shell components.

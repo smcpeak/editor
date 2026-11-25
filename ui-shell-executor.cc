@@ -10,6 +10,7 @@
 // editor
 #include "debug-values.h"                        // DEBUG_VALUES
 #include "file-mod-time.h"                       // getFileModTime
+#include "ui-shell-gui-queryable.h"              // UIShellGUIQueryable
 #include "ui-shell-queryable.h"                  // UIShellQueryable
 #include "ui-shell-result.h"                     // UIShellResult
 #include "waiting-counter.h"                     // g_waitingCounter, IncDecWaitingCounter
@@ -1011,7 +1012,8 @@ GDValue UIShellExecutor::executeCommand(GDValue const &command)
       xmessagesb("Failed to load screenshot image: " << expectFname);
     }
 
-    UIShellQueryable *q = getQueryableFromPath(path);
+    UIShellGUIQueryable *q =
+      getObjectFromPathDC<UIShellGUIQueryable>(path);
     QImage actualImage = q->uiShellImage(what);
 
     if (actualImage != expectImage) {
