@@ -40,6 +40,27 @@ somehow to yield a GDV value (usually a string) that is then compared to
 what is in the test script.
 
 
+Classes
+=======
+
+UIShellExecutor is the lowest-level class, responsible for executing
+commands one at a time and waiting for the app to become quiescent
+between them.
+
+UIShellScriptRunner handles reading the test/*.uis scripts and executing
+all of its commands in sequence.  It runs its own top-level Qt event
+loop, taking the place of the usual application top-level loop.
+
+UIShellQueryable is an interface that widgets can implement to allow the
+UI shell to perform widget-specific queries.  This way, scripts can
+directly interrogate application state rather than, say, primarily
+relying on screenshots.  However, it also offers a way for widgets to
+yield images (screenshots) when necessary.
+
+UIShellResult holds the result of a single command (success or error)
+for passing between UI shell components.
+
+
 Quiescence detection mechanism
 ==============================
 

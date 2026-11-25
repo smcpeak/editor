@@ -13,6 +13,9 @@ object used internally by the ui-shell module, and "reply" for the name
 of the object that is passed over the wire to the client of the UI shell
 server protocol.
 
+2026-11-25: The `ui-shell` module has been split into
+`ui-shell-executor` and `ui-shell-script-runner`.
+
 
 Motivation
 ==========
@@ -23,8 +26,8 @@ hierarchy), inject inputs such as keystrokes and clicks, and see the
 results.  The immediate use is trying out a new dialog during
 development without writing a complete .uis script blind first.
 
-The UI shell (ui-shell.{h,cc}, ui-shell-queryable.{h,cc},
-doc/ui-shell.txt) already has most of the pieces:
+The UI shell (ui-shell-*.{h,cc}, doc/ui-shell.txt) already has most of
+the pieces:
 
   * A command language, the UI Shell Language: GDVN tagged tuples
     such as
@@ -238,9 +241,7 @@ when the app has settled afterward, and UIShellScriptRunner, which
 feeds it the commands of a .uis script.  UIShellServer will be a
 second client of the executor.
 
-2026-11-24: See ui-shell.h for the UIShellExecutor and
-UIShellScriptRunner interface, and the execution sequence within the
-executor (as that split has been completed).
+2026-11-24: UIShellExecutor and UIShellScriptRunner have been split.
 
 UIShellServer handles the commands about the session itself, Ping() and
 Quit(), without the executor.  It passes everything else to
