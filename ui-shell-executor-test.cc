@@ -8,19 +8,15 @@
 #include "unit-tests.h"                          // decl for my entry point
 
 // editor
-#include "ui-shell-command-handler.h"            // UIShellCommandHandler
+#include "ui-shell-test-handler.h"               // SequencingTestHandler
 #include "waiting-counter.h"                     // g_waitingCounter, adjWaitingCounter
 
 // smbase
 #include "smbase/exc.h"                          // xmessagesb, GENERIC_CATCH_BEGIN/END
-#include "smbase/gdvalue-parser.h"               // gdv::GDValueParser
-#include "smbase/gdvalue-tuple.h"                // gdv::gdvpToTuple
 #include "smbase/gdvalue.h"                      // gdv::fromGDVN
 #include "smbase/sm-macros.h"                    // OPEN_ANONYMOUS_NAMESPACE, IMEMBFP
-#include "smbase/sm-override.h"                  // OVERRIDE
 #include "smbase/sm-test.h"                      // EXPECT_EQ, EXPECT_MATCHES_REGEX
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
-#include "smbase/stringb.h"                      // stringb
 #include "smbase/xassert.h"                      // xassert, xfailure
 
 // Qt
@@ -142,108 +138,6 @@ void ExecutorTester::slot_decrementWaitingCounter() NOEXCEPT
 
 
 OPEN_ANONYMOUS_NAMESPACE
-
-
-/* Handler that records its calls in a log, and adds these commands:
-
-     Return(v)       Return v.
-     Throw("msg")    Throw XMessage("msg").
-     Steps(n)        Return null and leave n pending steps.
-     StepThrows(n k) Like Steps(n), but step k (1-based) throws.
-*/
-class SequencingTestHandler : public UIShellCommandHandler {
-public:      // data
-  // Log of calls, shared with `ExecutorTester`.
-  std::vector<std::string> &m_log;
-
-  // Number of the next pending step to perform, 1-based.
-  int m_nextStep;
-
-  // Number of steps in the current command.
-  int m_numSteps;
-
-  // Step that throws, or 0 for none.
-  int m_throwAtStep;
-
-protected:   // funcs
-  virtual GDValue executeDerivedCommand(
-    std::string const &funcName,
-    GDValueParser const &parser) OVERRIDE
-  {
-    m_log.push_back("command " + funcName);
-
-    if (funcName == "Return") {
-      auto [v] = gdvpToTuple<GDValue>(parser);
-      return v;
-    }
-
-    else if (funcName == "Throw") {
-      auto [msg] = gdvpToTuple<std::string>(parser);
-      xmessage(msg);
-    }
-
-    else if (funcName == "Steps") {
-      auto [n] = gdvpToTuple<int>(parser);
-      m_nextStep = 1;
-      m_numSteps = n;
-      m_throwAtStep = 0;
-    }
-
-    else if (funcName == "StepThrows") {
-      auto [n, k] = gdvpToTuple<int, int>(parser);
-      m_nextStep = 1;
-      m_numSteps = n;
-      m_throwAtStep = k;
-    }
-
-    else {
-      return UIShellCommandHandler::executeDerivedCommand(
-        funcName, parser);
-    }
-
-    return GDValue();
-  }
-
-public:      // funcs
-  explicit SequencingTestHandler(std::vector<std::string> &log)
-    : UIShellCommandHandler(),
-      m_log(log),
-      m_nextStep(1),
-      m_numSteps(0),
-      m_throwAtStep(0)
-  {}
-
-  virtual UIShellQueryable *getQueryableFromPath(
-    std::string const &path) OVERRIDE
-  {
-    xmessagesb("no queryables: " << path);
-    return nullptr;    // not reached
-  }
-
-  virtual bool hasPendingStep() const OVERRIDE
-  {
-    return m_nextStep <= m_numSteps;
-  }
-
-  virtual void executePendingStep() OVERRIDE
-  {
-    xassertPrecondition(hasPendingStep());
-
-    int step = m_nextStep++;
-    m_log.push_back(stringb("step " << step));
-
-    if (step == m_throwAtStep) {
-      xmessagesb("step " << step << " failed");
-    }
-  }
-
-  virtual void discardPendingSteps() OVERRIDE
-  {
-    m_log.push_back("discard");
-    m_nextStep = 1;
-    m_numSteps = 0;
-  }
-};
 
 
 // The objects needed to run commands through an executor.

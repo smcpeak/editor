@@ -374,6 +374,7 @@ UNIT_TESTS_OBJS += ui-shell-command-handler-test.moc.o
 UNIT_TESTS_OBJS += ui-shell-command-handler-test.o
 UNIT_TESTS_OBJS += ui-shell-executor-test.moc.o
 UNIT_TESTS_OBJS += ui-shell-executor-test.o
+UNIT_TESTS_OBJS += ui-shell-test-handler.o
 UNIT_TESTS_OBJS += unit-tests.o
 UNIT_TESTS_OBJS += uri-util-test.o
 UNIT_TESTS_OBJS += wrapped-integer-test.o
