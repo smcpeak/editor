@@ -4,7 +4,7 @@
 #include "process-watcher.h"           // this module
 
 // smqtutil
-#include "smqtutil/qtutil.h"           // toString(QString)
+#include "smqtutil/qtutil.h"           // toString(QString), disconnectSignals
 
 // smbase
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN
@@ -30,8 +30,7 @@ ProcessWatcher::ProcessWatcher(NamedTextDocument *doc)
 
 ProcessWatcher::~ProcessWatcher()
 {
-  // See doc/signals-and-dtors.txt.
-  QObject::disconnect(&m_commandRunner, NULL, this, NULL);
+  disconnectSignals(&m_commandRunner, this);
 }
 
 

@@ -9,7 +9,7 @@
 #include "editor-widget.h"             // EditorWidget
 
 // smqtutil
-#include "smqtutil/qtutil.h"           // toString, doubleQuote(QString)
+#include "smqtutil/qtutil.h"           // toString, doubleQuote(QString), disconnectSignals
 
 // smbase
 #include "smbase/codepoint.h"          // isUppercaseLetter
@@ -163,11 +163,10 @@ SearchAndReplacePanel::~SearchAndReplacePanel()
   // Disconnect the widget and the status label.
   this->setEditorWidget(NULL);
 
-  // See doc/signals-and-dtors.txt.
-  QObject::disconnect(m_findBox, NULL, this, NULL);
-  QObject::disconnect(m_replBox, NULL, this, NULL);
-  QObject::disconnect(m_regexCheckBox, NULL, this, NULL);
-  QObject::disconnect(m_helpButton, NULL, this, NULL);
+  disconnectSignals(m_findBox, this);
+  disconnectSignals(m_replBox, this);
+  disconnectSignals(m_regexCheckBox, this);
+  disconnectSignals(m_helpButton, this);
 }
 
 

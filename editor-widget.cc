@@ -50,7 +50,7 @@
 #include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtbdffont.h"                  // QtBDFFont, drawHexQuad
 #include "smqtutil/qtguiutil.h"                  // keysString(QKeyEvent), QPainterSaveRestore, showRaiseAndActivateWindow, setClipboardWithRetry
-#include "smqtutil/qtutil.h"                     // toString(QString), SET_QOBJECT_NAME, toQString
+#include "smqtutil/qtutil.h"                     // toString(QString), SET_QOBJECT_NAME, toQString, disconnectSignals
 #include "smqtutil/sync-wait.h"                  // synchronouslyWaitUntil, GUISynchronousWaiter
 
 // smbase
@@ -249,7 +249,7 @@ EditorWidget::~EditorWidget()
 
   m_textSearch.reset();
 
-  QObject::disconnect(rfaAMClient(), nullptr, this, nullptr);
+  disconnectSignals(rfaAMClient(), this);
   cancelFileStatusRequestIfAny();
 
   // Do this explicitly just for clarity, but the automatic destruction

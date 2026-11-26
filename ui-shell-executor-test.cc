@@ -11,6 +11,9 @@
 #include "ui-shell-test-handler.h"               // SequencingTestHandler
 #include "waiting-counter.h"                     // g_waitingCounter, adjWaitingCounter
 
+// smqtutil
+#include "smqtutil/qtutil.h"                     // disconnectSignals
+
 // smbase
 #include "smbase/exc.h"                          // xmessagesb, GENERIC_CATCH_BEGIN/END
 #include "smbase/gdvalue.h"                      // gdv::fromGDVN
@@ -62,9 +65,8 @@ ExecutorTester::ExecutorTester(
 
 ExecutorTester::~ExecutorTester()
 {
-  // See doc/signals-and-dtors.txt.
-  QObject::disconnect(&m_executor, nullptr, this, nullptr);
-  QObject::disconnect(&m_timeoutTimer, nullptr, this, nullptr);
+  disconnectSignals(&m_executor, this);
+  disconnectSignals(&m_timeoutTimer, this);
 }
 
 

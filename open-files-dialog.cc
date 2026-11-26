@@ -10,7 +10,7 @@
 // smqtutil
 #include "smqtutil/qstringb.h"         // qstringb
 #include "smqtutil/qtguiutil.h"        // keysString(QKeyEvent), messageBox
-#include "smqtutil/qtutil.h"           // toQString, SET_QOBJECT_NAME
+#include "smqtutil/qtutil.h"           // toQString, SET_QOBJECT_NAME, disconnectSignals
 #include "smqtutil/sm-table-widget.h"  // SMTableWidget
 
 // smbase
@@ -142,11 +142,10 @@ OpenFilesDialog::OpenFilesDialog(EditorGlobal *editorGlobal,
 
 OpenFilesDialog::~OpenFilesDialog()
 {
-  // See doc/signals-and-dtors.txt.
-  QObject::disconnect(m_filterLineEdit, NULL, this, NULL);
-  QObject::disconnect(m_tableWidget, NULL, this, NULL);
-  QObject::disconnect(m_closeSelButton, NULL, this, NULL);
-  QObject::disconnect(m_helpButton, NULL, this, NULL);
+  disconnectSignals(m_filterLineEdit, this);
+  disconnectSignals(m_tableWidget, this);
+  disconnectSignals(m_closeSelButton, this);
+  disconnectSignals(m_helpButton, this);
 }
 
 

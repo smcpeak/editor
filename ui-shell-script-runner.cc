@@ -6,6 +6,9 @@
 // editor
 #include "ui-shell-result.h"           // UIShellResult
 
+// smqtutil
+#include "smqtutil/qtutil.h"           // disconnectSignals
+
 // smbase
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
 #include "smbase/gdvalue.h"            // gdv::GDValue
@@ -53,8 +56,7 @@ UIShellScriptRunner::UIShellScriptRunner(
 
 UIShellScriptRunner::~UIShellScriptRunner()
 {
-  // See doc/signals-and-dtors.txt.
-  QObject::disconnect(&m_executor, nullptr, this, nullptr);
+  disconnectSignals(&m_executor, this);
 }
 
 

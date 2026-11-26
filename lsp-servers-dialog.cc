@@ -6,7 +6,7 @@
 #include "lsp-client-manager.h"        // LSPClientManager
 
 #include "smqtutil/qtguiutil.h"        // removeWindowContextHelpButton
-#include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME
+#include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME, disconnectSignals
 #include "smqtutil/sm-table-widget.h"  // SMTableWidget
 
 #include "smbase/chained-cond.h"       // smbase::cc::z_le_lt
@@ -32,7 +32,7 @@ INIT_TRACE("lsp-servers-dialog");
 LSPServersDialog::~LSPServersDialog()
 {
   TRACE1("dtor");
-  QObject::disconnect(m_lspClientManager, nullptr, this, nullptr);
+  disconnectSignals(m_lspClientManager, this);
 }
 
 

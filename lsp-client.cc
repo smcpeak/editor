@@ -16,7 +16,7 @@
 #include "uri-util.h"                            // makeFileURI, getFileURIPath
 
 #include "smqtutil/gdvalue-qt.h"                 // toGDValue(QString)
-#include "smqtutil/qtutil.h"                     // toString(QString)
+#include "smqtutil/qtutil.h"                     // toString(QString), disconnectSignals
 
 #include "smbase/container-util.h"               // smbase::contains
 #include "smbase/datetime.h"                     // localTimeString
@@ -531,7 +531,7 @@ void LSPClient::on_errorDataReady() NOEXCEPT
 LSPClient::~LSPClient()
 {
   // Don't send a signal due to the forcible shutdown.
-  QObject::disconnect(this, nullptr, nullptr, nullptr);
+  disconnectSignals(this, nullptr);
 
   forciblyShutDown();
 }

@@ -40,7 +40,7 @@
 #include "smqtutil/gdvalue-qt.h"                 // toGDValue(QString)
 #include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtguiutil.h"                  // showRaiseAndActivateWindow, messageBox
-#include "smqtutil/qtutil.h"                     // toQString, installSMQtUtilMessageHandler
+#include "smqtutil/qtutil.h"                     // toQString, installSMQtUtilMessageHandler, disconnectSignals
 #include "smqtutil/timer-event-loop.h"           // sleepWhilePumpingEvents
 
 // smbase
@@ -295,8 +295,7 @@ EditorGlobal::~EditorGlobal()
         ProcessWatcher *watcher = m_processes.removeFirst();
 
         // Before letting it go, disconnect my slot.
-        // See doc/signals-and-dtors.txt.
-        QObject::disconnect(watcher, NULL, this, NULL);
+        disconnectSignals(watcher, this);
 
         // Now leak 'watcher'!
       }
@@ -310,10 +309,8 @@ EditorGlobal::~EditorGlobal()
 
   m_rfaAMClient.shutdownAll();
 
-  // Disconnect all of the connections made in the constructor.
-  // See doc/signals-and-dtors.txt.
-  QObject::disconnect(this, 0, this, 0);
-  QObject::disconnect(&m_rfaAMClient, 0, this, 0);
+  disconnectSignals(this, this);
+  disconnectSignals(&m_rfaAMClient, this);
 
   m_lspClientManager.reset();
 }

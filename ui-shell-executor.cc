@@ -9,6 +9,9 @@
 #include "ui-shell-result.h"           // UIShellResult
 #include "waiting-counter.h"           // g_waitingCounter
 
+// smqtutil
+#include "smqtutil/qtutil.h"           // disconnectSignals
+
 // smbase
 #include "smbase/exc.h"                // EXN_CONTEXT_STRING_OPT, GENERIC_CATCH_BEGIN/END
 #include "smbase/gdvalue.h"            // gdv::GDValue
@@ -79,12 +82,9 @@ UIShellExecutor::~UIShellExecutor()
 {
   this->killTimerIf();
 
-  // See doc/signals-and-dtors.txt.
-  //
   // It is possible we already disconnected, or never connected in the
   // first place, but this is still safe.
-  QObject::disconnect(QAbstractEventDispatcher::instance(), nullptr,
-                      this, nullptr);
+  disconnectSignals(QAbstractEventDispatcher::instance(), this);
 }
 
 

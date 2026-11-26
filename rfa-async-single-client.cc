@@ -51,7 +51,6 @@ RFA_AsyncSingleClient::~RFA_AsyncSingleClient() noexcept
 {
   GENERIC_CATCH_BEGIN
 
-  // See doc/signals-and-dtors.txt.
   disconnectSignals();
 
   // Try to kill the server process since otherwise QProcess will print

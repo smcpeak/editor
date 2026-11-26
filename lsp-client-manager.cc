@@ -94,7 +94,6 @@ LSPClientManager::~LSPClientManager()
 {
   GENERIC_CATCH_BEGIN
 
-  // As usual, disconnect before destorying.
   disconnectAllClientSignals();
 
   // If we still have connections, do not stop to perform graceful

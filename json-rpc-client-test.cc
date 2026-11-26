@@ -10,7 +10,7 @@
 #include "command-runner.h"            // CommandRunner
 #include "uri-util.h"                  // makeFileURI
 
-#include "smqtutil/qtutil.h"           // waitForQtEvent
+#include "smqtutil/qtutil.h"           // waitForQtEvent, disconnectSignals
 
 #include "smbase/exc.h"                // smbase::XBase
 #include "smbase/gdvalue-either.h"     // gdv::toGDValue(smbase::Either)
@@ -294,8 +294,7 @@ JSON_RPC_ClientTester::~JSON_RPC_ClientTester()
 {
   DIAG("JSON_RPC_ClientTester dtor");
 
-  QObject::disconnect(&m_lsp, nullptr,
-                      this, nullptr);
+  disconnectSignals(&m_lsp, this);
 }
 
 

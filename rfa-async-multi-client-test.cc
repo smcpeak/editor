@@ -8,7 +8,7 @@
 #include "rfa-msg.h"                             // RFA_Msg_Echo
 
 // smqtutil
-#include "smqtutil/qtutil.h"                     // toString(QString)
+#include "smqtutil/qtutil.h"                     // toString(QString), disconnectSignals
 
 // smbase
 #include "smbase/exc.h"                          // smbase::XBase, xfatal
@@ -48,8 +48,7 @@ RFA_AsyncMultiClientTest::RFA_AsyncMultiClientTest(CmdlineArgsSpan args)
 
 RFA_AsyncMultiClientTest::~RFA_AsyncMultiClientTest()
 {
-  // See doc/signals-and-dtors.txt.
-  QObject::disconnect(&m_rfaAMClient, nullptr, this, nullptr);
+  disconnectSignals(&m_rfaAMClient, this);
 }
 
 

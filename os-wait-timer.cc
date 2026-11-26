@@ -3,6 +3,9 @@
 
 #include "os-wait-timer.h"             // this module
 
+// smqtutil
+#include "smqtutil/qtutil.h"           // disconnectSignals
+
 // smbase
 #include "smbase/dev-warning.h"        // DEV_WARNING
 #include "smbase/htt.h"                // smbase::HTT_Singleton
@@ -73,8 +76,7 @@ OSWaitTimer::~OSWaitTimer()
 
   if (m_active) {
     // Disconnect both signals.
-    QObject::disconnect(m_dispatcher, NULL,
-                        this, NULL);
+    disconnectSignals(m_dispatcher, this);
   }
 
   if (m_node) {

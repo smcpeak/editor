@@ -5,7 +5,7 @@
 #include "unit-tests.h"                          // decl for my entry point
 
 // smqtutil
-#include "smqtutil/qtutil.h"                     // toString(QString)
+#include "smqtutil/qtutil.h"                     // toString(QString), disconnectSignals
 
 // smbase
 #include "smbase/exc.h"                          // smbase::XBase
@@ -32,8 +32,7 @@ FSServerTest::FSServerTest()
 
 FSServerTest::~FSServerTest()
 {
-  // See doc/signals-and-dtors.txt.
-  QObject::disconnect(&m_rfaASClient, nullptr, this, nullptr);
+  disconnectSignals(&m_rfaASClient, this);
 }
 
 

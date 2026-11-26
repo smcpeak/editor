@@ -6,6 +6,9 @@
 // editor
 #include "rfa-async-single-client.h"   // RFA_AsyncSingleClient
 
+// smqtutil
+#include "smqtutil/qtutil.h"           // disconnectSignals
+
 // smbase
 #include "smbase/container-util.h"     // smbase::contains
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END
@@ -132,8 +135,7 @@ RFA_AsyncMultiClient::Connection::Connection(
 
 RFA_AsyncMultiClient::Connection::~Connection()
 {
-  // See doc/signals-and-dtors.txt.
-  QObject::disconnect(m_rfaASClient.get(), nullptr, m_parentAMClient, nullptr);
+  disconnectSignals(m_rfaASClient.get(), m_parentAMClient);
 }
 
 

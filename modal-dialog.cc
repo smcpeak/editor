@@ -4,7 +4,7 @@
 #include "modal-dialog.h"              // this module
 
 #include "smqtutil/qtguiutil.h"        // centerWindowOnWindow, messageBox, removeWindowContextHelpButton
-#include "smqtutil/qtutil.h"           // SET_OBJECT_NAME
+#include "smqtutil/qtutil.h"           // SET_OBJECT_NAME, disconnectSignals
 
 #include "smbase/xassert.h"            // xassert
 
@@ -27,15 +27,14 @@ ModalDialog::ModalDialog(QWidget *parent, Qt::WindowFlags f)
 
 ModalDialog::~ModalDialog()
 {
-  // See doc/signals-and-dtors.txt.
   if (m_helpButton) {
-    QObject::disconnect(m_helpButton, nullptr, this, nullptr);
+    disconnectSignals(m_helpButton, this);
   }
   if (m_okButton) {
-    QObject::disconnect(m_okButton, nullptr, this, nullptr);
+    disconnectSignals(m_okButton, this);
   }
   if (m_cancelButton) {
-    QObject::disconnect(m_cancelButton, nullptr, this, nullptr);
+    disconnectSignals(m_cancelButton, this);
   }
 }
 

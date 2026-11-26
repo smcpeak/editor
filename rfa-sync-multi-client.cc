@@ -9,6 +9,7 @@
 // smqtutil
 #include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtguiutil.h"                  // messageBox
+#include "smqtutil/qtutil.h"                     // disconnectSignals
 #include "smqtutil/sync-wait.h"                  // SynchronousWaiter
 
 // smbase
@@ -43,8 +44,7 @@ RFA_SyncMultiClient::RFA_SyncMultiClient(
 
 RFA_SyncMultiClient::~RFA_SyncMultiClient()
 {
-  // See doc/signals-and-dtors.txt.
-  QObject::disconnect(m_rfaAMClient, nullptr, this, nullptr);
+  disconnectSignals(m_rfaAMClient, this);
 }
 
 

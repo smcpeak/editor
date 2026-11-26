@@ -36,7 +36,7 @@
 #include "smqtutil/qhboxframe.h"                 // QHBoxFrame
 #include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtguiutil.h"                  // CursorSetRestore, setTrueFrameGeometry
-#include "smqtutil/qtutil.h"                     // toQString
+#include "smqtutil/qtutil.h"                     // toQString, disconnectSignals
 
 // smbase
 #include "smbase/chained-cond.h"                 // cc::z_le_lt
@@ -207,9 +207,8 @@ EditorWindow::~EditorWindow()
   delete m_editorWidgetFrame;
   m_editorWidgetFrame = nullptr;
 
-  // See doc/signals-and-dtors.txt.
-  QObject::disconnect(m_sarPanel,     NULL, m_editorGlobal, NULL);
-  QObject::disconnect(m_editorGlobal, NULL, this, NULL);
+  disconnectSignals(m_sarPanel, m_editorGlobal);
+  disconnectSignals(m_editorGlobal, this);
 }
 
 

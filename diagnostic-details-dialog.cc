@@ -9,7 +9,7 @@
 
 #include "smqtutil/qstringb.h"         // qstringb
 #include "smqtutil/qtguiutil.h"        // removeWindowContextHelpButton
-#include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME
+#include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME, disconnectSignals
 #include "smqtutil/sm-table-widget.h"  // SMTableWidget
 
 #include "smbase/exc.h"                // GENERIC_CATCH_BEGIN/END, smbase::XBase
@@ -165,7 +165,7 @@ void DiagnosticDetailsDialog::showEvent(QShowEvent *event)
 
 DiagnosticDetailsDialog::~DiagnosticDetailsDialog()
 {
-  QObject::disconnect(m_table->selectionModel(), nullptr, this, nullptr);
+  disconnectSignals(m_table->selectionModel(), this);
 }
 
 

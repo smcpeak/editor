@@ -9,7 +9,7 @@
 #include "command-runner-test.h"       // helper classes for this module
 
 // smqtutil
-#include "smqtutil/qtutil.h"           // toString
+#include "smqtutil/qtutil.h"           // toString, disconnectSignals
 #include "smqtutil/timer-event-loop.h" // sleepWhilePumpingEvents
 
 // smbase
@@ -661,8 +661,7 @@ CRTester::CRTester(CommandRunner *runner, Protocol protocol)
 
 CRTester::~CRTester()
 {
-  // For safety, should disconnect slots in destructor.
-  QObject::disconnect(m_commandRunner, NULL, this, NULL);
+  disconnectSignals(m_commandRunner, this);
 }
 
 

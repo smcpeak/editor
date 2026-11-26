@@ -18,7 +18,7 @@
 // smqtutil
 #include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtguiutil.h"                  // keysString, showRaiseAndActivateWindow
-#include "smqtutil/qtutil.h"                     // installSMQtUtilMessageHandler, toString
+#include "smqtutil/qtutil.h"                     // installSMQtUtilMessageHandler, toString, disconnectSignals
 
 // smbase
 #include "smbase/chained-cond.h"                 // smbase::cc::z_le_lt
@@ -210,8 +210,8 @@ UISGTNameDialog::UISGTNameDialog(QString const &name, QWidget *parent)
 
 UISGTNameDialog::~UISGTNameDialog()
 {
-  QObject::disconnect(m_okButton, nullptr, this, nullptr);
-  QObject::disconnect(m_cancelButton, nullptr, this, nullptr);
+  disconnectSignals(m_okButton, this);
+  disconnectSignals(m_cancelButton, this);
 }
 
 
@@ -270,8 +270,8 @@ UISGTTableDialog::UISGTTableDialog(QWidget *parent)
 
 UISGTTableDialog::~UISGTTableDialog()
 {
-  QObject::disconnect(m_addRowButton, nullptr, this, nullptr);
-  QObject::disconnect(m_closeButton, nullptr, this, nullptr);
+  disconnectSignals(m_addRowButton, this);
+  disconnectSignals(m_closeButton, this);
 }
 
 
@@ -450,17 +450,16 @@ UISGTMainWindow::UISGTMainWindow()
 
 UISGTMainWindow::~UISGTMainWindow()
 {
-  // See doc/signals-and-dtors.txt.
-  QObject::disconnect(m_clickButton, nullptr, this, nullptr);
-  QObject::disconnect(m_copyButton, nullptr, this, nullptr);
-  QObject::disconnect(m_delayButton, nullptr, this, nullptr);
-  QObject::disconnect(m_delayTimer, nullptr, this, nullptr);
-  QObject::disconnect(m_quitAction, nullptr, this, nullptr);
-  QObject::disconnect(m_featureAction, nullptr, this, nullptr);
-  QObject::disconnect(m_resetAction, nullptr, this, nullptr);
-  QObject::disconnect(m_editNameAction, nullptr, this, nullptr);
-  QObject::disconnect(m_tableAction, nullptr, this, nullptr);
-  QObject::disconnect(m_messageBoxAction, nullptr, this, nullptr);
+  disconnectSignals(m_clickButton, this);
+  disconnectSignals(m_copyButton, this);
+  disconnectSignals(m_delayButton, this);
+  disconnectSignals(m_delayTimer, this);
+  disconnectSignals(m_quitAction, this);
+  disconnectSignals(m_featureAction, this);
+  disconnectSignals(m_resetAction, this);
+  disconnectSignals(m_editNameAction, this);
+  disconnectSignals(m_tableAction, this);
+  disconnectSignals(m_messageBoxAction, this);
 }
 
 

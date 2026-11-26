@@ -8,7 +8,7 @@
 #include "editor-widget.h"             // EditorWidget
 #include "editor-window.h"             // EditorWindow (for conversion to QWidget*)
 
-#include "smqtutil/qtutil.h"           // toQString, toString(QSize)
+#include "smqtutil/qtutil.h"           // toQString, toString(QSize), disconnectSignals
 
 #include "smbase/dev-warning.h"        // DEV_WARNING
 #include "smbase/gdvalue.h"            // gdv::toGDValue
@@ -394,11 +394,10 @@ ApplyCommandDialog::~ApplyCommandDialog()
 {
   TRACE1("running destructor");
 
-  // See doc/signals-and-dtors.txt.
-  QObject::disconnect(m_filterLineEdit, nullptr, this, nullptr);
-  QObject::disconnect(m_copyButton, nullptr, this, nullptr);
-  QObject::disconnect(m_deleteButton, nullptr, this, nullptr);
-  QObject::disconnect(m_clearNewCommandButton, nullptr, this, nullptr);
+  disconnectSignals(m_filterLineEdit, this);
+  disconnectSignals(m_copyButton, this);
+  disconnectSignals(m_deleteButton, this);
+  disconnectSignals(m_clearNewCommandButton, this);
 }
 
 

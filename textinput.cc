@@ -4,7 +4,7 @@
 #include "textinput.h"                 // this module
 
 #include "smqtutil/qstringb.h"         // qstringb
-#include "smqtutil/qtutil.h"           // toString(QString)
+#include "smqtutil/qtutil.h"           // toString(QString), disconnectSignals
 
 #include "smbase/trace.h"              // TRACE
 #include "smbase/xassert.h"            // xassert
@@ -88,8 +88,7 @@ TextInputDialog::TextInputDialog(QString const &title,
 
 TextInputDialog::~TextInputDialog()
 {
-  // See doc/signals-and-dtors.txt.
-  QObject::disconnect(m_comboBox->lineEdit(), NULL, this, NULL);
+  disconnectSignals(m_comboBox->lineEdit(), this);
 }
 
 

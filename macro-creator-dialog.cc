@@ -7,7 +7,7 @@
 #include "editor-global.h"             // EditorGlobal
 
 #include "smqtutil/qstringb.h"         // qstringb
-#include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME, toQString
+#include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME, toQString, disconnectSignals
 #include "smqtutil/sm-line-edit.h"     // SMLineEdit
 
 #include <QLabel>
@@ -79,8 +79,7 @@ MacroCreatorDialog::MacroCreatorDialog(
 
 MacroCreatorDialog::~MacroCreatorDialog()
 {
-  // See doc/signals-and-dtors.txt.
-  QObject::disconnect(m_numberOfCommands, nullptr, this, nullptr);
+  disconnectSignals(m_numberOfCommands, this);
 }
 
 

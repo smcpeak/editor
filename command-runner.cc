@@ -5,7 +5,7 @@
 
 // smqtutil
 #include "smqtutil/qstringb.h"         // qstringb
-#include "smqtutil/qtutil.h"           // waitForQtEvent
+#include "smqtutil/qtutil.h"           // waitForQtEvent, disconnectSignals
 
 // smbase
 #include "smbase/codepoint.h"          // isShellMetacharacter
@@ -115,8 +115,7 @@ CommandRunner::~CommandRunner()
 {
   TRACE_CR("~CommandRunner: state=" << toString(m_process.state()));
 
-  // See doc/signals-and-dtors.txt.
-  QObject::disconnect(&m_process, NULL, this, NULL);
+  disconnectSignals(&m_process, this);
 
   if (m_killedProcess && m_process.state() != QProcess::NotRunning) {
     // We already tried and failed to kill the process.  The QProcess

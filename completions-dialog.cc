@@ -6,7 +6,7 @@
 #include "lsp-data.h"                  // LSP_CompletionList, LSP_CompletionItem
 
 #include "smqtutil/qtguiutil.h"        // removeWindowContextHelpButton, keysString, trueMoveWindow
-#include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME
+#include "smqtutil/qtutil.h"           // SET_QOBJECT_NAME, disconnectSignals
 
 #include "smbase/gdvalue-optional.h"   // gdv::toGDValue(std::optional)
 #include "smbase/gdvalue.h"            // gdv::GDValue for TRACE1_GDVN_EXPRS
@@ -34,7 +34,7 @@ static int const HSCROLL_STEP = 100;
 
 CompletionsDialog::~CompletionsDialog()
 {
-  QObject::disconnect(m_filterLineEdit, nullptr, nullptr, nullptr);
+  disconnectSignals(m_filterLineEdit, nullptr);
 }
 
 

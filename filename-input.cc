@@ -11,7 +11,7 @@
 // smqtutil
 #include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtguiutil.h"                  // messageBox
-#include "smqtutil/qtutil.h"                     // toString(QString)
+#include "smqtutil/qtutil.h"                     // toString(QString), disconnectSignals
 #include "smqtutil/sm-line-edit.h"               // SMLineEdit
 
 // smbase
@@ -165,11 +165,10 @@ FilenameInputDialog::FilenameInputDialog(
 
 FilenameInputDialog::~FilenameInputDialog()
 {
-  // See doc/signals-and-dtors.txt.
-  QObject::disconnect(m_connectionDropDown, nullptr, this, nullptr);
-  QObject::disconnect(m_filenameEdit, nullptr, this, nullptr);
-  QObject::disconnect(m_helpButton, nullptr, this, nullptr);
-  QObject::disconnect(m_rfaAMClient, nullptr, this, nullptr);
+  disconnectSignals(m_connectionDropDown, this);
+  disconnectSignals(m_filenameEdit, this);
+  disconnectSignals(m_helpButton, this);
+  disconnectSignals(m_rfaAMClient, this);
 }
 
 

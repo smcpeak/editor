@@ -6,7 +6,7 @@
 #include "command-runner.h"            // CommandRunner
 #include "json-rpc-reply.h"            // JSON_RPC_Reply
 
-#include "smqtutil/qtutil.h"           // toString(QString)
+#include "smqtutil/qtutil.h"           // toString(QString), disconnectSignals
 
 #include "smbase/container-util.h"     // smbase::contains
 #include "smbase/exc.h"                // smbase::xformat
@@ -409,7 +409,7 @@ void JSON_RPC_Client::on_processTerminated() NOEXCEPT
 
 JSON_RPC_Client::~JSON_RPC_Client()
 {
-  QObject::disconnect(&m_child, nullptr, this, nullptr);
+  disconnectSignals(&m_child, this);
 }
 
 

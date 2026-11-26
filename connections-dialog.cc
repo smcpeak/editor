@@ -110,7 +110,6 @@ ConnectionsDialog::ConnectionsDialog(RFA_AsyncMultiClient *rfaAMClient)
 
 ConnectionsDialog::~ConnectionsDialog() noexcept
 {
-  // See doc/signals-and-dtors.txt.
   disconnectSignalSender(m_refreshButton);
   disconnectSignalSender(m_connectButton);
   disconnectSignalSender(m_restartButton);
