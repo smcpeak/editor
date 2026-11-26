@@ -6,6 +6,7 @@
 // Needs to come before something, not sure what.
 #include "smbase/gdvalue-unique-ptr-fwd.h"       // gdv::toGDValue(std::unique_ptr)
 
+// editor
 #include "doc-name.h"                            // DocumentName
 #include "fail-reason-opt.h"                     // FailReasonOpt
 #include "host-name.h"                           // HostName
@@ -18,6 +19,10 @@
 #include "rfa-async-multi-client.h"              // RFA_AbstractAsyncMultiClient
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics
 
+// smqtutil
+#include "smqtutil/qtutil.h"                     // disconnectSignals
+
+// smbase
 #include "smbase/chained-cond.h"                 // smbase::cc::z_le_lt
 #include "smbase/exc.h"                          // smbase::xmessage, GENERIC_CATCH_{BEGIN,END}
 #include "smbase/gdvalue-list.h"                 // gdv::toGDValue(std::list)
@@ -31,6 +36,7 @@
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
 #include "smbase/xassert-eq-container.h"         // XASSERT_EQUAL_SETS
 
+// libc++
 #include <memory>                                // std::unique_ptr
 #include <string>                                // std::string
 
@@ -356,17 +362,11 @@ void LSPClientManager::connectSignals(LSPClient *client)
 }
 
 
-void LSPClientManager::disconnectSignals(LSPClient *client)
-{
-  QObject::disconnect(client, nullptr, this, nullptr);
-}
-
-
 void LSPClientManager::disconnectAllClientSignals()
 {
   for (auto &kv : m_clients) {
     LSPClient &client = kv.second->client();
-    disconnectSignals(&client);
+    disconnectSignals(&client, this);
   }
 }
 

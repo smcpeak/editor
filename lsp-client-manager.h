@@ -154,9 +154,6 @@ private:     // methods
   // Connect the signals from `client` to `this`.
   void connectSignals(LSPClient *client);
 
-  // Disconnect signals from `client`.
-  void disconnectSignals(LSPClient *client);
-
   // Disconnect all client signals.
   void disconnectAllClientSignals();
 
