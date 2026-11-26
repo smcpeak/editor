@@ -28,6 +28,8 @@ class QImage;
 class QKeyEvent;
 class QLabel;
 class QLineEdit;
+class QListView;
+class QListWidget;
 class QMenu;
 class QMouseEvent;
 class QPushButton;
@@ -136,6 +138,33 @@ public Q_SLOTS:
 };
 
 
+// Modeless window with lists.
+class UISGTListWindow : public QWidget {
+  Q_OBJECT
+  NO_OBJECT_COPIES(UISGTListWindow);
+
+public:      // data
+  // Number of the next item that `m_addItemButton` adds.
+  int m_nextItemNumber;
+
+  // Widgets.  They are owned by their Qt parents.
+  QListWidget *m_list;
+  QPushButton *m_addItemButton;
+  QPushButton *m_removeItemButton;
+  QListView *m_listView;
+
+public:      // funcs
+  // `parent` is the window that owns this one; this is nonetheless a
+  // separate top-level window.
+  explicit UISGTListWindow(QWidget *parent);
+  ~UISGTListWindow();
+
+public Q_SLOTS:
+  void on_addItemButtonClicked() NOEXCEPT;
+  void on_removeItemButtonClicked() NOEXCEPT;
+};
+
+
 // The main window of the test program.
 class UISGTMainWindow : public QMainWindow,
                         public UIShellGUIQueryable {
@@ -179,12 +208,16 @@ public:      // data
   UISGTMousePad *m_mousePad;
   QTextEdit *m_notes;
 
+  // The List Window.  It is created hidden.
+  UISGTListWindow *m_listWindow;
+
   QAction *m_quitAction;
   QAction *m_featureAction;
   QAction *m_resetAction;
   QAction *m_editNameAction;
   QAction *m_tableAction;
   QAction *m_messageBoxAction;
+  QAction *m_listWindowAction;
 
 private:     // funcs
   void buildMenus();
@@ -228,6 +261,7 @@ public Q_SLOTS:
   void on_editNameActionTriggered() NOEXCEPT;
   void on_tableActionTriggered() NOEXCEPT;
   void on_messageBoxActionTriggered() NOEXCEPT;
+  void on_listWindowActionTriggered() NOEXCEPT;
 };
 
 

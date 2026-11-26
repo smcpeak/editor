@@ -1,0 +1,39 @@
+// check-list-view.uis
+// Test CheckListViewSelectedItem, using the List Window.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+
+Shortcut("mainWindow.menuBar.windowsMenu.listWindowAction" "F4")
+CheckFocusWindow("mainWindow.listWindow")
+
+SetFocus("mainWindow.listWindow.listView")
+CheckFocusWidget("mainWindow.listWindow.listView")
+CheckListViewSelectedItem("mainWindow.listWindow.listView" "one")
+
+// Arrow keys move the current item.
+FocusKeyPR("Key_Down" "")
+CheckListViewSelectedItem("mainWindow.listWindow.listView" "two")
+FocusKeyPR("Key_Down" "")
+CheckListViewSelectedItem("mainWindow.listWindow.listView" "three")
+
+// It stays on the last item.
+FocusKeyPR("Key_Down" "")
+CheckListViewSelectedItem("mainWindow.listWindow.listView" "three")
+
+FocusKeyPR("Key_Up" "")
+CheckListViewSelectedItem("mainWindow.listWindow.listView" "two")
+
+// It also works on a list widget, which is a kind of list view.
+CheckListViewSelectedItem("mainWindow.listWindow.list" "alpha")
+
+CheckFails(
+  CheckListViewSelectedItem("mainWindow.listWindow.listView" "one")
+  "should have been \"one\" but was \"two\"")
+
+  ]
+}
+
+// EOF

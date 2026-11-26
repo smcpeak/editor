@@ -1,0 +1,52 @@
+// check-focus.uis
+// Test CheckFocusWindow and CheckFocusWidget as focus moves between
+// the main window, a modal dialog and the List Window.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+CheckFocusWindow("mainWindow")
+
+// A modal dialog.
+Shortcut("mainWindow.menuBar.dialogsMenu.tableAction" "F3")
+CheckFocusWindow("mainWindow.tableDialog")
+CheckFocusWidget("mainWindow.tableDialog.table")
+
+CheckFails(
+  CheckFocusWindow("mainWindow")
+  "should have been \"mainWindow\" but was \"mainWindow.tableDialog\"")
+CheckFails(
+  CheckFocusWidget("mainWindow.tableDialog.closeButton")
+  "should have been \"mainWindow.tableDialog.closeButton\" but was \"mainWindow.tableDialog.table\"")
+
+ClickButton("mainWindow.tableDialog.closeButton")
+CheckFocusWindow("mainWindow")
+CheckFocusWidget("mainWindow.central.clickButton")
+
+// The List Window.
+Shortcut("mainWindow.menuBar.windowsMenu.listWindowAction" "F4")
+CheckFocusWindow("mainWindow.listWindow")
+CheckFocusWidget("mainWindow.listWindow.list")
+
+SetFocus("mainWindow.listWindow.listView")
+CheckFocusWindow("mainWindow.listWindow")
+CheckFocusWidget("mainWindow.listWindow.listView")
+
+CheckFails(
+  CheckFocusWidget("mainWindow.listWindow.list")
+  "should have been \"mainWindow.listWindow.list\" but was \"mainWindow.listWindow.listView\"")
+
+// Back to the main window.
+ActivateWindow("mainWindow")
+CheckFocusWindow("mainWindow")
+CheckFocusWidget("mainWindow.central.clickButton")
+
+CheckFails(
+  CheckFocusWindow("mainWindow.listWindow")
+  "should have been \"mainWindow.listWindow\" but was \"mainWindow\"")
+
+  ]
+}
+
+// EOF

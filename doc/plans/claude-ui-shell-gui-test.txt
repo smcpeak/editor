@@ -413,7 +413,9 @@ Modeless window
     CheckListViewSelectedItem works on any list view.
     Window > List Window shows and activates it if it is already
     open.  It is the target of ActivateWindow, CheckWindowTitle, and
-    ResizeEvent on a second top-level window.
+    ResizeEvent on a second top-level window.  As with the modal
+    dialogs, its path is "mainWindow.listWindow", because the main
+    window is its Qt parent.
 
 Command handler
 ---------------

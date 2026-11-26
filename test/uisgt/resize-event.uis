@@ -21,6 +21,22 @@ CheckFails(
 // The pad has a fixed size.
 CheckSize("mainWindow.central.mousePad" QSize(100 100))
 
+// A widget in a second top-level window.
+Shortcut("mainWindow.menuBar.windowsMenu.listWindowAction" "F4")
+CheckFocusWindow("mainWindow.listWindow")
+
+ResizeEvent("mainWindow.listWindow.list" QSize(320 240))
+CheckSize("mainWindow.listWindow.list" QSize(320 240))
+
+ResizeEvent("mainWindow.listWindow.list" QSize(360 260))
+CheckSize("mainWindow.listWindow.list" QSize(360 260))
+
+// The list view's height is fixed, but its width follows the list's.
+CheckSize("mainWindow.listWindow.listView" QSize(360 80))
+
+// Resizing the List Window does not affect the main window.
+CheckSize("mainWindow.central.notes" QSize(450 200))
+
   ]
 }
 

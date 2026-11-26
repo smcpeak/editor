@@ -1,0 +1,55 @@
+// check-window-title.uis
+// Test CheckFocusWindowTitle, CheckFocusWindowTitleMatches and
+// CheckWindowTitle.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+
+// The main window.
+CheckFocusWindowTitle("UI Shell GUI Test")
+CheckFocusWindowTitleMatches("GUI")
+CheckWindowTitle("mainWindow" "UI Shell GUI Test")
+
+// Any widget in the window can name it.
+CheckWindowTitle("mainWindow.central.notes" "UI Shell GUI Test")
+
+// The List Window.
+Shortcut("mainWindow.menuBar.windowsMenu.listWindowAction" "F4")
+CheckFocusWindow("mainWindow.listWindow")
+CheckFocusWindowTitle("List Window")
+CheckFocusWindowTitleMatches("^List")
+CheckWindowTitle("mainWindow.listWindow.list" "List Window")
+
+// The main window's title, while it does not have focus.
+CheckWindowTitle("mainWindow" "UI Shell GUI Test")
+
+// The Edit Name dialog.
+ActivateWindow("mainWindow")
+CheckFocusWindow("mainWindow")
+Shortcut("mainWindow.menuBar.dialogsMenu.editNameAction" "F2")
+CheckFocusWindow("mainWindow.nameDialog")
+CheckFocusWindowTitle("Edit Name")
+CheckFocusWindowTitleMatches("Name$")
+CheckWindowTitle("mainWindow.nameDialog.nameEdit" "Edit Name")
+CheckWindowTitle("mainWindow.listWindow" "List Window")
+
+CheckFails(
+  CheckFocusWindowTitle("List Window")
+  "should have been \"List Window\" but was \"Edit Name\"")
+CheckFails(
+  CheckFocusWindowTitleMatches("^List")
+  "the actual string \"Edit Name\" did not match the regex \"\\^List\"")
+CheckFails(
+  CheckWindowTitle("mainWindow" "Edit Name")
+  "should have been \"Edit Name\" but was \"UI Shell GUI Test\"")
+
+ClickButton("mainWindow.nameDialog.cancelButton")
+CheckFocusWindow("mainWindow")
+CheckFocusWindowTitle("UI Shell GUI Test")
+
+  ]
+}
+
+// EOF

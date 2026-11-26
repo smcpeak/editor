@@ -42,6 +42,8 @@
 #include <QKeySequence>
 #include <QLabel>
 #include <QLineEdit>
+#include <QListView>
+#include <QListWidget>
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
@@ -49,6 +51,7 @@
 #include <QPushButton>
 #include <QString>
 #include <QStringList>
+#include <QStringListModel>
 #include <QTableWidget>
 #include <QTableWidgetItem>
 #include <QTextEdit>
@@ -56,6 +59,7 @@
 #include <QVBoxLayout>
 
 // libc++
+#include <algorithm>                             // std::min
 #include <exception>                             // std::exception
 #include <iostream>                              // std::{cout, cerr, endl}
 #include <memory>                                // std::unique_ptr
@@ -298,6 +302,98 @@ void UISGTTableDialog::on_addRowButtonClicked() NOEXCEPT
 }
 
 
+// -------------------------- UISGTListWindow --------------------------
+UISGTListWindow::UISGTListWindow(QWidget *parent)
+  : QWidget(parent, Qt::Window),
+    m_nextItemNumber(1),
+    m_list(nullptr),
+    m_addItemButton(nullptr),
+    m_removeItemButton(nullptr),
+    m_listView(nullptr)
+{
+  setObjectName("listWindow");
+  setWindowTitle("List Window");
+
+  QVBoxLayout *vbox = new QVBoxLayout(this);
+
+  m_list = new QListWidget(this);
+  m_list->setObjectName("list");
+  m_list->addItems(QStringList{"alpha", "beta", "gamma"});
+  m_list->setCurrentRow(0);
+
+  // Give all extra space to `m_list`, so that `ResizeEvent` can set
+  // its size exactly.
+  vbox->addWidget(m_list, 1 /*stretch*/);
+
+  QHBoxLayout *hbox = new QHBoxLayout();
+  vbox->addLayout(hbox);
+
+  m_addItemButton = new QPushButton("&Add Item", this);
+  m_addItemButton->setObjectName("addItemButton");
+  hbox->addWidget(m_addItemButton);
+  QObject::connect(m_addItemButton, &QPushButton::clicked,
+                   this, &UISGTListWindow::on_addItemButtonClicked);
+
+  m_removeItemButton = new QPushButton("&Remove Item", this);
+  m_removeItemButton->setObjectName("removeItemButton");
+  hbox->addWidget(m_removeItemButton);
+  QObject::connect(m_removeItemButton, &QPushButton::clicked,
+                   this, &UISGTListWindow::on_removeItemButtonClicked);
+
+  hbox->addStretch(1);
+
+  // A plain list view, rather than a list widget.  Its model is owned
+  // by the view.
+  m_listView = new QListView(this);
+  m_listView->setObjectName("listView");
+  m_listView->setModel(new QStringListModel(
+    QStringList{"one", "two", "three"}, m_listView));
+  m_listView->setCurrentIndex(m_listView->model()->index(0, 0));
+  m_listView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+  // Fixed, so it does not take any of the extra space.
+  m_listView->setFixedHeight(80);
+  vbox->addWidget(m_listView);
+
+  m_list->setFocus();
+}
+
+
+UISGTListWindow::~UISGTListWindow()
+{
+  disconnectSignals(m_addItemButton, this);
+  disconnectSignals(m_removeItemButton, this);
+}
+
+
+void UISGTListWindow::on_addItemButtonClicked() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  m_list->addItem(QString("item %1").arg(m_nextItemNumber++));
+  m_list->setCurrentRow(m_list->count() - 1);
+
+  GENERIC_CATCH_END
+}
+
+
+void UISGTListWindow::on_removeItemButtonClicked() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  int const row = m_list->currentRow();
+  if (row >= 0) {
+    delete m_list->takeItem(row);
+
+    // Make the item that took its place current, or the new last item
+    // if it was last, rather than relying on what Qt does.
+    m_list->setCurrentRow(std::min(row, m_list->count() - 1));
+  }
+
+  GENERIC_CATCH_END
+}
+
+
 // -------------------------- UISGTMainWindow --------------------------
 UISGTMainWindow::UISGTMainWindow()
   : QMainWindow(),
@@ -322,12 +418,14 @@ UISGTMainWindow::UISGTMainWindow()
     m_mouseLabel(nullptr),
     m_mousePad(nullptr),
     m_notes(nullptr),
+    m_listWindow(nullptr),
     m_quitAction(nullptr),
     m_featureAction(nullptr),
     m_resetAction(nullptr),
     m_editNameAction(nullptr),
     m_tableAction(nullptr),
-    m_messageBoxAction(nullptr)
+    m_messageBoxAction(nullptr),
+    m_listWindowAction(nullptr)
 {
   setObjectName("mainWindow");
   setWindowTitle("UI Shell GUI Test");
@@ -443,6 +541,9 @@ UISGTMainWindow::UISGTMainWindow()
   layout->setColumnStretch(1, 1);
   ++row;
 
+  // Its paths start with "mainWindow" since this is its Qt parent.
+  m_listWindow = new UISGTListWindow(this);
+
   // Start with the focus on the button.
   m_clickButton->setFocus();
 }
@@ -460,6 +561,7 @@ UISGTMainWindow::~UISGTMainWindow()
   disconnectSignals(m_editNameAction, this);
   disconnectSignals(m_tableAction, this);
   disconnectSignals(m_messageBoxAction, this);
+  disconnectSignals(m_listWindowAction, this);
 }
 
 
@@ -507,6 +609,16 @@ void UISGTMainWindow::buildMenus()
     QObject::connect(
       m_messageBoxAction, &QAction::triggered,
       this, &UISGTMainWindow::on_messageBoxActionTriggered);
+  }
+
+  {
+    QMenu *menu = addMenu("&Windows", "windowsMenu");
+
+    m_listWindowAction =
+      addAction(menu, "&List Window", "listWindowAction", "F4");
+    QObject::connect(
+      m_listWindowAction, &QAction::triggered,
+      this, &UISGTMainWindow::on_listWindowActionTriggered);
   }
 }
 
@@ -737,6 +849,17 @@ void UISGTMainWindow::on_messageBoxActionTriggered() NOEXCEPT
 
   box.exec();
   m_messageLabel->setText("message: closed");
+
+  GENERIC_CATCH_END
+}
+
+
+void UISGTMainWindow::on_listWindowActionTriggered() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  // This also works if it is already shown.
+  showRaiseAndActivateWindow(m_listWindow);
 
   GENERIC_CATCH_END
 }

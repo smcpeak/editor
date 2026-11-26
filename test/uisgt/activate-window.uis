@@ -1,0 +1,40 @@
+// activate-window.uis
+// Test ActivateWindow, using the main window and the List Window.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+
+Shortcut("mainWindow.menuBar.windowsMenu.listWindowAction" "F4")
+CheckFocusWindow("mainWindow.listWindow")
+
+ActivateWindow("mainWindow")
+CheckFocusWindow("mainWindow")
+CheckFocusWidget("mainWindow.central.clickButton")
+
+ActivateWindow("mainWindow.listWindow")
+CheckFocusWindow("mainWindow.listWindow")
+CheckFocusWidget("mainWindow.listWindow.list")
+
+// Each window remembers its focus widget.
+SetFocus("mainWindow.listWindow.listView")
+ActivateWindow("mainWindow")
+CheckFocusWidget("mainWindow.central.clickButton")
+ActivateWindow("mainWindow.listWindow")
+CheckFocusWidget("mainWindow.listWindow.listView")
+
+// The menu item activates the List Window when it is already open.
+ActivateWindow("mainWindow")
+CheckFocusWindow("mainWindow")
+Shortcut("mainWindow.menuBar.windowsMenu.listWindowAction" "F4")
+CheckFocusWindow("mainWindow.listWindow")
+
+CheckFails(
+  CheckFocusWindow("mainWindow")
+  "should have been \"mainWindow\" but was \"mainWindow.listWindow\"")
+
+  ]
+}
+
+// EOF

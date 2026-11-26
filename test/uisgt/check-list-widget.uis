@@ -1,0 +1,68 @@
+// check-list-widget.uis
+// Test the CheckListWidget* commands, using the List Window.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+
+Shortcut("mainWindow.menuBar.windowsMenu.listWindowAction" "F4")
+CheckFocusWindow("mainWindow.listWindow")
+CheckFocusWidget("mainWindow.listWindow.list")
+
+CheckListWidgetCount("mainWindow.listWindow.list" 3)
+CheckListWidgetContents("mainWindow.listWindow.list"
+  ["alpha" "beta" "gamma"])
+CheckListWidgetCurrentRow("mainWindow.listWindow.list" 0)
+
+// Arrow keys move the current row.
+KeyPress("mainWindow.listWindow.list" "Key_Down" "")
+CheckListWidgetCurrentRow("mainWindow.listWindow.list" 1)
+KeyPress("mainWindow.listWindow.list" "Key_Down" "")
+CheckListWidgetCurrentRow("mainWindow.listWindow.list" 2)
+KeyPress("mainWindow.listWindow.list" "Key_Up" "")
+CheckListWidgetCurrentRow("mainWindow.listWindow.list" 1)
+
+// Adding an item makes it current.
+ClickButton("mainWindow.listWindow.addItemButton")
+CheckListWidgetCount("mainWindow.listWindow.list" 4)
+CheckListWidgetContents("mainWindow.listWindow.list"
+  ["alpha" "beta" "gamma" "item 1"])
+CheckListWidgetCurrentRow("mainWindow.listWindow.list" 3)
+
+ClickButton("mainWindow.listWindow.addItemButton")
+CheckListWidgetContents("mainWindow.listWindow.list"
+  ["alpha" "beta" "gamma" "item 1" "item 2"])
+CheckListWidgetCurrentRow("mainWindow.listWindow.list" 4)
+
+// Removing an item makes the next one current.
+KeyPress("mainWindow.listWindow.list" "Key_Up" "")
+CheckListWidgetCurrentRow("mainWindow.listWindow.list" 3)
+ClickButton("mainWindow.listWindow.removeItemButton")
+CheckListWidgetContents("mainWindow.listWindow.list"
+  ["alpha" "beta" "gamma" "item 2"])
+CheckListWidgetCurrentRow("mainWindow.listWindow.list" 3)
+
+// Removing the last item makes the new last one current.
+ClickButton("mainWindow.listWindow.removeItemButton")
+CheckListWidgetCount("mainWindow.listWindow.list" 3)
+CheckListWidgetContents("mainWindow.listWindow.list"
+  ["alpha" "beta" "gamma"])
+CheckListWidgetCurrentRow("mainWindow.listWindow.list" 2)
+
+// Wrong expected values.
+CheckFails(
+  CheckListWidgetCount("mainWindow.listWindow.list" 4)
+  "should have been 4 but was 3")
+CheckFails(
+  CheckListWidgetContents("mainWindow.listWindow.list"
+    ["alpha" "beta"])
+  "should have been \\[\"alpha\" \"beta\"\\] but was \\[\"alpha\" \"beta\" \"gamma\"\\]")
+CheckFails(
+  CheckListWidgetCurrentRow("mainWindow.listWindow.list" 0)
+  "should have been 0 but was 2")
+
+  ]
+}
+
+// EOF
