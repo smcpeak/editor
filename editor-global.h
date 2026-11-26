@@ -226,7 +226,12 @@ private Q_SLOTS:
 
 public:       // funcs
   // Construct application state from `main()`.
-  EditorGlobal(int argc, char **argv);
+  //
+  // `argc` is passed by reference because `QApplication` accepts it
+  // that way (and then stores it), so we need to be passed a reference
+  // that lives longer than the object.
+  EditorGlobal(int &argc, char **argv);
+
   ~EditorGlobal();
 
   // Assert invariants on all documents, etc.  Throw on failure.

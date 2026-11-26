@@ -106,7 +106,7 @@ char const EditorGlobal::appName[] = "Editor";
 int const EditorGlobal::MAX_NUM_RECENT_COMMANDS = 100;
 
 
-EditorGlobal::EditorGlobal(int argc, char **argv)
+EditorGlobal::EditorGlobal(int &argc, char **argv)
   : QApplication(argc, argv),
     m_osWaitTimer(),
     m_pixmaps(),
