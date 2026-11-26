@@ -501,6 +501,7 @@ all: gui-tests.exe
 # ------------------------- ui-shell-gui-test --------------------------
 # ui-shell modules that are tested using a GUI.
 UI_SHELL_GT_OBJS :=
+UI_SHELL_GT_OBJS += event-recorder.o
 UI_SHELL_GT_OBJS += ui-shell-app.o
 UI_SHELL_GT_OBJS += ui-shell-gui-command-handler.moc.o
 UI_SHELL_GT_OBJS += ui-shell-gui-command-handler.o
@@ -517,7 +518,6 @@ UISGT_OBJS :=
 UISGT_OBJS += $(UI_SHELL_UT_OBJS)
 UISGT_OBJS += $(UI_SHELL_GT_OBJS)
 
-UISGT_OBJS += event-recorder.o
 UISGT_OBJS += file-mod-time.o
 
 UISGT_OBJS += ui-shell-gui-test.moc.o
@@ -623,7 +623,6 @@ EDITOR_OBJS += editor-widget.moc.o
 EDITOR_OBJS += editor-widget.o
 EDITOR_OBJS += editor-window.moc.o
 EDITOR_OBJS += editor-window.o
-EDITOR_OBJS += event-recorder.o
 EDITOR_OBJS += filename-input.o
 EDITOR_OBJS += filename-input.moc.o
 EDITOR_OBJS += fonts-dialog.o
