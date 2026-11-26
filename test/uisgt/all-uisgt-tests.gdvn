@@ -18,8 +18,11 @@
   [ "./ui-shell-gui-test.exe" "-uisCmds=test/uisgt/wait-until-check-label.uis" ]
   [ "./ui-shell-gui-test.exe" "-uisCmds=test/uisgt/check-combo-box.uis" ]
   [ "./ui-shell-gui-test.exe" "-uisCmds=test/uisgt/check-text-edit.uis" ]
+  [ "./ui-shell-gui-test.exe" "-uisCmds=test/uisgt/check-table-widget.uis" ]
+  [ "./ui-shell-gui-test.exe" "-uisCmds=test/uisgt/check-message-box.uis" ]
   [ "./ui-shell-gui-test.exe" "-uisCmds=test/uisgt/check-clipboard.uis" ]
   [ "./ui-shell-gui-test.exe" "-uisCmds=test/uisgt/check-query.uis" ]
+  [ "./ui-shell-gui-test.exe" "-uisCmds=test/uisgt/modal-dialog.uis" ]
 ]
 
 // EOF

@@ -1,0 +1,63 @@
+// modal-dialog.uis
+// Test the Edit Name dialog end to end.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+KeyPress("mainWindow.central.nameEdit" "Key_A" "a")
+CheckLabel("mainWindow.central.nameResultLabel" "name result: (none)")
+
+// Open, type, OK.  The dialog starts with the main window's name.
+Shortcut("mainWindow.menuBar.dialogsMenu.editNameAction" "F2")
+CheckFocusWindow("nameDialog")
+CheckFocusWidget("nameDialog.nameEdit")
+CheckWindowTitle("nameDialog" "Edit Name")
+CheckLineEditText("nameDialog.nameEdit" "a")
+
+// The text might be selected on entry, so go to the end first.
+FocusKeyPR("Key_End" "")
+FocusKeyPR("Key_B" "b")
+CheckLineEditText("nameDialog.nameEdit" "ab")
+ClickButton("nameDialog.okButton")
+CheckFocusWindow("mainWindow")
+CheckLabel("mainWindow.central.nameResultLabel" "name result: ab")
+
+// The main window's name is not changed by the dialog.
+CheckLineEditText("mainWindow.central.nameEdit" "a")
+
+// Open, type, Cancel.
+Shortcut("mainWindow.menuBar.dialogsMenu.editNameAction" "F2")
+CheckFocusWidget("nameDialog.nameEdit")
+FocusKeyPR("Key_End" "")
+FocusKeyPR("Key_C" "c")
+CheckLineEditText("nameDialog.nameEdit" "ac")
+ClickButton("nameDialog.cancelButton")
+CheckFocusWindow("mainWindow")
+CheckLabel("mainWindow.central.nameResultLabel" "name result: ab")
+
+// Return activates the default button, OK.
+Shortcut("mainWindow.menuBar.dialogsMenu.editNameAction" "F2")
+CheckFocusWidget("nameDialog.nameEdit")
+FocusKeyPR("Key_Return" "\r")
+CheckFocusWindow("mainWindow")
+CheckLabel("mainWindow.central.nameResultLabel" "name result: a")
+
+// Escape cancels.
+Shortcut("mainWindow.menuBar.dialogsMenu.editNameAction" "F2")
+CheckFocusWidget("nameDialog.nameEdit")
+FocusKeyPR("Key_End" "")
+FocusKeyPR("Key_D" "d")
+FocusKeyPR("Key_Escape" "\u{1B}")
+CheckFocusWindow("mainWindow")
+CheckLabel("mainWindow.central.nameResultLabel" "name result: a")
+
+// The dialog is gone.
+CheckFails(
+  CheckLineEditText("nameDialog.nameEdit" "a")
+  "could not find root element \"nameDialog\"")
+
+  ]
+}
+
+// EOF

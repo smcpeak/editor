@@ -18,6 +18,7 @@
 #include "smbase/std-string-fwd.h"               // std::string [f]
 
 // Qt
+#include <QDialog>
 #include <QFrame>
 #include <QMainWindow>
 
@@ -31,6 +32,7 @@ class QMenu;
 class QMouseEvent;
 class QPushButton;
 class QString;
+class QTableWidget;
 class QTextEdit;
 class QTimer;
 class QWidget;
@@ -90,6 +92,50 @@ public:      // funcs
 };
 
 
+// Modal dialog for editing a name.
+class UISGTNameDialog : public QDialog {
+  Q_OBJECT
+  NO_OBJECT_COPIES(UISGTNameDialog);
+
+public:      // data
+  // Widgets.  They are owned by their Qt parents.
+  QLineEdit *m_nameEdit;
+  QPushButton *m_okButton;
+  QPushButton *m_cancelButton;
+
+public:      // funcs
+  // Initially, the name is `name`.
+  UISGTNameDialog(QString const &name, QWidget *parent);
+  ~UISGTNameDialog();
+
+  // The current name.
+  QString name() const;
+};
+
+
+// Modal dialog with a table that rows can be added to.
+class UISGTTableDialog : public QDialog {
+  Q_OBJECT
+  NO_OBJECT_COPIES(UISGTTableDialog);
+
+public:      // data
+  // Widgets.  They are owned by their Qt parents.
+  QTableWidget *m_table;
+  QPushButton *m_addRowButton;
+  QPushButton *m_closeButton;
+
+private:     // funcs
+  void appendRow(QString const &name, QString const &value);
+
+public:      // funcs
+  explicit UISGTTableDialog(QWidget *parent);
+  ~UISGTTableDialog();
+
+public Q_SLOTS:
+  void on_addRowButtonClicked() NOEXCEPT;
+};
+
+
 // The main window of the test program.
 class UISGTMainWindow : public QMainWindow,
                         public UIShellGUIQueryable {
@@ -136,6 +182,9 @@ public:      // data
   QAction *m_quitAction;
   QAction *m_featureAction;
   QAction *m_resetAction;
+  QAction *m_editNameAction;
+  QAction *m_tableAction;
+  QAction *m_messageBoxAction;
 
 private:     // funcs
   void buildMenus();
@@ -176,6 +225,9 @@ public Q_SLOTS:
   void on_quitActionTriggered() NOEXCEPT;
   void on_featureActionToggled(bool checked) NOEXCEPT;
   void on_resetActionTriggered() NOEXCEPT;
+  void on_editNameActionTriggered() NOEXCEPT;
+  void on_tableActionTriggered() NOEXCEPT;
+  void on_messageBoxActionTriggered() NOEXCEPT;
 };
 
 

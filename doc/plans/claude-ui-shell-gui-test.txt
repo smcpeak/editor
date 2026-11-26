@@ -392,7 +392,9 @@ editor's dialogs.
   Message box (QMessageBox, "messageBox", title "Message")
     Text "Something happened: code 42", detailed text
     "detail line 1\ndetail line 2", and an OK button with object name
-    "okButton".  Closing it sets messageLabel in the main window to
+    "okButton".  QMessageBox moves the button into its button box,
+    so its path is "messageBox.qt_msgbox_buttonbox.okButton".  Closing
+    it sets messageLabel in the main window to
     "message: closed".
 
 Modeless window
@@ -541,7 +543,7 @@ one wrong expected value.
   check-message-box.uis        Open the message box (F5),
                                CheckMessageBoxTextMatches,
                                CheckMessageBoxDetailedText, ClickButton
-                               messageBox.okButton, CheckLabel
+                               on the OK button, CheckLabel
                                "message: closed".
   check-clipboard.uis          Type into nameEdit, ClickButton
                                copyButton, CheckClipboard.

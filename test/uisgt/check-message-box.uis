@@ -1,0 +1,38 @@
+// check-message-box.uis
+// Test CheckMessageBoxTextMatches and CheckMessageBoxDetailedText.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+CheckLabel("mainWindow.central.messageLabel" "message: (none)")
+
+Shortcut("mainWindow.menuBar.dialogsMenu.messageBoxAction" "F5")
+CheckFocusWindow("messageBox")
+CheckWindowTitle("messageBox" "Message")
+
+CheckMessageBoxTextMatches("messageBox" "^Something happened")
+CheckMessageBoxTextMatches("messageBox" "code [0-9]+$")
+CheckMessageBoxDetailedText("messageBox"
+  "detail line 1\ndetail line 2")
+
+CheckFails(
+  CheckMessageBoxTextMatches("messageBox" "code 43")
+  "the actual string \"Something happened: code 42\" did not match")
+CheckFails(
+  CheckMessageBoxDetailedText("messageBox" "detail line 1")
+  "should have been \"detail line 1\" but was")
+CheckFails(
+  CheckMessageBoxDetailedText("mainWindow" "")
+  "has class UISGTMainWindow, not QMessageBox")
+
+// Closing the box is reported in the main window.
+CheckLabel("mainWindow.central.messageLabel" "message: (none)")
+ClickButton("messageBox.qt_msgbox_buttonbox.okButton")
+CheckFocusWindow("mainWindow")
+CheckLabel("mainWindow.central.messageLabel" "message: closed")
+
+  ]
+}
+
+// EOF

@@ -36,6 +36,7 @@
 #include <QClipboard>
 #include <QComboBox>
 #include <QGridLayout>
+#include <QHBoxLayout>
 #include <QImage>
 #include <QKeyEvent>
 #include <QKeySequence>
@@ -43,11 +44,16 @@
 #include <QLineEdit>
 #include <QMenu>
 #include <QMenuBar>
+#include <QMessageBox>
 #include <QMouseEvent>
 #include <QPushButton>
 #include <QString>
+#include <QStringList>
+#include <QTableWidget>
+#include <QTableWidgetItem>
 #include <QTextEdit>
 #include <QTimer>
+#include <QVBoxLayout>
 
 // libc++
 #include <exception>                             // std::exception
@@ -164,6 +170,134 @@ void UISGTMousePad::mouseMoveEvent(QMouseEvent *event)
 }
 
 
+// -------------------------- UISGTNameDialog --------------------------
+UISGTNameDialog::UISGTNameDialog(QString const &name, QWidget *parent)
+  : QDialog(parent),
+    m_nameEdit(nullptr),
+    m_okButton(nullptr),
+    m_cancelButton(nullptr)
+{
+  setObjectName("nameDialog");
+  setWindowTitle("Edit Name");
+
+  // The widgets are direct children of the dialog.
+  QVBoxLayout *vbox = new QVBoxLayout(this);
+
+  m_nameEdit = new QLineEdit(name, this);
+  m_nameEdit->setObjectName("nameEdit");
+  vbox->addWidget(m_nameEdit);
+
+  QHBoxLayout *hbox = new QHBoxLayout();
+  vbox->addLayout(hbox);
+  hbox->addStretch(1);
+
+  m_okButton = new QPushButton("OK", this);
+  m_okButton->setObjectName("okButton");
+  m_okButton->setDefault(true);
+  hbox->addWidget(m_okButton);
+  QObject::connect(m_okButton, &QPushButton::clicked,
+                   this, &QDialog::accept);
+
+  m_cancelButton = new QPushButton("Cancel", this);
+  m_cancelButton->setObjectName("cancelButton");
+  hbox->addWidget(m_cancelButton);
+  QObject::connect(m_cancelButton, &QPushButton::clicked,
+                   this, &QDialog::reject);
+
+  m_nameEdit->setFocus();
+}
+
+
+UISGTNameDialog::~UISGTNameDialog()
+{
+  QObject::disconnect(m_okButton, nullptr, this, nullptr);
+  QObject::disconnect(m_cancelButton, nullptr, this, nullptr);
+}
+
+
+QString UISGTNameDialog::name() const
+{
+  return m_nameEdit->text();
+}
+
+
+// ------------------------- UISGTTableDialog --------------------------
+UISGTTableDialog::UISGTTableDialog(QWidget *parent)
+  : QDialog(parent),
+    m_table(nullptr),
+    m_addRowButton(nullptr),
+    m_closeButton(nullptr)
+{
+  setObjectName("tableDialog");
+  setWindowTitle("Table");
+
+  QVBoxLayout *vbox = new QVBoxLayout(this);
+
+  m_table = new QTableWidget(0 /*rows*/, 2 /*columns*/, this);
+  m_table->setObjectName("table");
+  m_table->setHorizontalHeaderLabels(QStringList{"Name", "Value"});
+
+  // Keys move the current cell rather than starting an edit.
+  m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+  m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
+  vbox->addWidget(m_table);
+
+  appendRow("alpha", "1");
+  appendRow("beta", "2");
+  appendRow("gamma", "3");
+  m_table->setCurrentCell(0, 0);
+
+  QHBoxLayout *hbox = new QHBoxLayout();
+  vbox->addLayout(hbox);
+
+  m_addRowButton = new QPushButton("Add Row", this);
+  m_addRowButton->setObjectName("addRowButton");
+  hbox->addWidget(m_addRowButton);
+  QObject::connect(m_addRowButton, &QPushButton::clicked,
+                   this, &UISGTTableDialog::on_addRowButtonClicked);
+
+  hbox->addStretch(1);
+
+  m_closeButton = new QPushButton("Close", this);
+  m_closeButton->setObjectName("closeButton");
+  hbox->addWidget(m_closeButton);
+  QObject::connect(m_closeButton, &QPushButton::clicked,
+                   this, &QDialog::accept);
+
+  m_table->setFocus();
+}
+
+
+UISGTTableDialog::~UISGTTableDialog()
+{
+  QObject::disconnect(m_addRowButton, nullptr, this, nullptr);
+  QObject::disconnect(m_closeButton, nullptr, this, nullptr);
+}
+
+
+void UISGTTableDialog::appendRow(QString const &name,
+                                 QString const &value)
+{
+  int const row = m_table->rowCount();
+  m_table->insertRow(row);
+  m_table->setItem(row, 0, new QTableWidgetItem(name));
+  m_table->setItem(row, 1, new QTableWidgetItem(value));
+}
+
+
+void UISGTTableDialog::on_addRowButtonClicked() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  // The new row is number N, counting from 1.
+  int const n = m_table->rowCount() + 1;
+  appendRow(QString("row %1").arg(n), QString::number(n));
+  m_table->setCurrentCell(n-1, 0);
+
+  GENERIC_CATCH_END
+}
+
+
 // -------------------------- UISGTMainWindow --------------------------
 UISGTMainWindow::UISGTMainWindow()
   : QMainWindow(),
@@ -190,7 +324,10 @@ UISGTMainWindow::UISGTMainWindow()
     m_notes(nullptr),
     m_quitAction(nullptr),
     m_featureAction(nullptr),
-    m_resetAction(nullptr)
+    m_resetAction(nullptr),
+    m_editNameAction(nullptr),
+    m_tableAction(nullptr),
+    m_messageBoxAction(nullptr)
 {
   setObjectName("mainWindow");
   setWindowTitle("UI Shell GUI Test");
@@ -321,6 +458,9 @@ UISGTMainWindow::~UISGTMainWindow()
   QObject::disconnect(m_quitAction, nullptr, this, nullptr);
   QObject::disconnect(m_featureAction, nullptr, this, nullptr);
   QObject::disconnect(m_resetAction, nullptr, this, nullptr);
+  QObject::disconnect(m_editNameAction, nullptr, this, nullptr);
+  QObject::disconnect(m_tableAction, nullptr, this, nullptr);
+  QObject::disconnect(m_messageBoxAction, nullptr, this, nullptr);
 }
 
 
@@ -348,6 +488,26 @@ void UISGTMainWindow::buildMenus()
     m_resetAction = addAction(menu, "&Reset", "resetAction", "Ctrl+R");
     QObject::connect(m_resetAction, &QAction::triggered,
                      this, &UISGTMainWindow::on_resetActionTriggered);
+  }
+
+  {
+    QMenu *menu = addMenu("&Dialogs", "dialogsMenu");
+
+    m_editNameAction =
+      addAction(menu, "&Edit Name...", "editNameAction", "F2");
+    QObject::connect(
+      m_editNameAction, &QAction::triggered,
+      this, &UISGTMainWindow::on_editNameActionTriggered);
+
+    m_tableAction = addAction(menu, "&Table...", "tableAction", "F3");
+    QObject::connect(m_tableAction, &QAction::triggered,
+                     this, &UISGTMainWindow::on_tableActionTriggered);
+
+    m_messageBoxAction =
+      addAction(menu, "&Message Box...", "messageBoxAction", "F5");
+    QObject::connect(
+      m_messageBoxAction, &QAction::triggered,
+      this, &UISGTMainWindow::on_messageBoxActionTriggered);
   }
 }
 
@@ -531,6 +691,53 @@ void UISGTMainWindow::on_resetActionTriggered() NOEXCEPT
   m_messageLabel->setText("message: (none)");
   m_keyLogLabel->setText(UISGTKeyLogWidget::initialLabelText());
   m_mouseLabel->setText(UISGTMousePad::initialLabelText());
+
+  GENERIC_CATCH_END
+}
+
+
+// The dialogs are run with `exec()`, so the UI shell commands that
+// operate on them run inside a nested event loop.
+void UISGTMainWindow::on_editNameActionTriggered() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  UISGTNameDialog dialog(m_nameEdit->text(), this);
+  if (dialog.exec() == QDialog::Accepted) {
+    m_nameResultLabel->setText("name result: " + dialog.name());
+  }
+
+  GENERIC_CATCH_END
+}
+
+
+void UISGTMainWindow::on_tableActionTriggered() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  UISGTTableDialog dialog(this);
+  dialog.exec();
+
+  GENERIC_CATCH_END
+}
+
+
+void UISGTMainWindow::on_messageBoxActionTriggered() NOEXCEPT
+{
+  GENERIC_CATCH_BEGIN
+
+  QMessageBox box(this);
+  box.setObjectName("messageBox");
+  box.setWindowTitle("Message");
+  box.setText("Something happened: code 42");
+  box.setDetailedText("detail line 1\ndetail line 2");
+
+  // The button is reparented into the box's button box, so its path
+  // is "messageBox.qt_msgbox_buttonbox.okButton".
+  box.addButton(QMessageBox::Ok)->setObjectName("okButton");
+
+  box.exec();
+  m_messageLabel->setText("message: closed");
 
   GENERIC_CATCH_END
 }
