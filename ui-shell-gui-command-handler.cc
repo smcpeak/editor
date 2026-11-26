@@ -16,7 +16,7 @@
 #include "smqtutil/gdvalue-qt.h"                 // gdvpTo(QSize)
 #include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtguiutil.h"                  // showRaiseAndActivateWindow
-#include "smqtutil/qtutil.h"                     // operator<<(QString)
+#include "smqtutil/qtutil.h"                     // operator<<(QString), toQPointF
 
 // smbase
 #include "smbase/chained-cond.h"                 // smbase::cc::z_le_lt
@@ -381,13 +381,6 @@ static void checkTableWidgetContents(
     checkTableWidgetRow(table, row,
       expect.sequenceGetValueAt(row));
   }
-}
-
-
-// TODO: Move to `smqtutil`.
-static QPointF toQPointF(QPoint const &pt)
-{
-  return QPointF(pt.x(), pt.y());
 }
 
 
