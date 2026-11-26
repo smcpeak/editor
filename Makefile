@@ -298,7 +298,6 @@ EDITOR_OBJS += textlcoord.o
 EDITOR_OBJS += textmcoord-map.o
 EDITOR_OBJS += textmcoord.o
 EDITOR_OBJS += uri-util.o
-EDITOR_OBJS += waiting-counter.o
 
 # ui-shell modules that can be unit-tested.
 UI_SHELL_UT_OBJS :=
@@ -311,6 +310,7 @@ UI_SHELL_UT_OBJS += ui-shell-result.o
 UI_SHELL_UT_OBJS += ui-shell-script-file.o
 UI_SHELL_UT_OBJS += ui-shell-script-runner.moc.o
 UI_SHELL_UT_OBJS += ui-shell-script-runner.o
+UI_SHELL_UT_OBJS += waiting-counter.o
 
 EDITOR_OBJS += $(UI_SHELL_UT_OBJS)
 
@@ -519,7 +519,6 @@ UISGT_OBJS += $(UI_SHELL_GT_OBJS)
 
 UISGT_OBJS += event-recorder.o
 UISGT_OBJS += file-mod-time.o
-UISGT_OBJS += waiting-counter.o
 
 UISGT_OBJS += ui-shell-gui-test.moc.o
 UISGT_OBJS += ui-shell-gui-test.o
