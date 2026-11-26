@@ -77,6 +77,14 @@ to `UNIT_TESTS_OBJS` in the `Makefile`. Test assertions use the smbase
   `CheckLabel(...)`). Use `-record` to capture an input sequence into
   `recorded.uis`, then add checks by hand. See `doc/ui-shell.txt` for
   how execution waits for the app to go idle between steps.
+- `ui-shell-gui-test.exe` is a small stand-alone program for testing
+  the GUI UI shell commands themselves, independent of the editor.
+  Its scripts are in `test/uisgt/`, listed in
+  `test/uisgt/all-uisgt-tests.gdvn`, and `make check` runs them with
+  `./ui-shell-gui-test.exe -testCommands=test/uisgt/all-uisgt-tests.gdvn`
+  before the editor's batch.  A new command in
+  `ui-shell-gui-command-handler.cc` gets a script there; see
+  `doc/ui-shell.txt`.
 - `gui-tests.exe` tests individual dialogs and is run by hand.
 
 Claude should not run the GUI tests unless specifically directed to

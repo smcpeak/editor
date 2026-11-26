@@ -584,8 +584,8 @@ small program that builds the images with the same code as
 `uiShellImage`, saves them, and checks that they compare equal after
 being loaded again.)
 
-check-image.uis does not use CheckFails on a mismatch, since that
-would leave failing-actual-image.png behind.
+check-image.uis also tests a mismatch, using RemoveFileIfExists
+before and after so that failing-actual-image.png is not left behind.
 
 test/uisgt/all-uisgt-tests.gdvn lists all of the scripts, in the order
 above, in the same format as test/all-tests.gdvn:

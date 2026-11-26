@@ -12,13 +12,17 @@ extension is ".uis".
 A UIS file can be executed in the editor by passing the
 "-uisCmds=file.uis" command line argument.  There is also the
 "-testCommands=cmds.gdvn" argument that can execute many UIS files
-within a single process for improved efficiency.
+within a single process for improved efficiency.  These options are
+not specific to the editor; see "Using the UI shell in another
+program", below.
 
 The syntax of a UIS file uses GDVN (see smbase/gdvalue-design.txt).  It
-has an outer map with keys `args` and `cmds`.  The former specifies the
-command line arguments for that test (usually the name of a file to
-open).  The latter is a sequence of tagged containers where the tag is
-the command name and the container elements provide its arguments.
+has an outer map with keys `args`, `includes` and `cmds`.  `args`
+specifies the command line arguments for that test (in the editor,
+usually the name of a file to open).  `includes` names files whose
+`Define`s are used in `cmds`, such as test/common-defns.gdvn.  `cmds`
+is a sequence of tagged containers where the tag is the command name
+and the container elements provide its arguments.
 
 The "-record" command line switch can create a sequence of input event
 commands (keystrokes, etc.) to start with.  Checks are then inserted
@@ -85,10 +89,91 @@ necessary.
 UIShellResult holds the result of a single command (success or error)
 for passing between UI shell components.
 
-Because the executor and the base handler do not need widgets, they
-have unit tests (ui-shell-executor-test.cc and
-ui-shell-command-handler-test.cc).  The GUI commands are covered by the
-.uis tests.
+UIShellScriptFile (ui-shell-script-file) reads a .uis file: it
+processes `includes`, substitutes the `Define`s, and flattens `cmds`
+into a list of commands.
+
+ui-shell-app has what a GUI program needs to be driven by the UI
+shell: UIShellOptions recognizes "-uisCmds" and "-record",
+`runUIShellScript` runs a script with a UIShellScriptRunner, and
+`runUIShellTestCommandsIfRequested` implements "-testCommands".
+
+Because the executor, the base handler and the script file reader do
+not need widgets, they have unit tests (ui-shell-executor-test.cc,
+ui-shell-command-handler-test.cc and ui-shell-script-file-test.cc).
+The GUI commands are tested by ui-shell-gui-test (below).
+
+
+Using the UI shell in another program
+=====================================
+
+None of the classes above depend on the editor.  To make another Qt
+GUI program scriptable, as the editor and ui-shell-gui-test do:
+
+  * In `main`, call `runUIShellTestCommandsIfRequested`, passing the
+    function that does the real work (`innerMain`), which must create
+    its own QApplication.
+
+  * In `innerMain`, pass each argument to
+    `UIShellOptions::processOption`, and include
+    `UIShellOptions::helpText()` in the usage message.
+
+  * Give the top-level windows and the widgets that scripts refer to
+    object names, since that is how paths find them.
+
+  * Create an EventRecorder if "-record" was given.
+
+  * If a script was given, call `runUIShellScript` with a
+    UIShellGUICommandHandler (or a class derived from it that adds
+    program-specific commands) and a global self-check function.
+
+ui-shell-gui-test.cc is a small, complete example.
+
+
+ui-shell-gui-test
+=================
+
+ui-shell-gui-test.exe is a stand-alone program whose only purpose is
+to be driven by UI shell scripts.  It has an example of each kind of
+widget that the GUI commands operate on: a main window with a menu
+bar, three modal dialogs (Edit Name, Table, and a QMessageBox) and a
+modeless List Window.  The design is in
+doc/plans/claude-ui-shell-gui-test.txt.
+
+Its scripts are in test/uisgt/, roughly one per command, and
+test/uisgt/all-uisgt-tests.gdvn lists them.  `make check` runs them
+with:
+
+  ./ui-shell-gui-test.exe -testCommands=test/uisgt/all-uisgt-tests.gdvn
+
+before the editor's .uis tests, since those depend on the commands
+working.  An individual script can be run with:
+
+  ./ui-shell-gui-test.exe -uisCmds=test/uisgt/<name>.uis
+
+The program adds one command of its own, `CheckFails(<check>
+"<regex>")`, which runs a Check* or WaitUntilCheck* command and
+succeeds only if it fails with a message matching the regex.  Since
+most bugs in a check would make it pass when it should not, each
+check-* script uses CheckFails to confirm that a wrong expected value
+is reported, and with a useful message.
+
+When adding a command to UIShellGUICommandHandler:
+
+  * If the command needs a kind of widget that ui-shell-gui-test does
+    not have yet, add one to the appropriate window, with an object
+    name, and if it has interesting state, something (usually a
+    label) that shows it.
+
+  * Add test/uisgt/<command>.uis.  As the others do, start with a
+    CheckFocusWidget or CheckFocusWindow, so a problem with the
+    initial focus is reported as such.  For a check, use CheckFails
+    with at least one wrong expected value.
+
+  * Add the script to test/uisgt/all-uisgt-tests.gdvn.
+
+Commands that do not need widgets belong in UIShellCommandHandler and
+should be tested in ui-shell-command-handler-test.cc instead.
 
 
 Quiescence detection mechanism
