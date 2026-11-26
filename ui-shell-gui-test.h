@@ -19,10 +19,11 @@
 
 // Qt
 #include <QMainWindow>
-#include <QString>
 
 class QLabel;
 class QPushButton;
+class QString;
+class QWidget;
 
 
 // The main window of the test program.

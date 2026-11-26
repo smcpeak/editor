@@ -33,6 +33,7 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QString>
 
 // libc++
 #include <exception>                             // std::exception
