@@ -9,10 +9,10 @@ Goal
 Add ui-shell-gui-test.exe, a stand-alone Qt GUI program whose only
 purpose is to be driven by UI shell scripts.  It has examples of every
 kind of widget that the commands in ui-shell-gui-command-handler.cc
-operate on, and a set of test/usgt/*.uis scripts, roughly one per
+operate on, and a set of test/uisgt/*.uis scripts, roughly one per
 command, exercises them.  `make check` runs them all with:
 
-  ./ui-shell-gui-test.exe -testCommands=test/usgt/all-usgt-tests.gdvn
+  ./ui-shell-gui-test.exe -testCommands=test/uisgt/all-uisgt-tests.gdvn
 
 Today, UIShellGUICommandHandler is only tested indirectly, through the
 editor's .uis tests, which use some commands heavily and others barely
@@ -461,7 +461,7 @@ the editor.
 The tests
 =========
 
-The scripts are in test/usgt/.  Each starts with a CheckFocusWidget
+The scripts are in test/uisgt/.  Each starts with a CheckFocusWidget
 or CheckFocusWindow, so that a problem with initial focus (seen with
 the editor on Windows) is reported as such, rather than as a confusing
 later failure.  The check-* scripts also use CheckFails for at least
@@ -552,7 +552,7 @@ one wrong expected value.
                                focus moves between the main window, a
                                modal dialog and the List Window.
   check-image.uis              CheckImage("mainWindow" "swatch"
-                               "test/usgt/swatch-red.png"), change the
+                               "test/uisgt/swatch-red.png"), change the
                                color, then compare against
                                swatch-green.png.
   check-query.uis              CheckQuery and CheckQueryMatches on the
@@ -570,21 +570,21 @@ one wrong expected value.
 The reference images for check-image.uis are made by running the
 script once without them: CheckImage fails and saves
 failing-actual-image.png, which is inspected and copied to
-test/usgt/swatch-*.png.
+test/uisgt/swatch-*.png.
 
-test/usgt/all-usgt-tests.gdvn lists all of the scripts, in the order
+test/uisgt/all-uisgt-tests.gdvn lists all of the scripts, in the order
 above, in the same format as test/all-tests.gdvn:
 
-  // all-usgt-tests.gdvn
+  // all-uisgt-tests.gdvn
   // List of all ui-shell-gui-test command lines to run in succession.
 
   [
-    [ "./ui-shell-gui-test.exe" "-uisCmds=test/usgt/empty.uis" ]
-    [ "./ui-shell-gui-test.exe" "-uisCmds=test/usgt/key-press.uis" ]
+    [ "./ui-shell-gui-test.exe" "-uisCmds=test/uisgt/empty.uis" ]
+    [ "./ui-shell-gui-test.exe" "-uisCmds=test/uisgt/key-press.uis" ]
     ...
   ]
 
-If the scripts end up repeating paths, a test/usgt/usgt-defns.gdvn,
+If the scripts end up repeating paths, a test/uisgt/uisgt-defns.gdvn,
 used through `includes`, can define them, as test/common-defns.gdvn
 does for the editor.
 
@@ -619,7 +619,7 @@ Makefile:
     working:
 
       ./ui-shell-gui-test.exe \
-        -testCommands=test/usgt/all-usgt-tests.gdvn
+        -testCommands=test/uisgt/all-uisgt-tests.gdvn
 
 Docs:
 
@@ -642,7 +642,7 @@ Implementation steps
   3. Add ui-shell-gui-test.exe with the main window containing only
      clickButton and clickCountLabel, UISGTCommandHandler with
      CheckFails, empty.uis, click-button.uis, check-label.uis and
-     all-usgt-tests.gdvn, and the `make check` line.
+     all-uisgt-tests.gdvn, and the `make check` line.
   4. The rest of the main window and its menus, and the scripts that
      need only the main window.
   5. The modal dialogs and their scripts.
