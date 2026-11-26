@@ -297,17 +297,22 @@ EDITOR_OBJS += textcategory.o
 EDITOR_OBJS += textlcoord.o
 EDITOR_OBJS += textmcoord-map.o
 EDITOR_OBJS += textmcoord.o
-EDITOR_OBJS += ui-shell-command-handler.o
-EDITOR_OBJS += ui-shell-command-util.o
-EDITOR_OBJS += ui-shell-executor.moc.o
-EDITOR_OBJS += ui-shell-executor.o
-EDITOR_OBJS += ui-shell-queryable.o
-EDITOR_OBJS += ui-shell-result.o
-EDITOR_OBJS += ui-shell-script-file.o
-EDITOR_OBJS += ui-shell-script-runner.moc.o
-EDITOR_OBJS += ui-shell-script-runner.o
 EDITOR_OBJS += uri-util.o
 EDITOR_OBJS += waiting-counter.o
+
+# ui-shell modules that can be unit-tested.
+UI_SHELL_UT_OBJS :=
+UI_SHELL_UT_OBJS += ui-shell-command-handler.o
+UI_SHELL_UT_OBJS += ui-shell-command-util.o
+UI_SHELL_UT_OBJS += ui-shell-executor.moc.o
+UI_SHELL_UT_OBJS += ui-shell-executor.o
+UI_SHELL_UT_OBJS += ui-shell-queryable.o
+UI_SHELL_UT_OBJS += ui-shell-result.o
+UI_SHELL_UT_OBJS += ui-shell-script-file.o
+UI_SHELL_UT_OBJS += ui-shell-script-runner.moc.o
+UI_SHELL_UT_OBJS += ui-shell-script-runner.o
+
+EDITOR_OBJS += $(UI_SHELL_UT_OBJS)
 
 UNIT_TESTS_OBJS := $(EDITOR_OBJS)
 
@@ -495,26 +500,28 @@ all: gui-tests.exe
 
 
 # ------------------------- ui-shell-gui-test --------------------------
-# Test program for the GUI UI shell commands.  This uses an explicit
-# list of objects rather than `$(EDITOR_OBJS)` so that it will fail to
-# link if the UI shell starts depending on the editor.
+# ui-shell modules that are tested using a GUI.
+UI_SHELL_GT_OBJS :=
+UI_SHELL_GT_OBJS += ui-shell-app.o
+UI_SHELL_GT_OBJS += ui-shell-gui-command-handler.moc.o
+UI_SHELL_GT_OBJS += ui-shell-gui-command-handler.o
+UI_SHELL_GT_OBJS += ui-shell-gui-queryable.o
+
+EDITOR_OBJS += $(UI_SHELL_GT_OBJS)
+
+
+# Test program for the GUI UI shell commands.  This does not use
+# $(EDITOR_OBJS) because it should not depend on modules specific to the
+# editor.
 UISGT_OBJS :=
+
+UISGT_OBJS += $(UI_SHELL_UT_OBJS)
+UISGT_OBJS += $(UI_SHELL_GT_OBJS)
+
 UISGT_OBJS += event-recorder.o
 UISGT_OBJS += file-mod-time.o
-UISGT_OBJS += ui-shell-app.o
-UISGT_OBJS += ui-shell-command-handler.o
-UISGT_OBJS += ui-shell-command-util.o
-UISGT_OBJS += ui-shell-executor.moc.o
-UISGT_OBJS += ui-shell-executor.o
-UISGT_OBJS += ui-shell-gui-command-handler.moc.o
-UISGT_OBJS += ui-shell-gui-command-handler.o
-UISGT_OBJS += ui-shell-gui-queryable.o
-UISGT_OBJS += ui-shell-queryable.o
-UISGT_OBJS += ui-shell-result.o
-UISGT_OBJS += ui-shell-script-file.o
-UISGT_OBJS += ui-shell-script-runner.moc.o
-UISGT_OBJS += ui-shell-script-runner.o
 UISGT_OBJS += waiting-counter.o
+
 UISGT_OBJS += ui-shell-gui-test.moc.o
 UISGT_OBJS += ui-shell-gui-test.o
 
@@ -644,10 +651,6 @@ EDITOR_OBJS += status-bar.o
 EDITOR_OBJS += styledb.o
 EDITOR_OBJS += textinput.o
 EDITOR_OBJS += textinput.moc.o
-EDITOR_OBJS += ui-shell-app.o
-EDITOR_OBJS += ui-shell-gui-command-handler.moc.o
-EDITOR_OBJS += ui-shell-gui-command-handler.o
-EDITOR_OBJS += ui-shell-gui-queryable.o
 
 editor.exe: $(EDITOR_OBJS) $(GUI_LIBRARIES)
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_OBJS) $(GUI_LDFLAGS)
