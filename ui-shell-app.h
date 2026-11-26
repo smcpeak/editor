@@ -14,10 +14,10 @@
 #include "ui-shell-script-file.h"                // UIShellScriptFile
 
 // smbase
+#include "smbase/std-functional-fwd.h"           // std::function [f]
 #include "smbase/std-optional-fwd.h"             // std::optional [f]
 
 // libc++
-#include <functional>                            // std::function
 #include <string>                                // std::string
 
 class QApplication;

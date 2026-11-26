@@ -29,6 +29,7 @@
 #include <cstdlib>                               // std::{atoi, getenv}
 #include <cstring>                               // std::{memcpy, strlen}
 #include <exception>                             // std::exception
+#include <functional>                            // std::function
 #include <iostream>                              // std::{cout, endl}
 #include <optional>                              // std::optional
 #include <string>                                // std::string

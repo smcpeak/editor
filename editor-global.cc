@@ -407,6 +407,7 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
              << "\n"
              << "UI shell options:\n"
              << UIShellOptions::helpText()
+             << "\n"
              << uiShellOptionsNote;
         THROW(QuitAfterPrintingHelp(""));
       }
