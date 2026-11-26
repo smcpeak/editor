@@ -13,8 +13,22 @@ KeyPress("mainWindow.central.colorCombo" "Key_Down" "")
 CheckComboBoxText("mainWindow.central.colorCombo" "Green")
 CheckImage("mainWindow" "swatch" "test/uisgt/swatch-green.png")
 
-// A mismatch is not tested here because it would leave
-// failing-actual-image.png behind.
+
+// Remove a left-over failing image.
+RemoveFileIfExists("failing-actual-image.png")
+
+// Check mismatch; actual image is swatch-green.png.
+CheckFails(
+  CheckImage("mainWindow" "swatch" "test/uisgt/swatch-red.png")
+  "Does not match expected image test/uisgt/swatch-red.png.")
+
+// It should have created failing-actual-image.png.
+CheckPathExists("failing-actual-image.png" true)
+
+// Clean up.
+RemoveFileIfExists("failing-actual-image.png")
+
+
 CheckFails(
   CheckImage("mainWindow" "nope" "test/uisgt/swatch-green.png")
   "unknown image: \"nope\"")
