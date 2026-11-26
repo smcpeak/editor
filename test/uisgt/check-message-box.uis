@@ -11,16 +11,16 @@ Shortcut("mainWindow.menuBar.dialogsMenu.messageBoxAction" "F5")
 CheckFocusWindow("mainWindow.messageBox")
 CheckWindowTitle("mainWindow.messageBox" "Message")
 
-CheckMessageBoxTextMatches("messageBox" "^Something happened")
-CheckMessageBoxTextMatches("messageBox" "code [0-9]+$")
-CheckMessageBoxDetailedText("messageBox"
+CheckMessageBoxTextMatches("mainWindow.messageBox" "^Something happened")
+CheckMessageBoxTextMatches("mainWindow.messageBox" "code [0-9]+$")
+CheckMessageBoxDetailedText("mainWindow.messageBox"
   "detail line 1\ndetail line 2")
 
 CheckFails(
-  CheckMessageBoxTextMatches("messageBox" "code 43")
+  CheckMessageBoxTextMatches("mainWindow.messageBox" "code 43")
   "the actual string \"Something happened: code 42\" did not match")
 CheckFails(
-  CheckMessageBoxDetailedText("messageBox" "detail line 1")
+  CheckMessageBoxDetailedText("mainWindow.messageBox" "detail line 1")
   "should have been \"detail line 1\" but was")
 CheckFails(
   CheckMessageBoxDetailedText("mainWindow" "")

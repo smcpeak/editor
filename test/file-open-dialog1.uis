@@ -9,14 +9,14 @@ CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")
 
 // Type in "a/b/fo", then tab-complete it to "a/b/foo.txt".
 Shortcut("window1.m_menuBar.fileMenu.fileOpen" "F3")
-KeyPress("filename_input.m_filenameEdit" "Key_A" "a")
-KeyPress("filename_input.m_filenameEdit" "Key_Slash" "/")
-KeyPress("filename_input.m_filenameEdit" "Key_B" "b")
-KeyPress("filename_input.m_filenameEdit" "Key_Slash" "/")
-KeyPress("filename_input.m_filenameEdit" "Key_F" "f")
-KeyPress("filename_input.m_filenameEdit" "Key_O" "o")
-KeyPress("filename_input.m_filenameEdit" "Key_Tab" "")
-KeyPress("filename_input.m_filenameEdit" "Key_Return" "")
+KeyPress("window1.filename_input.m_filenameEdit" "Key_A" "a")
+KeyPress("window1.filename_input.m_filenameEdit" "Key_Slash" "/")
+KeyPress("window1.filename_input.m_filenameEdit" "Key_B" "b")
+KeyPress("window1.filename_input.m_filenameEdit" "Key_Slash" "/")
+KeyPress("window1.filename_input.m_filenameEdit" "Key_F" "f")
+KeyPress("window1.filename_input.m_filenameEdit" "Key_O" "o")
+KeyPress("window1.filename_input.m_filenameEdit" "Key_Tab" "")
+KeyPress("window1.filename_input.m_filenameEdit" "Key_Return" "")
 
 // Back in editor.
 CheckFocusWidget("window1.frame1.editorFrame.m_editorWidget")

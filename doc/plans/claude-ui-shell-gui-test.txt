@@ -393,14 +393,12 @@ editor's dialogs.
     Text "Something happened: code 42", detailed text
     "detail line 1\ndetail line 2", and an OK button with object name
     "okButton".  QMessageBox moves the button into its button box,
-    so its path is "messageBox.qt_msgbox_buttonbox.okButton".  Closing
-    it sets messageLabel in the main window to
-    "message: closed".
+    so its path is "mainWindow.messageBox.qt_msgbox_buttonbox.okButton".
+    Closing it sets messageLabel in the main window to "message:
+    closed".
 
-Note: Widgets inside modal dialogs have, in a sense, two different Qt
-object paths.  See the comments above `getQObjectFromPath` in
-`ui-shell-gui-command-handler.cc`.  The safest approach is to use paths
-that start with "mainWindow.".
+Note: Widgets inside modal dialogs have paths that start with
+"mainWindow" because the main window is their Qt parent object.
 
 Modeless window
 ---------------

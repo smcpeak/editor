@@ -152,22 +152,19 @@ void UIShellGUICommandHandler::resizeChildWidget(
 /* Get an object from its path from a top-level window, or throw
    `XMessage` if we cannot find it.
 
-   Beware: This function can find an object by starting from any
-   top-level widget, i.e., one that has an associated window in the
-   desktop window system.  However, modal dialogs are both top-level
-   widgets *and* they have a non-null parent.  This means that a widget
-   inside a modal dialog can be found *both* as "modalDialog.widget" and
-   as "mainWindow.modalDialog.widget".
+   This function searches for objects by starting from the top-level
+   widgets (i.e., those with an associated window in the desktop window
+   system).  It cannot find widgets or other Qt objects that are outside
+   the forest rooted at such windows; Qt does not have a global forest
+   of all objects.
 
-   In contrast, `qObjectPath` walks all the way up the parent tree, so
-   if such a widget has its path computed by that function, it would be
-   "mainWindow.modalDialog.widget".  This can be confusing when reading
-   or writing .uis scripts since the same widget can seem to have
-   multiple names.
-
-   TODO: Probably the right solution is to change this function to skip
-   top-level widgets that have non-null parents so that every widget is
-   consistently referred to by one name.
+   Furthermore, it filters out top-level widgets that have a non-nullptr
+   parent, which is the case for modal dialogs.  That's because,
+   otherwise, widgets would have multiple names due to being findable by
+   multiple paths, which would be confusing when reading and writing
+   .uis script files.  It also ensures consistency with the names that
+   `qObjectPath` produces, since that walks all the way up the parent
+   tree.
 */
 static QObject *getQObjectFromPath(std::string const &path)
 {
@@ -178,6 +175,11 @@ static QObject *getQObjectFromPath(std::string const &path)
 
   try {
     Q_FOREACH (QObject *object, QApplication::topLevelWidgets()) {
+      if (object->parent()) {
+        // Skip objects with parents, as explained above.
+        continue;
+      }
+
       if (object->objectName() == elts.at(0)) {
         for (int i=1; i < elts.count(); i++) {
           QString elt(elts.at(i));
