@@ -229,7 +229,6 @@ EDITOR_OBJS += doc-type-detect.o
 EDITOR_OBJS += doc-type-hilite.o
 EDITOR_OBJS += doc-type.o
 EDITOR_OBJS += editor-strutil.o
-EDITOR_OBJS += file-mod-time.o
 EDITOR_OBJS += gap-gdvalue.o
 EDITOR_OBJS += hashcomment_hilite.yy.o
 EDITOR_OBJS += hilite.o
@@ -311,6 +310,11 @@ UI_SHELL_UT_OBJS += ui-shell-script-file.o
 UI_SHELL_UT_OBJS += ui-shell-script-runner.moc.o
 UI_SHELL_UT_OBJS += ui-shell-script-runner.o
 UI_SHELL_UT_OBJS += waiting-counter.o
+
+# file-mod-time isn't closely tied to the UI shell, but it is used by
+# it, and hence needed in ui-shell-gui-test.exe.  Adding it to
+# UI_SHELL_UT_OBJS avoids one otherwise repeated occurrence.
+UI_SHELL_UT_OBJS += file-mod-time.o
 
 EDITOR_OBJS += $(UI_SHELL_UT_OBJS)
 
@@ -517,8 +521,6 @@ UISGT_OBJS :=
 
 UISGT_OBJS += $(UI_SHELL_UT_OBJS)
 UISGT_OBJS += $(UI_SHELL_GT_OBJS)
-
-UISGT_OBJS += file-mod-time.o
 
 UISGT_OBJS += ui-shell-gui-test.moc.o
 UISGT_OBJS += ui-shell-gui-test.o
