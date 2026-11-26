@@ -16,7 +16,7 @@
 #include "td-obs-recorder.h"                     // TextDocumentObservationRecorder
 #include "uri-util.h"                            // makeFileURI
 
-#include "smqtutil/qtutil.h"                     // waitForQtEvent
+#include "smqtutil/qtutil.h"                     // waitForQtEvent, disconnectSignals
 
 #include "smbase/gdvalue.h"                      // gdv::toGDValue
 #include "smbase/sm-env.h"                       // smbase::envAsBool
@@ -431,7 +431,7 @@ void LSPClientTester::connectSignals()
 
 void LSPClientTester::disconnectSignals()
 {
-  QObject::disconnect(&m_lspClient, nullptr, this, nullptr);
+  ::disconnectSignals(&m_lspClient, this);
 }
 
 
