@@ -1,0 +1,26 @@
+// check-text-edit.uis
+// Test CheckTextEditText.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+CheckTextEditText("mainWindow.central.notes" "")
+
+KeyPress("mainWindow.central.notes" "Shift+Key_A" "A")
+KeyPress("mainWindow.central.notes" "Key_B" "b")
+KeyPress("mainWindow.central.notes" "Key_Return" "\r")
+KeyPress("mainWindow.central.notes" "Key_C" "c")
+CheckTextEditText("mainWindow.central.notes" "Ab\nc")
+
+CheckFails(
+  CheckTextEditText("mainWindow.central.notes" "Ab")
+  "should have been \"Ab\" but was \"Ab\\\\nc\"")
+CheckFails(
+  CheckTextEditText("mainWindow.central.nameEdit" "")
+  "has class QLineEdit, not QTextEdit")
+
+  ]
+}
+
+// EOF

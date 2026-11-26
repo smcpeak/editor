@@ -1,0 +1,31 @@
+// set-focus.uis
+// Test SetFocus.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+
+SetFocus("mainWindow.central.nameEdit")
+CheckFocusWidget("mainWindow.central.nameEdit")
+
+SetFocus("mainWindow.central.colorCombo")
+CheckFocusWidget("mainWindow.central.colorCombo")
+
+SetFocus("mainWindow.central.keyLog")
+CheckFocusWidget("mainWindow.central.keyLog")
+
+SetFocus("mainWindow.central.notes")
+CheckFocusWidget("mainWindow.central.notes")
+
+SetFocus("mainWindow.central.clickButton")
+CheckFocusWidget("mainWindow.central.clickButton")
+
+CheckFails(
+  CheckFocusWidget("mainWindow.central.nameEdit")
+  "should have been \"mainWindow.central.nameEdit\" but was")
+
+  ]
+}
+
+// EOF

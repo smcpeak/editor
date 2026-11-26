@@ -1,0 +1,30 @@
+// mouse-move.uis
+// Test MouseMove.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+
+// No button held.  This relies on the pad having mouse tracking on.
+MouseMove("mainWindow.central.mousePad" QPoint(5 6) {} {})
+CheckLabel("mainWindow.central.mouseLabel"
+  "mouse: move NoButton (5,6) NoButton NoModifier")
+
+// A drag.
+MouseButtonPress("mainWindow.central.mousePad"
+  QPoint(10 10) LeftButton {} {})
+MouseMove("mainWindow.central.mousePad" QPoint(20 30) {LeftButton} {})
+CheckLabel("mainWindow.central.mouseLabel"
+  "mouse: move NoButton (20,30) LeftButton NoModifier")
+MouseMove("mainWindow.central.mousePad"
+  QPoint(25 35) {LeftButton} {Alt})
+CheckLabel("mainWindow.central.mouseLabel"
+  "mouse: move NoButton (25,35) LeftButton Alt")
+MouseButtonRelease("mainWindow.central.mousePad"
+  QPoint(25 35) LeftButton {} {})
+
+  ]
+}
+
+// EOF

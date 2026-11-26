@@ -312,7 +312,8 @@ Widgets and their interactions:
     sets the color of the "swatch" image (below).
   keyLog (UISGTKeyLogWidget, a focusable QWidget)
     Its keyPressEvent and keyReleaseEvent set keyLogLabel to
-    "key: press <key> <text>" or "key: release <key> <text>".  The
+    "key: press <key> \"<text>\"" or "key: release <key> \"<text>\"",
+    e.g., "key: press Shift+Key_B \"B\"".  The
     release half is needed for FocusKeyRelease, since QLineEdit
     shows no sign of a release.
   keyLogLabel (QLabel)
@@ -320,8 +321,9 @@ Widgets and their interactions:
   mousePad (UISGTMousePad, a QWidget of fixed size 100x100, with
     mouse tracking)
     Its mouse event handlers set mouseLabel to, e.g.,
-    "mouse: press LeftButton (10,20) buttons=LeftButton
-    mods=ShiftModifier", and likewise for release, dblclick and move.
+    "mouse: press LeftButton (10,20) LeftButton Shift" (button,
+    position, buttons, modifiers, in the order of the commands'
+    arguments), and likewise for release, dblclick and move.
   mouseLabel (QLabel)
     As above.
   notes (QTextEdit)

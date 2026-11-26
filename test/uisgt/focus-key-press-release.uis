@@ -1,0 +1,31 @@
+// focus-key-press-release.uis
+// Test FocusKeyPress and FocusKeyRelease.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+
+SetFocus("mainWindow.central.keyLog")
+CheckFocusWidget("mainWindow.central.keyLog")
+CheckLabel("mainWindow.central.keyLogLabel" "key: (none)")
+
+FocusKeyPress("Key_A" "a")
+CheckLabel("mainWindow.central.keyLogLabel" "key: press Key_A \"a\"")
+FocusKeyRelease("Key_A" "a")
+CheckLabel("mainWindow.central.keyLogLabel" "key: release Key_A \"a\"")
+
+FocusKeyPress("Shift+Key_B" "B")
+CheckLabel("mainWindow.central.keyLogLabel"
+  "key: press Shift+Key_B \"B\"")
+FocusKeyRelease("Shift+Key_B" "B")
+CheckLabel("mainWindow.central.keyLogLabel"
+  "key: release Shift+Key_B \"B\"")
+
+FocusKeyPress("Key_Down" "")
+CheckLabel("mainWindow.central.keyLogLabel" "key: press Key_Down \"\"")
+
+  ]
+}
+
+// EOF

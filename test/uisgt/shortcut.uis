@@ -1,0 +1,28 @@
+// shortcut.uis
+// Test the three ways Shortcut works.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+
+// On a menu action.
+CheckLabel("mainWindow.central.featureLabel" "feature: off")
+Shortcut("mainWindow.menuBar.optionsMenu.featureAction" "Ctrl+E")
+CheckLabel("mainWindow.central.featureLabel" "feature: on")
+Shortcut("mainWindow.menuBar.optionsMenu.featureAction" "Ctrl+E")
+CheckLabel("mainWindow.central.featureLabel" "feature: off")
+
+// On a label with a buddy, which focuses the buddy.
+Shortcut("mainWindow.central.nameLabel" "Alt+N")
+CheckFocusWidget("mainWindow.central.nameEdit")
+
+// On a push button, which clicks it.
+CheckLabel("mainWindow.central.clickCountLabel" "clicks: 0")
+Shortcut("mainWindow.central.clickButton" "Alt+C")
+CheckLabel("mainWindow.central.clickCountLabel" "clicks: 1")
+
+  ]
+}
+
+// EOF

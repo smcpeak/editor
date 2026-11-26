@@ -1,0 +1,33 @@
+// key-press.uis
+// Test KeyPress and CheckLineEditText.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+CheckLineEditText("mainWindow.central.nameEdit" "")
+
+// KeyPress goes to the named widget, even without focus.
+KeyPress("mainWindow.central.nameEdit" "Shift+Key_A" "A")
+KeyPress("mainWindow.central.nameEdit" "Key_B" "b")
+KeyPress("mainWindow.central.nameEdit" "Key_C" "c")
+CheckLineEditText("mainWindow.central.nameEdit" "Abc")
+CheckFocusWidget("mainWindow.central.clickButton")
+
+KeyPress("mainWindow.central.nameEdit" "Key_Backspace" "\b")
+CheckLineEditText("mainWindow.central.nameEdit" "Ab")
+
+KeyPress("mainWindow.central.keyLog" "Key_X" "x")
+CheckLabel("mainWindow.central.keyLogLabel" "key: press Key_X \"x\"")
+
+CheckFails(
+  CheckLineEditText("mainWindow.central.nameEdit" "Abc")
+  "should have been \"Abc\" but was \"Ab\"")
+CheckFails(
+  CheckLineEditText("mainWindow.central.clickButton" "")
+  "has class QPushButton, not QLineEdit")
+
+  ]
+}
+
+// EOF

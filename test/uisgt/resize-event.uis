@@ -1,0 +1,27 @@
+// resize-event.uis
+// Test ResizeEvent and CheckSize.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+
+// The sizes are above the window's minimum size; see the comment in
+// `UIShellGUICommandHandler::resizeChildWidget`.
+ResizeEvent("mainWindow.central.notes" QSize(400 150))
+CheckSize("mainWindow.central.notes" QSize(400 150))
+
+ResizeEvent("mainWindow.central.notes" QSize(450 200))
+CheckSize("mainWindow.central.notes" QSize(450 200))
+
+CheckFails(
+  CheckSize("mainWindow.central.notes" QSize(400 150))
+  "should have been QSize\\(400 150\\) but was QSize\\(450 200\\)")
+
+// The pad has a fixed size.
+CheckSize("mainWindow.central.mousePad" QSize(100 100))
+
+  ]
+}
+
+// EOF

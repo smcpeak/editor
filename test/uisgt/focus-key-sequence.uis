@@ -1,0 +1,24 @@
+// focus-key-sequence.uis
+// Test FocusKeySequence.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+
+SetFocus("mainWindow.central.notes")
+CheckFocusWidget("mainWindow.central.notes")
+FocusKeySequence("hello world")
+CheckTextEditText("mainWindow.central.notes" "hello world")
+
+SetFocus("mainWindow.central.nameEdit")
+FocusKeySequence("abc")
+CheckLineEditText("mainWindow.central.nameEdit" "abc")
+
+// The notes were not affected.
+CheckTextEditText("mainWindow.central.notes" "hello world")
+
+  ]
+}
+
+// EOF

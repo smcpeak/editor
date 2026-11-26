@@ -1,0 +1,40 @@
+// mouse-buttons.uis
+// Test MouseButtonPress, MouseButtonRelease and MouseButtonDblClick.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+CheckLabel("mainWindow.central.mouseLabel" "mouse: (none)")
+
+// The press adds its button to the set of buttons.
+MouseButtonPress("mainWindow.central.mousePad"
+  QPoint(10 20) LeftButton {} {})
+CheckLabel("mainWindow.central.mouseLabel"
+  "mouse: press LeftButton (10,20) LeftButton NoModifier")
+
+MouseButtonRelease("mainWindow.central.mousePad"
+  QPoint(11 21) LeftButton {} {})
+CheckLabel("mainWindow.central.mouseLabel"
+  "mouse: release LeftButton (11,21) NoButton NoModifier")
+
+MouseButtonDblClick("mainWindow.central.mousePad"
+  QPoint(12 22) LeftButton {} {})
+CheckLabel("mainWindow.central.mouseLabel"
+  "mouse: dblclick LeftButton (12,22) LeftButton NoModifier")
+
+// Another button, with another one already down, and modifiers.
+MouseButtonPress("mainWindow.central.mousePad"
+  QPoint(30 40) RightButton {LeftButton} {Shift})
+CheckLabel("mainWindow.central.mouseLabel"
+  "mouse: press RightButton (30,40) LeftButton+RightButton Shift")
+
+MouseButtonRelease("mainWindow.central.mousePad"
+  QPoint(30 40) RightButton {LeftButton} {Ctrl Shift})
+CheckLabel("mainWindow.central.mouseLabel"
+  "mouse: release RightButton (30,40) LeftButton Shift+Ctrl")
+
+  ]
+}
+
+// EOF

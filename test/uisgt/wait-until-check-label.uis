@@ -1,0 +1,27 @@
+// wait-until-check-label.uis
+// Test WaitUntilCheckLabel.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+CheckLabel("mainWindow.central.delayLabel" "delayed: idle")
+
+// The timer does not keep the app from being idle, so the next command
+// runs while the update is still pending.
+ClickButton("mainWindow.central.delayButton")
+CheckLabel("mainWindow.central.delayLabel" "delayed: pending")
+WaitUntilCheckLabel(2000 "mainWindow.central.delayLabel"
+  "delayed: done")
+CheckLabel("mainWindow.central.delayLabel" "delayed: done")
+
+// A value that never appears.
+CheckFails(
+  WaitUntilCheckLabel(100 "mainWindow.central.delayLabel"
+    "delayed: never")
+  "but value is \"delayed: done\", not \"delayed: never\"")
+
+  ]
+}
+
+// EOF

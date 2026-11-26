@@ -1,0 +1,26 @@
+// focus-key-pr.uis
+// Test FocusKeyPR.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+
+SetFocus("mainWindow.central.nameEdit")
+CheckFocusWidget("mainWindow.central.nameEdit")
+FocusKeyPR("Key_H" "h")
+FocusKeyPR("Key_I" "i")
+FocusKeyPR("Shift+Key_Exclam" "!")
+CheckLineEditText("mainWindow.central.nameEdit" "hi!")
+FocusKeyPR("Key_Backspace" "\b")
+CheckLineEditText("mainWindow.central.nameEdit" "hi")
+
+// The release comes after the press.
+SetFocus("mainWindow.central.keyLog")
+FocusKeyPR("Key_Z" "z")
+CheckLabel("mainWindow.central.keyLogLabel" "key: release Key_Z \"z\"")
+
+  ]
+}
+
+// EOF

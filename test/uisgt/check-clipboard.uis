@@ -1,0 +1,25 @@
+// check-clipboard.uis
+// Test CheckClipboard.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+
+KeyPress("mainWindow.central.nameEdit" "Key_X" "x")
+KeyPress("mainWindow.central.nameEdit" "Key_Y" "y")
+ClickButton("mainWindow.central.copyButton")
+CheckClipboard("xy")
+
+KeyPress("mainWindow.central.nameEdit" "Key_Z" "z")
+ClickButton("mainWindow.central.copyButton")
+CheckClipboard("xyz")
+
+CheckFails(
+  CheckClipboard("xy")
+  "should have been \"xy\" but was \"xyz\"")
+
+  ]
+}
+
+// EOF

@@ -1,0 +1,47 @@
+// check-query.uis
+// Test CheckQuery, CheckQueryMatches and WaitUntilCheckQuery.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+
+CheckQuery("mainWindow" "clickCount" 0)
+ClickButton("mainWindow.central.clickButton")
+CheckQuery("mainWindow" "clickCount" 1)
+
+CheckQuery("mainWindow" "featureOn" false)
+TriggerAction("mainWindow.menuBar.optionsMenu.featureAction")
+CheckQuery("mainWindow" "featureOn" true)
+
+CheckQuery("mainWindow" "delayState" "idle")
+CheckQueryMatches("mainWindow" "delayState" "^id")
+ClickButton("mainWindow.central.delayButton")
+CheckQuery("mainWindow" "delayState" "pending")
+WaitUntilCheckQuery(2000 "mainWindow" "delayState" "done")
+
+CheckFails(
+  CheckQuery("mainWindow" "clickCount" 5)
+  "should have been 5 but was 1")
+CheckFails(
+  CheckQueryMatches("mainWindow" "delayState" "^pend")
+  "the actual string \"done\" did not match the regex \"\\^pend\"")
+CheckFails(
+  CheckQueryMatches("mainWindow" "clickCount" "1")
+  "the actual value 1 is not a string")
+CheckFails(
+  CheckQuery("mainWindow" "noSuchState" 0)
+  "unknown state: \"noSuchState\"")
+CheckFails(
+  WaitUntilCheckQuery(100 "mainWindow" "delayState" "never")
+  "but value is \"done\", not \"never\"")
+
+// The central widget is not queryable.
+CheckFails(
+  CheckQuery("mainWindow.central" "clickCount" 1)
+  "object at \"mainWindow.central\" has class")
+
+  ]
+}
+
+// EOF

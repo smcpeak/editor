@@ -1,0 +1,37 @@
+// trigger-action.uis
+// Test TriggerAction and CheckActionChecked.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+
+CheckActionChecked("mainWindow.menuBar.optionsMenu.featureAction" false)
+CheckLabel("mainWindow.central.featureLabel" "feature: off")
+
+TriggerAction("mainWindow.menuBar.optionsMenu.featureAction")
+CheckActionChecked("mainWindow.menuBar.optionsMenu.featureAction" true)
+CheckLabel("mainWindow.central.featureLabel" "feature: on")
+
+TriggerAction("mainWindow.menuBar.optionsMenu.featureAction")
+CheckActionChecked("mainWindow.menuBar.optionsMenu.featureAction" false)
+CheckLabel("mainWindow.central.featureLabel" "feature: off")
+
+// A non-checkable action.
+ClickButton("mainWindow.central.clickButton")
+CheckLabel("mainWindow.central.clickCountLabel" "clicks: 1")
+TriggerAction("mainWindow.menuBar.optionsMenu.resetAction")
+CheckLabel("mainWindow.central.clickCountLabel" "clicks: 0")
+
+CheckFails(
+  CheckActionChecked("mainWindow.menuBar.optionsMenu.featureAction"
+                     true)
+  "should have been true but was false")
+CheckFails(
+  CheckActionChecked("mainWindow.menuBar.optionsMenu" true)
+  "has class QMenu, not QAction")
+
+  ]
+}
+
+// EOF

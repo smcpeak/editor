@@ -1,0 +1,24 @@
+// check-combo-box.uis
+// Test CheckComboBoxText.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+
+CheckComboBoxText("mainWindow.central.colorCombo" "Red")
+KeyPress("mainWindow.central.colorCombo" "Key_Down" "")
+CheckComboBoxText("mainWindow.central.colorCombo" "Green")
+KeyPress("mainWindow.central.colorCombo" "Key_Down" "")
+CheckComboBoxText("mainWindow.central.colorCombo" "Blue")
+KeyPress("mainWindow.central.colorCombo" "Key_Up" "")
+CheckComboBoxText("mainWindow.central.colorCombo" "Green")
+
+CheckFails(
+  CheckComboBoxText("mainWindow.central.colorCombo" "Red")
+  "should have been \"Red\" but was \"Green\"")
+
+  ]
+}
+
+// EOF
