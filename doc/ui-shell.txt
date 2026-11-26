@@ -137,8 +137,11 @@ ui-shell-gui-test.exe is a stand-alone program whose only purpose is
 to be driven by UI shell scripts.  It has an example of each kind of
 widget that the GUI commands operate on: a main window with a menu
 bar, three modal dialogs (Edit Name, Table, and a QMessageBox) and a
-modeless List Window.  The design is in
-doc/plans/claude-ui-shell-gui-test.txt.
+modeless List Window.
+
+Its original design is in doc/plans/claude-ui-shell-gui-test.txt, but
+(per the intent of the `plans` directory) it isn't updated as further
+changes are made.  Important design aspects are described here instead.
 
 Its scripts are in test/uisgt/, roughly one per command, and
 test/uisgt/all-uisgt-tests.gdvn lists them.  `make check` runs them

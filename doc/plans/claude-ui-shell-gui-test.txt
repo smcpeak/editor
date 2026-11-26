@@ -3,6 +3,9 @@ Plan for `ui-shell-gui-test`, a test program for the GUI UI shell
 2026-11-25
 
 
+2026-11-26: Implementation of this plan is now complete.
+
+
 Goal
 ====
 
