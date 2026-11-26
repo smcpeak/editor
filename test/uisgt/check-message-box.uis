@@ -8,8 +8,8 @@ CheckFocusWidget("mainWindow.central.clickButton")
 CheckLabel("mainWindow.central.messageLabel" "message: (none)")
 
 Shortcut("mainWindow.menuBar.dialogsMenu.messageBoxAction" "F5")
-CheckFocusWindow("messageBox")
-CheckWindowTitle("messageBox" "Message")
+CheckFocusWindow("mainWindow.messageBox")
+CheckWindowTitle("mainWindow.messageBox" "Message")
 
 CheckMessageBoxTextMatches("messageBox" "^Something happened")
 CheckMessageBoxTextMatches("messageBox" "code [0-9]+$")
@@ -28,7 +28,7 @@ CheckFails(
 
 // Closing the box is reported in the main window.
 CheckLabel("mainWindow.central.messageLabel" "message: (none)")
-ClickButton("messageBox.qt_msgbox_buttonbox.okButton")
+ClickButton("mainWindow.messageBox.qt_msgbox_buttonbox.okButton")
 CheckFocusWindow("mainWindow")
 CheckLabel("mainWindow.central.messageLabel" "message: closed")
 

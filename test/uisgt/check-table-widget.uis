@@ -7,49 +7,49 @@
 CheckFocusWidget("mainWindow.central.clickButton")
 
 Shortcut("mainWindow.menuBar.dialogsMenu.tableAction" "F3")
-CheckFocusWindow("tableDialog")
-CheckFocusWidget("tableDialog.table")
+CheckFocusWindow("mainWindow.tableDialog")
+CheckFocusWidget("mainWindow.tableDialog.table")
 
-CheckTableWidgetRowCount("tableDialog.table" 3)
-CheckTableWidgetRow("tableDialog.table" 1 ["beta" "2"])
-CheckTableWidgetContents("tableDialog.table" [
+CheckTableWidgetRowCount("mainWindow.tableDialog.table" 3)
+CheckTableWidgetRow("mainWindow.tableDialog.table" 1 ["beta" "2"])
+CheckTableWidgetContents("mainWindow.tableDialog.table" [
   ["alpha" "1"]
   ["beta"  "2"]
   [re("^gam") "3"]
 ])
-CheckTableWidgetCellMatches("tableDialog.table" 2 0 "mm")
-CheckTableWidgetCurrentRow("tableDialog.table" 0)
+CheckTableWidgetCellMatches("mainWindow.tableDialog.table" 2 0 "mm")
+CheckTableWidgetCurrentRow("mainWindow.tableDialog.table" 0)
 
 // Arrow keys move the current row.
-KeyPress("tableDialog.table" "Key_Down" "")
-CheckTableWidgetCurrentRow("tableDialog.table" 1)
-KeyPress("tableDialog.table" "Key_Down" "")
-CheckTableWidgetCurrentRow("tableDialog.table" 2)
-KeyPress("tableDialog.table" "Key_Up" "")
-CheckTableWidgetCurrentRow("tableDialog.table" 1)
+KeyPress("mainWindow.tableDialog.table" "Key_Down" "")
+CheckTableWidgetCurrentRow("mainWindow.tableDialog.table" 1)
+KeyPress("mainWindow.tableDialog.table" "Key_Down" "")
+CheckTableWidgetCurrentRow("mainWindow.tableDialog.table" 2)
+KeyPress("mainWindow.tableDialog.table" "Key_Up" "")
+CheckTableWidgetCurrentRow("mainWindow.tableDialog.table" 1)
 
 // Adding a row makes it current.
-ClickButton("tableDialog.addRowButton")
-CheckTableWidgetRowCount("tableDialog.table" 4)
-CheckTableWidgetRow("tableDialog.table" 3 ["row 4" "4"])
-CheckTableWidgetCurrentRow("tableDialog.table" 3)
+ClickButton("mainWindow.tableDialog.addRowButton")
+CheckTableWidgetRowCount("mainWindow.tableDialog.table" 4)
+CheckTableWidgetRow("mainWindow.tableDialog.table" 3 ["row 4" "4"])
+CheckTableWidgetCurrentRow("mainWindow.tableDialog.table" 3)
 
 // Wrong expected values.
 CheckFails(
-  CheckTableWidgetRowCount("tableDialog.table" 3)
+  CheckTableWidgetRowCount("mainWindow.tableDialog.table" 3)
   "should have been 3 but was 4")
 CheckFails(
-  CheckTableWidgetRow("tableDialog.table" 0 ["alpha" "2"])
+  CheckTableWidgetRow("mainWindow.tableDialog.table" 0 ["alpha" "2"])
   "should have been \\[\"alpha\" \"2\"\\] but was")
 CheckFails(
-  CheckTableWidgetContents("tableDialog.table" [
+  CheckTableWidgetContents("mainWindow.tableDialog.table" [
     ["alpha" "1"]
     ["beta"  "2"]
     ["gamma" "3"]
   ])
   "numRows: mismatch")
 CheckFails(
-  CheckTableWidgetContents("tableDialog.table" [
+  CheckTableWidgetContents("mainWindow.tableDialog.table" [
     ["alpha" "1"]
     ["beta"  "X"]
     ["gamma" "3"]
@@ -57,7 +57,7 @@ CheckFails(
   ])
   "cell text: mismatch")
 CheckFails(
-  CheckTableWidgetContents("tableDialog.table" [
+  CheckTableWidgetContents("mainWindow.tableDialog.table" [
     [re("^b") "1"]
     ["beta"  "2"]
     ["gamma" "3"]
@@ -65,13 +65,13 @@ CheckFails(
   ])
   "re match fail")
 CheckFails(
-  CheckTableWidgetCellMatches("tableDialog.table" 0 0 "^b")
+  CheckTableWidgetCellMatches("mainWindow.tableDialog.table" 0 0 "^b")
   "the actual string \"alpha\" did not match the regex \"\\^b\"")
 CheckFails(
-  CheckTableWidgetCurrentRow("tableDialog.table" 0)
+  CheckTableWidgetCurrentRow("mainWindow.tableDialog.table" 0)
   "should have been 0 but was 3")
 
-ClickButton("tableDialog.closeButton")
+ClickButton("mainWindow.tableDialog.closeButton")
 CheckFocusWindow("mainWindow")
 
   ]

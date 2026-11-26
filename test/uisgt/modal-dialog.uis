@@ -10,16 +10,16 @@ CheckLabel("mainWindow.central.nameResultLabel" "name result: (none)")
 
 // Open, type, OK.  The dialog starts with the main window's name.
 Shortcut("mainWindow.menuBar.dialogsMenu.editNameAction" "F2")
-CheckFocusWindow("nameDialog")
-CheckFocusWidget("nameDialog.nameEdit")
-CheckWindowTitle("nameDialog" "Edit Name")
-CheckLineEditText("nameDialog.nameEdit" "a")
+CheckFocusWindow("mainWindow.nameDialog")
+CheckFocusWidget("mainWindow.nameDialog.nameEdit")
+CheckWindowTitle("mainWindow.nameDialog" "Edit Name")
+CheckLineEditText("mainWindow.nameDialog.nameEdit" "a")
 
 // The text might be selected on entry, so go to the end first.
 FocusKeyPR("Key_End" "")
 FocusKeyPR("Key_B" "b")
-CheckLineEditText("nameDialog.nameEdit" "ab")
-ClickButton("nameDialog.okButton")
+CheckLineEditText("mainWindow.nameDialog.nameEdit" "ab")
+ClickButton("mainWindow.nameDialog.okButton")
 CheckFocusWindow("mainWindow")
 CheckLabel("mainWindow.central.nameResultLabel" "name result: ab")
 
@@ -28,24 +28,24 @@ CheckLineEditText("mainWindow.central.nameEdit" "a")
 
 // Open, type, Cancel.
 Shortcut("mainWindow.menuBar.dialogsMenu.editNameAction" "F2")
-CheckFocusWidget("nameDialog.nameEdit")
+CheckFocusWidget("mainWindow.nameDialog.nameEdit")
 FocusKeyPR("Key_End" "")
 FocusKeyPR("Key_C" "c")
-CheckLineEditText("nameDialog.nameEdit" "ac")
-ClickButton("nameDialog.cancelButton")
+CheckLineEditText("mainWindow.nameDialog.nameEdit" "ac")
+ClickButton("mainWindow.nameDialog.cancelButton")
 CheckFocusWindow("mainWindow")
 CheckLabel("mainWindow.central.nameResultLabel" "name result: ab")
 
 // Return activates the default button, OK.
 Shortcut("mainWindow.menuBar.dialogsMenu.editNameAction" "F2")
-CheckFocusWidget("nameDialog.nameEdit")
+CheckFocusWidget("mainWindow.nameDialog.nameEdit")
 FocusKeyPR("Key_Return" "\r")
 CheckFocusWindow("mainWindow")
 CheckLabel("mainWindow.central.nameResultLabel" "name result: a")
 
 // Escape cancels.
 Shortcut("mainWindow.menuBar.dialogsMenu.editNameAction" "F2")
-CheckFocusWidget("nameDialog.nameEdit")
+CheckFocusWidget("mainWindow.nameDialog.nameEdit")
 FocusKeyPR("Key_End" "")
 FocusKeyPR("Key_D" "d")
 FocusKeyPR("Key_Escape" "\u{1B}")
@@ -56,6 +56,11 @@ CheckLabel("mainWindow.central.nameResultLabel" "name result: a")
 CheckFails(
   CheckLineEditText("nameDialog.nameEdit" "a")
   "could not find root element \"nameDialog\"")
+
+// Try finding it both ways.
+CheckFails(
+  CheckLineEditText("mainWindow.nameDialog.nameEdit" "a")
+  "could not find child \"nameDialog\"")
 
   ]
 }

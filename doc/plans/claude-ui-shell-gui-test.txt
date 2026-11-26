@@ -397,6 +397,11 @@ editor's dialogs.
     it sets messageLabel in the main window to
     "message: closed".
 
+Note: Widgets inside modal dialogs have, in a sense, two different Qt
+object paths.  See the comments above `getQObjectFromPath` in
+`ui-shell-gui-command-handler.cc`.  The safest approach is to use paths
+that start with "mainWindow.".
+
 Modeless window
 ---------------
 

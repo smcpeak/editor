@@ -16,7 +16,7 @@
 #include "smqtutil/gdvalue-qt.h"                 // gdvpTo(QSize)
 #include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtguiutil.h"                  // showRaiseAndActivateWindow
-#include "smqtutil/qtutil.h"                     // operator<<(QString), toQPointF
+#include "smqtutil/qtutil.h"                     // operator<<(QString), toQPointF, qObjectPath
 
 // smbase
 #include "smbase/chained-cond.h"                 // smbase::cc::z_le_lt
@@ -149,8 +149,26 @@ void UIShellGUICommandHandler::resizeChildWidget(
 }
 
 
-// Get an object from its path from a top-level window, or throw
-// `XMessage` if we cannot find it.
+/* Get an object from its path from a top-level window, or throw
+   `XMessage` if we cannot find it.
+
+   Beware: This function can find an object by starting from any
+   top-level widget, i.e., one that has an associated window in the
+   desktop window system.  However, modal dialogs are both top-level
+   widgets *and* they have a non-null parent.  This means that a widget
+   inside a modal dialog can be found *both* as "modalDialog.widget" and
+   as "mainWindow.modalDialog.widget".
+
+   In contrast, `qObjectPath` walks all the way up the parent tree, so
+   if such a widget has its path computed by that function, it would be
+   "mainWindow.modalDialog.widget".  This can be confusing when reading
+   or writing .uis scripts since the same widget can seem to have
+   multiple names.
+
+   TODO: Probably the right solution is to change this function to skip
+   top-level widgets that have non-null parents so that every widget is
+   consistently referred to by one name.
+*/
 static QObject *getQObjectFromPath(std::string const &path)
 {
   QStringList elts = toQString(path).split('.');
