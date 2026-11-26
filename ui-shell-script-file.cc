@@ -13,6 +13,10 @@
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
 
+// libc++
+#include <string>                                // std::string
+#include <vector>                                // std::vector
+
 using namespace gdv;
 using namespace smbase;
 

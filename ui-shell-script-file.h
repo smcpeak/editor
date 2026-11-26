@@ -9,10 +9,10 @@
 #include "ui-shell-script-file-fwd.h"            // fwds for this module
 
 // smbase
-#include "smbase/gdvalue.h"                      // gdv::GDValue
+#include "smbase/gdvalue-fwd.h"                  // gdv::GDValue [f]
+#include "smbase/std-string-fwd.h"               // std::string [f]
 
 // libc++
-#include <string>                                // std::string
 #include <vector>                                // std::vector
 
 
