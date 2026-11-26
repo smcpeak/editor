@@ -32,9 +32,8 @@
 #include "rfa-gui-sync-multi-client.h"           // RFA_GUISyncMultiClient
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics (implicit)
 #include "textinput.h"                           // TextInputDialog
+#include "ui-shell-app.h"                        // UIShellOptions, runUIShellScript, runUIShellTestCommandsIfRequested
 #include "ui-shell-gui-command-handler.h"        // UIShellGUICommandHandler
-#include "ui-shell-script-file.h"                // UIShellScriptFile
-#include "ui-shell-script-runner.h"              // UIShellScriptRunner
 #include "uri-util.h"                            // getFileURIPath
 
 // smqtutil
@@ -42,7 +41,6 @@
 #include "smqtutil/qstringb.h"                   // qstringb
 #include "smqtutil/qtguiutil.h"                  // showRaiseAndActivateWindow, messageBox
 #include "smqtutil/qtutil.h"                     // toQString, installSMQtUtilMessageHandler
-#include "smqtutil/silent-mbox-filter.h"         // SilentMessageBoxFilter
 #include "smqtutil/timer-event-loop.h"           // sleepWhilePumpingEvents
 
 // smbase
@@ -54,7 +52,7 @@
 #include "smbase/exclusive-write-file.h"         // smbase::ExclusiveWriteFile
 #include "smbase/fasttime.h"                     // smbase::{fastTimeInitialize, fastTimeMilliseconds, fastTimeIsImplemented}
 #include "smbase/gdv-ordered-map.h"              // gdv::GDVOrderedMap
-#include "smbase/gdvalue-parser.h"               // gdv::{GDValueParser, gdvpTo}
+#include "smbase/gdvalue-parser.h"               // gdv::GDValueParser
 #include "smbase/gdvalue-set.h"                  // gdv::toGDValue(std::set)
 #include "smbase/gdvalue-vector.h"               // gdv::toGDValue(std::vector)
 #include "smbase/gdvalue.h"                      // gdv::toGDValue
@@ -67,7 +65,7 @@
 #include "smbase/sm-file-util.h"                 // SMFileUtil
 #include "smbase/sm-test.h"                      // PVAL
 #include "smbase/sm-unique-ptr.h"                // smbase::UniquePtr
-#include "smbase/string-util.h"                  // beginsWith, shellDoubleQuoteCommand, removeSuffix
+#include "smbase/string-util.h"                  // beginsWith, removeSuffix
 #include "smbase/stringb.h"                      // stringb
 #include "smbase/strtokp.h"                      // StrtokParse
 #include "smbase/sm-trace.h"                     // INIT_TRACE, etc.
@@ -81,7 +79,6 @@
 
 // libc++
 #include <algorithm>                             // std::max
-#include <cstring>                               // std::{strlen, memcpy}
 #include <deque>                                 // std::deque
 #include <exception>                             // std::exception
 #include <memory>                                // std::{unique_ptr, make_unique}
@@ -91,7 +88,7 @@
 #include <utility>                               // std::{exchange, move}
 
 // libc
-#include <stdlib.h>                              // atoi
+#include <stdlib.h>                              // getenv
 
 using namespace gdv;
 using namespace smbase;
@@ -134,9 +131,7 @@ EditorGlobal::EditorGlobal(int argc, char **argv)
     m_settings(),
     m_useUserSettingsFile(true),
     m_filenameInputDialogHistory(),
-    m_recordInputEvents(false),
-    m_uiShellCmdsFileName(),
-    m_uiShellCommands()
+    m_uiShellOptions()
 {
   HTT_TASK("EditorGlobal ctor");
 
@@ -363,18 +358,14 @@ static char const *optionsDescription =
   "options:\n"
   "  -help           Print this message and exit.\n"
   "  -version        Print the version and exit.\n"
-  "  -uisCmds=file.uis\n"
-  "                  Execute UI shell commands in file.uis, then quit.\n"
-  "                  Implies -no-settings.\n"
-  "  -testCommands=tests.gdvn\n"
-  "                  Execute all tests in tests.gdvn.\n"
-  "  -record         Record events to recorded.uis.\n"
   "  -conn=hostname  Start with an active remote connection to hostname.\n"
   "  -no-settings    Do not read or write user settings.\n"
   "  -fake-lsp       Use `lsp-test-server.py` as the LSP server.\n"
-  "\n"
-  "With -uisCmds, set envvar NOQUIT=1 to stop if failure and NOQUIT=0 to\n"
-  "stop after execution regardless of failure.\n"
+  ;
+
+
+static char const *uiShellOptionsNote =
+  "-uisCmds and -record imply -no-settings and -fake-lsp.\n"
   ;
 
 
@@ -393,39 +384,6 @@ void EditorGlobal::addFileToOpenInitially(
 }
 
 
-void EditorGlobal::processUIShellCmdsFile(
-  std::vector<std::string> &filesToOpen /*APPEND*/,
-  std::string const &fname)
-{
-  if (!m_uiShellCmdsFileName.empty()) {
-    xformat("Multiple \"-uisCmds=\" options are not allowed.");
-  }
-  m_uiShellCmdsFileName = fname;
-
-  // We are going to run an automated test, so ignore user
-  // settings.
-  m_useUserSettingsFile = false;
-
-  // Only use the fake server with -record or -uisCmds.
-  m_lspIsFakeServer = true;
-
-  // Read the script.
-  UIShellScriptFile script(m_uiShellCmdsFileName);
-
-  // The `args` can be missing, in which case we do not open any
-  // files initially.
-  cout << "args: " << toGDValue(script.m_args) << "\n";
-
-  // For now, all arguments specified this way are interpreted as
-  // files to open.
-  for (std::string const &fname : script.m_args) {
-    addFileToOpenInitially(filesToOpen /*APPEND*/, fname);
-  }
-
-  m_uiShellCommands = std::move(script.m_commands);
-}
-
-
 std::vector<std::string> EditorGlobal::processCommandLineOptions(
   int argc, char **argv)
 {
@@ -439,27 +397,18 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
     }
 
     else if (arg[0]=='-') {
-      if (arg == "-help") {
+      if (m_uiShellOptions.processOption(arg)) {
+        // Handled; see the `isTestMode` check after the loop.
+      }
+
+      else if (arg == "-help") {
         cout << "usage: " << argv[0] << " [options] [files...]\n\n"
-             << optionsDescription;
+             << optionsDescription
+             << "\n"
+             << "UI shell options:\n"
+             << UIShellOptions::helpText()
+             << uiShellOptionsNote;
         THROW(QuitAfterPrintingHelp(""));
-      }
-
-      else if (beginsWith(arg, "-uisCmds=")) {
-        // Execute a sequence of UI shell commands as part of a test.
-        processUIShellCmdsFile(filesToOpen /*APPEND*/, arg.substr(9));
-      }
-
-      else if (arg == "-record") {
-        // Record events to seed a new test.
-        m_recordInputEvents = true;
-
-        // Since this is preparatory to an automated test, which will
-        // not have user settings, turn them off here too.
-        m_useUserSettingsFile = false;
-
-        // Only use the fake server with -record or -uisCmds.
-        m_lspIsFakeServer = true;
       }
 
       else if (arg == "-fake-lsp") {
@@ -495,13 +444,36 @@ std::vector<std::string> EditorGlobal::processCommandLineOptions(
     }
 
     else {
-      if (!m_uiShellCmdsFileName.empty()) {
-        xformat("Cannot specify files to open with -uisCmds.  Put them "
-                "into the .uis file instead.");
-      }
-
       // Open all non-option files specified on the command line.
       addFileToOpenInitially(filesToOpen /*APPEND*/, arg);
+    }
+  }
+
+  if (m_uiShellOptions.isTestMode()) {
+    // We are going to run, or prepare for, an automated test, so
+    // ignore user settings.
+    m_useUserSettingsFile = false;
+
+    // Only use the fake server with -record or -uisCmds.
+    m_lspIsFakeServer = true;
+  }
+
+  if (m_uiShellOptions.hasScript()) {
+    if (!filesToOpen.empty()) {
+      xformat("Cannot specify files to open with -uisCmds.  Put them "
+              "into the .uis file instead.");
+    }
+
+    // The `args` can be missing, in which case we do not open any
+    // files initially.
+    std::vector<std::string> const &args =
+      m_uiShellOptions.m_script.m_args;
+    cout << "args: " << toGDValue(args) << "\n";
+
+    // For now, all arguments specified this way are interpreted as
+    // files to open.
+    for (std::string const &fname : args) {
+      addFileToOpenInitially(filesToOpen /*APPEND*/, fname);
     }
   }
 
@@ -1872,58 +1844,16 @@ static int innerMain(int argc, char **argv)
       };
 
       Owner<EventRecorder> recorder;
-      if (app.m_recordInputEvents) {
+      if (app.m_uiShellOptions.m_recordInputEvents) {
         recorder = new EventRecorder("recorded.uis");
       }
 
-      if (!app.m_uiShellCmdsFileName.empty()) {
-        // Automated GUI test.
-        g_abortUponDevWarning = true;
-        cout << "running test: " << app.m_uiShellCmdsFileName << endl;
-
-        // Cause the UI shell script name to be included in any failure
-        // message.
-        EXN_CONTEXT(app.m_uiShellCmdsFileName);
-        HTT_TASK_DYNAMIC_LABEL(app.m_uiShellCmdsFileName);
-
-        // Disable message box sounds since they are annoying to listen
-        // to while the automated tests run.
-        SilentMessageBoxFilter silentFilter(&app);
-
-        // Declared first so it is destroyed after `runner`.
+      if (app.m_uiShellOptions.hasScript()) {
+        // Automated GUI test.  If it passes, it could still fail
+        // below, depending on object counts.
         UIShellGUICommandHandler commandHandler;
-
-        UIShellScriptRunner runner(
-          commandHandler, app.m_uiShellCommands, selfCheck);
-        runner.m_printFailureToStdout = true;
-        std::optional<std::string> error = runner.runTest();
-        if (!error.has_value()) {
-          cout << "test passed" << endl;
-
-          // Check all invariants before declaring victory.  (This is
-          // redundant with the calls to `selfCheck` done during
-          // execution, but harmless.)
-          app.selfCheck();
-
-          ret = 0;   // It could still fail, depending on object counts.
-        }
-        else {
-          // In the failure case, UIShellScriptRunner prints the
-          // failure due to setting its `m_printFailureToStdout`.
-          ret = 2;
-        }
-
-        // TODO: This is a bizarre interface.  Improve it.
-        if (char const *noQuit = getenv("NOQUIT")) {
-          // If we are going to return at least $NOQUIT, keep the app
-          // running so I can inspect its state.  Often I will use
-          // NOQUIT=1 to stop iff there is a test failure.  NOQUIT=0
-          // will stop unconditionally.
-          if (ret >= atoi(noQuit)) {
-            cout << "leaving app running due to NOQUIT" << endl;
-            app.exec();
-          }
-        }
+        ret = runUIShellScript(app, app.m_uiShellOptions,
+                               commandHandler, selfCheck);
       }
 
       else {
@@ -1963,132 +1893,13 @@ static int innerMain(int argc, char **argv)
 }
 
 
-// Return a dynamically-allocated, NUL-terminated array holding the
-// contents of `s`.
-static char *dupString(std::string const &s)
-{
-  char *ret = new char[s.size() + 1];
-  std::memcpy(ret, s.data(), s.size());
-  ret[s.size()] = 0;
-  return ret;
-}
-
-
-// Run `command` as if it were this program's `argc/argv`.  Return
-// non-zero if the attempt fails.
-static int runOneCommand(std::vector<std::string> const &command)
-{
-  std::cout << "Command: "
-            << shellDoubleQuoteCommand(command) << "\n";
-
-  // The tests unfortunately have some race conditions I have not
-  // been able to fully eliminate, so try each one up to 3 times.
-  //
-  // 2025-09-01: It has been a while since I saw a failure.  Let's try
-  // setting the default value to 1 so we do not retry at all.
-  int attempts = 0;
-  int const retryLimit = envAsIntOr(1, "EDITOR_TEST_RETRIES");
-
-  while (true) {
-    ++attempts;
-
-    // The `argc/argv` passed to the `QApplication` ctor must be
-    // mutable, so make copies of everything.
-    char **argv = new char*[command.size()+1];
-    std::vector<char*> argvPointers;
-    for (std::size_t i=0; i < command.size(); ++i) {
-      argv[i] = dupString(command.at(i));
-      argvPointers.push_back(argv[i]);
-    }
-    argv[command.size()] = nullptr;
-
-    // Run the constructed command line.
-    int result = innerMain(command.size()+1, argv);
-
-    // Free the `argv` array.
-    delete[] argv;
-
-    // Free the individual strings.  We do not read `argv` to find
-    // them because `QApplication` can modify the `argv` array.
-    for (char *p : argvPointers) {
-      delete[] p;
-    }
-
-    if (result == 0) {
-      // Test passed.
-      return 0;
-    }
-    else {
-      if (attempts < retryLimit) {
-        std::cout << "Attempt " << attempts << " of " << retryLimit
-                  << " failed (code=" << result << "), retrying...\n";
-      }
-      else {
-        std::cout << "All " << retryLimit
-                  << " attempts failed, stopping with code "
-                  << result << "\n";
-        return result;
-      }
-    }
-  }
-
-  // Not reached.
-}
-
-
-// Read `cmdsFname` as GDVN and treat its contents as a sequence of
-// command lines to run, in sequence, as if they were this program's
-// command line.  The expectation is these are automated GUI tests.
-//
-// It is faster to run all the tests in one process if possible rather
-// than starting a new process for each.
-static int runCommandList(std::string const &cmdsFname)
-{
-  try {
-    std::cout << "Executing commands from " << cmdsFname << "\n";
-
-    // Parse the file as GDVN and parse the GDV as a sequence of
-    // sequences of strings.
-    GDValue commandGDV = GDValue::readFromFile(cmdsFname);
-    std::vector<std::vector<std::string>> allCommands =
-      gdvpTo<decltype(allCommands)>(GDValueParser(commandGDV));
-
-    // Treat each sequence of strings as a command line.
-    for (std::vector<std::string> const &command : allCommands) {
-      int result = runOneCommand(command);
-      if (result != 0) {
-        return result;
-      }
-    }
-
-    // All tests passed.
-    return 0;
-  }
-
-  catch (std::exception &x) {
-    // At least for now, if a test fails with an exception, I do not
-    // treat that as retryable.
-    std::cout << "Test failed: " << x.what() << "\n";
-    return 2;
-  }
-}
-
-
 int main(int argc, char **argv)
 {
   // Start the root timer.
   HTT_Singleton::ensureCreated();
 
-  std::optional<int> exitCode;
-
-  if (argc >= 2) {
-    std::string firstArg(argv[1]);
-    char const *prefix = "-testCommands=";
-    if (beginsWith(firstArg, prefix)) {
-      std::string cmdsFname = firstArg.substr(std::strlen(prefix));
-      exitCode = runCommandList(cmdsFname);
-    }
-  }
+  std::optional<int> exitCode =
+    runUIShellTestCommandsIfRequested(argc, argv, innerMain);
 
   if (!exitCode.has_value()) {
     exitCode = innerMain(argc, argv);

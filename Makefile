@@ -477,6 +477,7 @@ EDITOR_OBJS += list-choice-dialog.o
 EDITOR_OBJS += modal-dialog.moc.o
 EDITOR_OBJS += modal-dialog.o
 EDITOR_OBJS += pixmaps.o
+EDITOR_OBJS += ui-shell-app.o
 EDITOR_OBJS += ui-shell-gui-command-handler.moc.o
 EDITOR_OBJS += ui-shell-gui-command-handler.o
 EDITOR_OBJS += ui-shell-gui-queryable.o

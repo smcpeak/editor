@@ -37,6 +37,7 @@
 #include "recent-items-list-iface.h"             // RecentItemsList
 #include "rfa-async-multi-client.h"              // RFA_AsyncMultiClient
 #include "sar-panel-fwd.h"                       // SearchAndReplacePanel [n]
+#include "ui-shell-app.h"                        // UIShellOptions
 
 // smbase
 #include "smbase/exclusive-write-file-fwd.h"     // smbase::ExclusiveWriteFile [n]
@@ -177,28 +178,14 @@ public:      // data
   // Shared history for a dialog.
   FilenameInputDialog::History m_filenameInputDialogHistory;
 
-  // True to record input to "recorded.uis" for test case creation.
-  bool m_recordInputEvents;
-
-  // Name of a UI shell commands file to run, or empty for none.
-  //
-  // This member and the next are public because `innerMain` accesses
-  // them as it initiates UI shell command execution.
-  std::string m_uiShellCmdsFileName;
-
-  // Sequence of commands to run for the test.
-  std::vector<gdv::GDValue> m_uiShellCommands;
+  // UI shell options from the command line.  This is public because
+  // `innerMain` uses it to start recording or run a script.
+  UIShellOptions m_uiShellOptions;
 
 private:     // methods
   // Treat `fname` like a file specified on the command line, adding it
   // to `filesToOpen`.
   void addFileToOpenInitially(
-    std::vector<std::string> &filesToOpen /*APPEND*/,
-    std::string const &fname);
-
-  // Process `fname`, the argument to a "-uisCmds=" option.  Among other
-  // things, augment `filesToOpen`.
-  void processUIShellCmdsFile(
     std::vector<std::string> &filesToOpen /*APPEND*/,
     std::string const &fname);
 
