@@ -7,7 +7,7 @@
 #include "waiting-counter.h"           // adjWaitingCounter
 
 // smqtutil
-#include "smqtutil/qtutil.h"           // toString(QString), printQByteArray
+#include "smqtutil/qtutil.h"           // toString(QString), printQByteArray, disconnectSignals
 
 // smbase
 #include "smbase/bflatten.h"           // StreamFlatten
@@ -86,7 +86,7 @@ void RFA_AsyncSingleClient::setState(State s)
 
 void RFA_AsyncSingleClient::disconnectSignals()
 {
-  QObject::disconnect(&m_commandRunner, nullptr, this, nullptr);
+  ::disconnectSignals(&m_commandRunner, this);
 }
 
 
