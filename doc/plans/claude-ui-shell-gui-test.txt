@@ -1,0 +1,660 @@
+claude-ui-shell-gui-test.txt
+Plan for `ui-shell-gui-test`, a test program for the GUI UI shell
+2026-11-25
+
+
+Goal
+====
+
+Add ui-shell-gui-test.exe, a stand-alone Qt GUI program whose only
+purpose is to be driven by UI shell scripts.  It has examples of every
+kind of widget that the commands in ui-shell-gui-command-handler.cc
+operate on, and a set of test/usgt/*.uis scripts, roughly one per
+command, exercises them.  `make check` runs them all with:
+
+  ./ui-shell-gui-test.exe -testCommands=test/usgt/all-usgt-tests.gdvn
+
+Today, UIShellGUICommandHandler is only tested indirectly, through the
+editor's .uis tests, which use some commands heavily and others barely
+or not at all.  A separate program also shows that the GUI UI shell
+layer has no dependencies on the editor (the NOTE at the top of
+ui-shell-gui-command-handler.cc).
+
+To make that possible, the handling of "-uisCmds", "-testCommands" and
+"-record" moves out of editor-global.cc into modules that any Qt GUI
+program can use.  "-uisServer" (doc/plans/claude-gui-control-shell.txt)
+will be added there too when it exists.
+
+Not covered: `DumpObjectTree`, which only prints, and will be tested
+through its query version once that exists.
+
+
+Factoring the command line handling
+===================================
+
+What editor-global.cc does today:
+
+  * `processUIShellCmdsFile`: read the .uis file (a map with `args`,
+    optional `includes` and `cmds`), apply the `Define` substitutions,
+    and flatten `cmds` with `gdvFlattenSequence`.
+  * `processCommandLineOptions`: recognize "-uisCmds=" and "-record",
+    plus editor-specific side effects (no user settings, fake LSP
+    server, `args` are files to open).
+  * `innerMain`: create the EventRecorder for "-record"; for
+    "-uisCmds", set `g_abortUponDevWarning`, add the exception context,
+    install SilentMessageBoxFilter, run a UIShellScriptRunner, print
+    "test passed", run the self-check one final time, and handle
+    NOQUIT.
+  * `main`, `runCommandList`, `runOneCommand`, `dupString`:
+    "-testCommands=", which must be the first argument, runs each
+    command line in a GDVN file by calling `innerMain` in the same
+    process, with retries (EDITOR_TEST_RETRIES).
+
+The generic parts go into two new modules.
+
+ui-shell-script-file (non-GUI, linked into unit-tests.exe)
+----------------------------------------------------------
+
+The file-reading part, which needs only smbase.  Being outside the GUI
+also lets it get a unit test, so reading .uis files (which the
+script-runner test plan left uncovered) is tested directly.
+
+  // ui-shell-script-file.h
+
+  // The contents of a .uis file, after substitution and flattening.
+  class UIShellScriptFile {
+  public:      // data
+    // The `args` entry, or empty if it is absent.  Its meaning is up
+    // to the program; the editor opens them as files.
+    std::vector<std::string> m_args;
+
+    // The `cmds` entry, with the `Define`s from `includes` and `cmds`
+    // substituted, and nested sequences and nulls flattened away.
+    std::vector<gdv::GDValue> m_commands;
+
+  public:      // funcs
+    UIShellScriptFile();
+
+    // Read and process `fname`.  Names in `includes` are relative to
+    // the directory containing `fname`.  Throws on I/O, syntax and
+    // structure errors.
+    explicit UIShellScriptFile(std::string const &fname);
+  };
+
+`gdvFlattenSequence` moves into ui-shell-script-file.cc.  The
+"args: ..." line that the editor prints now stays in editor-global.cc.
+
+ui-shell-script-file-test.cc covers: `args` present and absent, a
+missing `cmds`, an `includes` file with a `Define` used in `cmds`,
+nested sequences and nulls being flattened, and a tagged sequence
+being left alone.  The scratch files go under out/ussft/.
+
+ui-shell-app (GUI, linked into editor.exe and ui-shell-gui-test.exe)
+--------------------------------------------------------------------
+
+The parts that deal with the command line and with running the test.
+
+  // ui-shell-app.h
+
+  // The UI shell command line options shared by GUI programs that
+  // can be driven by the UI shell.
+  class UIShellOptions {
+  public:      // data
+    // From "-uisCmds=FILE": FILE, or empty if the option is absent.
+    std::string m_scriptFileName;
+
+    // The contents of `m_scriptFileName`, if it is not empty.
+    UIShellScriptFile m_script;
+
+    // True if "-record" was given: record input events to
+    // "recorded.uis".
+    bool m_recordInputEvents;
+
+    // (Later, from "-uisServer=FILE": the access file name, or empty.)
+
+  public:      // funcs
+    UIShellOptions();
+
+    // Lines to include in a program's "-help" output, describing
+    // the options handled here, including "-testCommands" and NOQUIT.
+    static char const *helpText();
+
+    // If `arg` is one of the options handled here, process it and
+    // return true.  Otherwise, return false so the caller can try
+    // its own options.  Throws `XFormat` for a repeated "-uisCmds",
+    // or for "-testCommands" (which is only valid as the first
+    // argument, and is handled by `runUIShellTestCommandsIfRequested`
+    // before this is called).  Errors from reading the script
+    // propagate.
+    bool processOption(std::string const &arg);
+
+    // True if "-uisCmds" was given.
+    bool hasScript() const;
+
+    // True if "-uisCmds" or "-record" was given, meaning the program
+    // should start in a reproducible state (e.g., no user settings).
+    bool isTestMode() const;
+  };
+
+  // Run the commands in `options.m_script` with `handler`, calling
+  // `globalSelfCheck` after each one, and once more at the end if all
+  // passed.  Return 0 if the script passed and 2 if not.
+  //
+  // This also sets `g_abortUponDevWarning`, prints "running test:"
+  // and "test passed", puts the script name into the exception
+  // context, suppresses message box sounds, and implements NOQUIT
+  // (running `app.exec()` before returning).
+  //
+  // Requires: options.hasScript()
+  int runUIShellScript(
+    QApplication &app,
+    UIShellOptions const &options,
+    UIShellCommandHandler &handler,
+    std::function<void ()> globalSelfCheck);
+
+  // If `argv[1]` is "-testCommands=FILE", run each command line in
+  // FILE, a GDVN sequence of sequences of strings, by calling
+  // `innerMain` with it as `argc/argv`, stopping at the first one that
+  // fails.  A failing command line is retried up to
+  // $UI_SHELL_TEST_RETRIES times (default 1, i.e., no retries).
+  // Return 0 if all passed, otherwise the exit code of the one that
+  // failed.
+  //
+  // If `argv[1]` is anything else, return `std::nullopt` and do
+  // nothing.
+  //
+  // `innerMain` must create its own `QApplication`, since it is
+  // called once for each command line.  The program name in each
+  // command line becomes `argv[0]`, but is otherwise ignored; the
+  // command lines are run in this process.
+  std::optional<int> runUIShellTestCommandsIfRequested(
+    int argc, char **argv,
+    std::function<int (int argc, char **argv)> innerMain);
+
+`runOneCommand`, `runCommandList` and `dupString` move into
+ui-shell-app.cc as static functions.  The environment variable is
+renamed from EDITOR_TEST_RETRIES to UI_SHELL_TEST_RETRIES, since it is
+no longer editor-specific; nothing in the repo sets it.
+
+The EventRecorder stays as it is.  A program that wants "-record"
+constructs one when `m_recordInputEvents` is true, as `innerMain`
+does now.  event-recorder.o has to move up in the Makefile so that
+the test program can link it (see "Build").
+
+Changes to the editor
+---------------------
+
+editor-global.h:
+
+  * `m_recordInputEvents`, `m_uiShellCmdsFileName` and
+    `m_uiShellCommands` are replaced by one public member:
+
+      // UI shell options from the command line.
+      UIShellOptions m_uiShellOptions;
+
+  * `processUIShellCmdsFile` is removed.
+
+editor-global.cc:
+
+  * `processCommandLineOptions` calls
+    `m_uiShellOptions.processOption(arg)` before its own option
+    tests.  After the loop:
+
+      if (m_uiShellOptions.isTestMode()) {
+        m_useUserSettingsFile = false;
+        m_lspIsFakeServer = true;
+      }
+      if (m_uiShellOptions.hasScript()) {
+        if (!filesToOpen.empty()) {
+          xformat("Cannot specify files to open with -uisCmds.  "
+                  "Put them into the .uis file instead.");
+        }
+        (print "args: ..." and add m_script.m_args to filesToOpen)
+      }
+
+    Checking for files after the loop rather than during it also
+    catches files given before "-uisCmds", which today are accepted.
+  * `optionsDescription` keeps the editor's options, and the help
+    output adds `UIShellOptions::helpText()` and the note that
+    "-uisCmds" and "-record" imply "-no-settings" and "-fake-lsp".
+  * In `innerMain`, the "-uisCmds" block becomes:
+
+      UIShellGUICommandHandler commandHandler;
+      ret = runUIShellScript(app, app.m_uiShellOptions,
+                             commandHandler, selfCheck);
+
+  * `main` calls `runUIShellTestCommandsIfRequested(argc, argv,
+    innerMain)`, and calls `innerMain` itself only if that returns
+    `std::nullopt`.
+
+The output of `make check` should not change, except that files
+before "-uisCmds" are now an error (no test does that).
+
+
+The test program
+================
+
+Files:
+
+  ui-shell-gui-test.h     Q_OBJECT classes (for moc)
+  ui-shell-gui-test.cc    their code, the command handler, and `main`
+
+These can be split up if they get big.  Class names use the prefix
+`UISGT`.
+
+Every object along a path used by the tests gets an object name.
+`getQObjectFromPath` only looks at direct children, so the widgets are
+created as direct children of the widget their layout is on, which
+keeps the paths short.  Paths below are written relative to their
+top-level window, e.g., "mainWindow.central.clickButton".
+
+Main window
+-----------
+
+`UISGTMainWindow : QMainWindow, UIShellGUIQueryable`, object name
+"mainWindow", title "UI Shell GUI Test".  Its central widget, named
+"central", has a grid layout:
+
+  +---------------------------------------------------------------+
+  | File  Options  Dialogs  Windows                               |
+  +---------------------------------------------------------------+
+  | [&Click Me]          clicks: 0                                |
+  | &Name: [______________]  [Copy]                               |
+  | name result: (none)                                           |
+  | feature: off                                                  |
+  | [&Delayed Update]    delayed: idle                            |
+  | message: (none)                                               |
+  | Color: [Red      v]                                           |
+  | +--keyLog--------+   key: (none)                              |
+  | | (takes focus)  |                                            |
+  | +----------------+                                            |
+  | +--mousePad---+      mouse: (none)                            |
+  | |  100 x 100  |                                               |
+  | +-------------+                                               |
+  | +--notes (QTextEdit)-----------------------------------------+|
+  | |                                                            ||
+  | +------------------------------------------------------------+|
+  +---------------------------------------------------------------+
+
+Widgets and their interactions:
+
+  clickButton (QPushButton "&Click Me")
+    Clicking increments a counter, and clickCountLabel shows
+    "clicks: N".  It is reachable by ClickButton, and by Shortcut,
+    which clicks QPushButtons directly.
+  clickCountLabel (QLabel)
+    "clicks: N".
+  nameLabel (QLabel "&Name:", buddy nameEdit)
+    For the Shortcut-on-a-label case, which focuses the buddy.
+  nameEdit (QLineEdit)
+    For KeyPress, FocusKeyPress, FocusKeyPR and CheckLineEditText.
+  copyButton (QPushButton "Copy")
+    Copies nameEdit's text to the clipboard, for CheckClipboard.
+  nameResultLabel (QLabel)
+    "name result: X", set when the Edit Name modal dialog is
+    accepted with X.
+  featureLabel (QLabel)
+    "feature: on" or "feature: off", following the checkable
+    Options > Feature action.
+  delayButton (QPushButton "&Delayed Update")
+    Sets delayLabel to "delayed: pending", and starts a 300 ms
+    single-shot timer that sets it to "delayed: done".  The script
+    runner treats the app as idle while the timer is pending, so the
+    next command runs right away.  That is what WaitUntilCheckLabel
+    and WaitUntilCheckQuery are for.
+  delayLabel (QLabel)
+    "delayed: idle/pending/done".
+  messageLabel (QLabel)
+    "message: (none)", then "message: closed" once the message box
+    has been closed.
+  colorCombo (QComboBox: Red, Green, Blue)
+    For CheckComboBoxText, changed with KeyPress Key_Down.  It also
+    sets the color of the "swatch" image (below).
+  keyLog (UISGTKeyLogWidget, a focusable QWidget)
+    Its keyPressEvent and keyReleaseEvent set keyLogLabel to
+    "key: press <key> <text>" or "key: release <key> <text>".  The
+    release half is needed for FocusKeyRelease, since QLineEdit
+    shows no sign of a release.
+  keyLogLabel (QLabel)
+    As above.
+  mousePad (UISGTMousePad, a QWidget of fixed size 100x100, with
+    mouse tracking)
+    Its mouse event handlers set mouseLabel to, e.g.,
+    "mouse: press LeftButton (10,20) buttons=LeftButton
+    mods=ShiftModifier", and likewise for release, dblclick and move.
+  mouseLabel (QLabel)
+    As above.
+  notes (QTextEdit)
+    For FocusKeySequence and CheckTextEditText, and the target of
+    ResizeEvent/CheckSize in the main window.
+
+The main window as a UIShellGUIQueryable:
+
+  uiShellQuery("clickCount")    int, the click counter
+  uiShellQuery("featureOn")     bool
+  uiShellQuery("delayState")    "idle", "pending" or "done"
+  uiShellQuery(other)           base class (throws)
+
+  uiShellImage("swatch")        an 8x8 QImage filled with the color
+                                chosen in colorCombo.  It has no text,
+                                so it does not depend on fonts, and
+                                the reference PNGs are stable across
+                                machines.
+
+`UISGTMainWindow::selfCheck()`, the global self-check, checks that the
+labels agree with the state they display (e.g., clickCountLabel's text
+matches the counter).
+
+Main menu
+---------
+
+Object names in parentheses.  The menu bar is "menuBar".
+
+  File (fileMenu)
+    Quit            Ctrl+Q    (quitAction)        closes all windows
+  Options (optionsMenu)
+    Feature         Ctrl+E    (featureAction)     checkable
+    Reset           Ctrl+R    (resetAction)       resets the counters
+                                                  and labels
+  Dialogs (dialogsMenu)
+    Edit Name...    F2        (editNameAction)    modal Edit Name
+    Table...        F3        (tableAction)       modal Table dialog
+    Message Box...  F5        (messageBoxAction)  modal QMessageBox
+  Windows (windowsMenu)
+    List Window     F4        (listWindowAction)  shows the modeless
+                                                  List Window
+
+The actions are children of their menus, so their paths look like
+"mainWindow.menuBar.dialogsMenu.editNameAction", in the same form as
+the editor's.
+
+Modal dialogs
+-------------
+
+Each one is opened with `exec()` from a menu action, so the tests run
+commands while a nested event loop is active, as they do with the
+editor's dialogs.
+
+  Edit Name (UISGTNameDialog : QDialog, object name "nameDialog",
+  title "Edit Name")
+    nameEdit (QLineEdit, initially the main window's nameEdit text),
+    okButton, cancelButton.  OK sets nameResultLabel in the main
+    window; Cancel leaves it alone.
+
+  Table (UISGTTableDialog : QDialog, "tableDialog", title "Table")
+    table (QTableWidget with columns "Name" and "Value", initially
+    the rows [alpha 1] [beta 2] [gamma 3]).  addRowButton appends
+    ["row N" "N"]; closeButton closes the dialog.  The arrow keys
+    move the current row.
+
+  Message box (QMessageBox, "messageBox", title "Message")
+    Text "Something happened: code 42", detailed text
+    "detail line 1\ndetail line 2", and an OK button with object name
+    "okButton".  Closing it sets messageLabel in the main window to
+    "message: closed".
+
+Modeless window
+---------------
+
+  List Window (UISGTListWindow : QWidget, a top-level window owned by
+  the main window, "listWindow", title "List Window")
+    list (QListWidget, initially alpha, beta, gamma), with
+    addItemButton (appends "item N") and removeItemButton (removes the
+    current item).  The arrow keys move the current row.
+    listView (QListView with a QStringListModel holding one, two,
+    three).  It is a plain QListView, not a QListWidget, to show that
+    CheckListViewSelectedItem works on any list view.
+    Window > List Window shows and activates it if it is already
+    open.  It is the target of ActivateWindow, CheckWindowTitle, and
+    ResizeEvent on a second top-level window.
+
+Command handler
+---------------
+
+`UISGTCommandHandler : UIShellGUICommandHandler` adds one command:
+
+  CheckFails(<check> "<regex>")
+    Execute <check>, which must be a Check* command, and fail unless
+    it throws an exception whose message matches <regex>.  Also fail
+    if it leaves pending steps.
+
+The .uis scripts can only express tests that pass, but most bugs in a
+check would make it pass when it shouldn't.  CheckFails lets each
+check-* script also confirm that a wrong expected value is reported,
+with a useful message.  It is only for checks, which run
+synchronously; actions post events whose effects appear later.  It is
+a command of this program only, not of UIShellGUICommandHandler.  The
+handler is also an example of how another program would extend the
+command set.
+
+`main`
+------
+
+  int main(int argc, char **argv)
+  {
+    if (std::optional<int> code =
+          runUIShellTestCommandsIfRequested(argc, argv, innerMain)) {
+      return *code;
+    }
+    return innerMain(argc, argv);
+  }
+
+`innerMain(argc, argv)`:
+
+  1. Create the QApplication.
+  2. Parse the arguments: `UIShellOptions::processOption`, and then
+     "-help" (prints usage and `UIShellOptions::helpText()`).  Anything
+     else is an error.  If the script has `args`, that is also an
+     error, since this program has nothing to do with them.
+  3. Create, show and activate the main window.
+  4. Create an EventRecorder if "-record" was given.  New tests can
+     be seeded with `./ui-shell-gui-test.exe -record`, as for the
+     editor.
+  5. With "-uisCmds", construct a UISGTCommandHandler and return
+     `runUIShellScript(app, options, handler, selfCheck)`.  Otherwise
+     return `app.exec()`.
+
+XBase exceptions are caught and printed, giving exit code 2, as in
+the editor.
+
+
+The tests
+=========
+
+The scripts are in test/usgt/.  Each starts with a CheckFocusWidget
+or CheckFocusWindow, so that a problem with initial focus (seen with
+the editor on Windows) is reported as such, rather than as a confusing
+later failure.  The check-* scripts also use CheckFails for at least
+one wrong expected value.
+
+  Script                       Commands tested, and how
+  ---------------------------  -----------------------------------------
+  empty.uis                    No commands.  The program starts, the
+                               runner substitutes Sleep(0), and it
+                               exits.
+  key-press.uis                KeyPress letters into nameEdit, then
+                               CheckLineEditText.
+  focus-key-press-release.uis  SetFocus to keyLog, then FocusKeyPress
+                               and FocusKeyRelease, each followed by a
+                               CheckLabel of keyLogLabel.
+  focus-key-pr.uis             FocusKeyPR into nameEdit (focused by
+                               SetFocus), CheckLineEditText.
+  focus-key-sequence.uis       FocusKeySequence("hello world") into
+                               notes, CheckTextEditText.
+  shortcut.uis                 Shortcut's three paths: on a menu action
+                               (Ctrl+E toggles the feature, CheckLabel),
+                               on a label with a buddy (nameLabel,
+                               CheckFocusWidget nameEdit), and on a
+                               push button (clickButton, CheckLabel).
+  set-focus.uis                SetFocus to several widgets, each
+                               followed by CheckFocusWidget.
+  activate-window.uis          Open the List Window (F4),
+                               CheckFocusWindow listWindow,
+                               ActivateWindow mainWindow,
+                               CheckFocusWindow mainWindow, and back.
+  resize-event.uis             ResizeEvent on notes and on
+                               listWindow.list, each followed by
+                               CheckSize.  The sizes are chosen above
+                               the windows' minimum sizes (see the
+                               comment in `resizeChildWidget`).
+  trigger-action.uis           TriggerAction featureAction twice,
+                               with CheckActionChecked and CheckLabel
+                               after each.
+  click-button.uis             ClickButton clickButton three times,
+                               CheckLabel "clicks: 3".
+  mouse-buttons.uis            MouseButtonPress, MouseButtonRelease and
+                               MouseButtonDblClick on mousePad, with
+                               different buttons and modifiers, each
+                               followed by CheckLabel of mouseLabel.
+  mouse-move.uis               MouseMove with and without a button
+                               held, CheckLabel.
+  check-label.uis              CheckLabel and CheckLabelMatches on
+                               clickCountLabel before and after a
+                               click.
+  wait-until-check-label.uis   Click delayButton, CheckLabel "delayed:
+                               pending", then WaitUntilCheckLabel(2000
+                               ... "delayed: done").  CheckFails on a
+                               WaitUntilCheckLabel with a short
+                               timeout and a value that never appears.
+  check-combo-box.uis          CheckComboBoxText "Red", KeyPress
+                               Key_Down, CheckComboBoxText "Green".
+  check-text-edit.uis          KeyPress into notes, including Return
+                               for a second line, CheckTextEditText.
+  check-list-view.uis          In the List Window, SetFocus listView,
+                               arrow keys, CheckListViewSelectedItem.
+  check-list-widget.uis        In the List Window: CheckListWidgetCount,
+                               CheckListWidgetContents and
+                               CheckListWidgetCurrentRow, before and
+                               after addItemButton, removeItemButton
+                               and arrow keys.
+  check-table-widget.uis       In the Table dialog:
+                               CheckTableWidgetRowCount,
+                               CheckTableWidgetRow,
+                               CheckTableWidgetContents (with an
+                               re("...") cell),
+                               CheckTableWidgetCellMatches, and
+                               CheckTableWidgetCurrentRow after arrow
+                               keys and addRowButton.  Then
+                               closeButton.
+  check-message-box.uis        Open the message box (F5),
+                               CheckMessageBoxTextMatches,
+                               CheckMessageBoxDetailedText, ClickButton
+                               messageBox.okButton, CheckLabel
+                               "message: closed".
+  check-clipboard.uis          Type into nameEdit, ClickButton
+                               copyButton, CheckClipboard.
+  check-window-title.uis       CheckFocusWindowTitle,
+                               CheckFocusWindowTitleMatches and
+                               CheckWindowTitle, with the main window,
+                               the List Window and the Edit Name dialog
+                               in turn having focus.
+  check-focus.uis              CheckFocusWindow and CheckFocusWidget as
+                               focus moves between the main window, a
+                               modal dialog and the List Window.
+  check-image.uis              CheckImage("mainWindow" "swatch"
+                               "test/usgt/swatch-red.png"), change the
+                               color, then compare against
+                               swatch-green.png.
+  check-query.uis              CheckQuery and CheckQueryMatches on the
+                               main window's queries, and
+                               WaitUntilCheckQuery on "delayState".
+                               (These are UIShellCommandHandler
+                               commands, but they find the queryable
+                               through the GUI handler's
+                               `getQueryableFromPath`.)
+  modal-dialog.uis             The Edit Name dialog end to end: open
+                               with F2, type a name, OK, check
+                               nameResultLabel; then open again, type,
+                               Cancel, and check it did not change.
+
+The reference images for check-image.uis are made by running the
+script once without them: CheckImage fails and saves
+failing-actual-image.png, which is inspected and copied to
+test/usgt/swatch-*.png.
+
+test/usgt/all-usgt-tests.gdvn lists all of the scripts, in the order
+above, in the same format as test/all-tests.gdvn:
+
+  // all-usgt-tests.gdvn
+  // List of all ui-shell-gui-test command lines to run in succession.
+
+  [
+    [ "./ui-shell-gui-test.exe" "-uisCmds=test/usgt/empty.uis" ]
+    [ "./ui-shell-gui-test.exe" "-uisCmds=test/usgt/key-press.uis" ]
+    ...
+  ]
+
+If the scripts end up repeating paths, a test/usgt/usgt-defns.gdvn,
+used through `includes`, can define them, as test/common-defns.gdvn
+does for the editor.
+
+
+Build
+=====
+
+Makefile:
+
+  * ui-shell-script-file.o goes before the `UNIT_TESTS_OBJS`
+    snapshot, and ui-shell-script-file-test.o into `UNIT_TESTS_OBJS`.
+  * ui-shell-app.o and event-recorder.o go into the part of
+    `EDITOR_OBJS` that the gui-tests section adds.
+  * A new section builds ui-shell-gui-test.exe from an explicit list
+    of objects, rather than all of `$(EDITOR_OBJS)`:
+
+      UISGT_OBJS :=
+      UISGT_OBJS += event-recorder.o
+      UISGT_OBJS += file-mod-time.o
+      UISGT_OBJS += ui-shell-app.o
+      UISGT_OBJS += ui-shell-command-handler.o
+      ... (the other ui-shell-* objects and their .moc.o files)
+      UISGT_OBJS += waiting-counter.o
+      UISGT_OBJS += ui-shell-gui-test.moc.o
+      UISGT_OBJS += ui-shell-gui-test.o
+
+    If any editor module is needed for it to link, that is a layering
+    bug to fix rather than a reason to add the module.  `all` builds
+    ui-shell-gui-test.exe.
+  * `check` runs the new batch right after test/empty.uis and before
+    the editor batch, since the editor tests depend on the commands
+    working:
+
+      ./ui-shell-gui-test.exe \
+        -testCommands=test/usgt/all-usgt-tests.gdvn
+
+Docs:
+
+  * doc/ui-shell.txt: describe ui-shell-script-file and ui-shell-app,
+    and ui-shell-gui-test as the test of the GUI commands, and how to
+    add a test there when adding a command.
+  * CLAUDE.md: in "GUI / UI shell tests", mention the test program
+    and its batch.
+
+
+Implementation steps
+====================
+
+  1. Add ui-shell-script-file and its unit test, and have
+     editor-global.cc use it in place of the body of
+     `processUIShellCmdsFile`.  The unit tests pass, and `make check`
+     output is unchanged.
+  2. Add ui-shell-app, and convert editor-global.{h,cc} to it as
+     described above.  `make check` output is unchanged.
+  3. Add ui-shell-gui-test.exe with the main window containing only
+     clickButton and clickCountLabel, UISGTCommandHandler with
+     CheckFails, empty.uis, click-button.uis, check-label.uis and
+     all-usgt-tests.gdvn, and the `make check` line.
+  4. The rest of the main window and its menus, and the scripts that
+     need only the main window.
+  5. The modal dialogs and their scripts.
+  6. The List Window and its scripts.
+  7. check-image.uis and its reference images.
+  8. The doc updates.
+
+Later, the step that adds "-uisServer" adds `m_serverAccessFileName`
+to `UIShellOptions`, plus a function, alongside `runUIShellScript`,
+that starts the server.  ui-shell-gui-test then gets it with no
+changes of its own beyond calling that function, and is a convenient
+target for testing the server.
+
+
+EOF
