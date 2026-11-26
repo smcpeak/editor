@@ -33,6 +33,7 @@
 #include "td-diagnostics.h"                      // TextDocumentDiagnostics (implicit)
 #include "textinput.h"                           // TextInputDialog
 #include "ui-shell-gui-command-handler.h"        // UIShellGUICommandHandler
+#include "ui-shell-script-file.h"                // UIShellScriptFile
 #include "ui-shell-script-runner.h"              // UIShellScriptRunner
 #include "uri-util.h"                            // getFileURIPath
 
@@ -53,8 +54,7 @@
 #include "smbase/exclusive-write-file.h"         // smbase::ExclusiveWriteFile
 #include "smbase/fasttime.h"                     // smbase::{fastTimeInitialize, fastTimeMilliseconds, fastTimeIsImplemented}
 #include "smbase/gdv-ordered-map.h"              // gdv::GDVOrderedMap
-#include "smbase/gdvalue-fnapply-transform.h"    // gdv::fnApplyTransformGDValue
-#include "smbase/gdvalue-parser.h"               // gdv::{GDValueParser, gdvpOptTo}
+#include "smbase/gdvalue-parser.h"               // gdv::{GDValueParser, gdvpTo}
 #include "smbase/gdvalue-set.h"                  // gdv::toGDValue(std::set)
 #include "smbase/gdvalue-vector.h"               // gdv::toGDValue(std::vector)
 #include "smbase/gdvalue.h"                      // gdv::toGDValue
@@ -359,29 +359,6 @@ void EditorGlobal::selfCheck() const
 }
 
 
-// Copy the elements of `src` into `dest` while flattening all sequences
-// immediately nested in it.  `null` is treated like an empty sequence,
-// and hence skipped.  Tagged sequences are not affected.
-static void gdvFlattenSequence(
-  std::vector<GDValue> &dest /*APPEND*/,
-  GDValue const &src)
-{
-  std::vector<GDValue> ret;
-
-  if (src.isSequence() && !src.isTaggedContainer()) {
-    for (GDValue const &elt : src.sequenceIterableC()) {
-      gdvFlattenSequence(dest, elt);
-    }
-  }
-  else if (src.isNull()) {
-    // Drop nulls.
-  }
-  else {
-    dest.push_back(src);
-  }
-}
-
-
 static char const *optionsDescription =
   "options:\n"
   "  -help           Print this message and exit.\n"
@@ -432,54 +409,20 @@ void EditorGlobal::processUIShellCmdsFile(
   // Only use the fake server with -record or -uisCmds.
   m_lspIsFakeServer = true;
 
-  // Read the script and parse it.
-  GDValue testScript =
-    GDValue::readFromFile(m_uiShellCmdsFileName);
-  GDValueParser parser(testScript);
-  parser.checkIsMap();
+  // Read the script.
+  UIShellScriptFile script(m_uiShellCmdsFileName);
 
   // The `args` can be missing, in which case we do not open any
   // files initially.
-  auto args = gdvpOptTo<std::vector<std::string>>(
-    parser.mapGetValueAtSymOpt("args"));
-  cout << "args: " << toGDValue(args) << "\n";
+  cout << "args: " << toGDValue(script.m_args) << "\n";
 
   // For now, all arguments specified this way are interpreted as
   // files to open.
-  for (std::string const &fname : args) {
+  for (std::string const &fname : script.m_args) {
     addFileToOpenInitially(filesToOpen /*APPEND*/, fname);
   }
 
-  // Build the transform object so we can populate it with definitions.
-  GDValueFnApplyTransform transform;
-
-  SMFileUtil sfu;
-
-  // Optional `includes` to read first for definitions.
-  auto includes = gdvpOptTo<std::vector<std::string>>(
-    parser.mapGetValueAtSymOpt("includes"));
-  for (std::string const &include : includes) {
-    // Treat the name as relative to where `fname` is.
-    std::string joinedInclude =
-      sfu.joinIfRelativeFilename(
-        sfu.splitPathDir(fname),
-        include);
-
-    // Add the definitions to `transform`.  The result of processing
-    // them is discarded.
-    TRACE1("processing include: " << joinedInclude);
-    transform.transform(GDValue::readFromFile(joinedInclude));
-  }
-
-  // The `cmds` is required.
-  GDValueParser origCmds = parser.mapGetValueAtSym("cmds");
-
-  // Evaluate and substitute definitions.
-  GDValue substCmds = transform.transform(origCmds.getValue());
-  TRACE3("substCmds dump: " << substCmds.dumpToString());
-
-  // Flatten as a sequence of values.
-  gdvFlattenSequence(m_uiShellCommands /*APPEND*/, substCmds);
+  m_uiShellCommands = std::move(script.m_commands);
 }
 
 
