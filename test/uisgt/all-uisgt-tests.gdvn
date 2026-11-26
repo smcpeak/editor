@@ -1,0 +1,10 @@
+// all-uisgt-tests.gdvn
+// List of all ui-shell-gui-test command lines to run in succession.
+
+[
+  [ "./ui-shell-gui-test.exe" "-uisCmds=test/uisgt/empty.uis" ]
+  [ "./ui-shell-gui-test.exe" "-uisCmds=test/uisgt/click-button.uis" ]
+  [ "./ui-shell-gui-test.exe" "-uisCmds=test/uisgt/check-label.uis" ]
+]
+
+// EOF

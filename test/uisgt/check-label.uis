@@ -1,0 +1,61 @@
+// check-label.uis
+// Test CheckLabel and CheckLabelMatches, and the CheckFails command
+// that the other check-* scripts use.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+
+// Before a click.
+CheckLabel("mainWindow.central.clickCountLabel" "clicks: 0")
+CheckLabelMatches("mainWindow.central.clickCountLabel" "^clicks: 0$")
+CheckLabelMatches("mainWindow.central.clickCountLabel" "clicks")
+
+ClickButton("mainWindow.central.clickButton")
+
+// After a click.
+CheckLabel("mainWindow.central.clickCountLabel" "clicks: 1")
+CheckLabelMatches("mainWindow.central.clickCountLabel" "^clicks: [1-9]")
+
+// Wrong expected values are reported.
+CheckFails(
+  CheckLabel("mainWindow.central.clickCountLabel" "clicks: 0")
+  "should have been \"clicks: 0\" but was \"clicks: 1\"")
+CheckFails(
+  CheckLabelMatches("mainWindow.central.clickCountLabel" "^clicks: 0$")
+  "the actual string \"clicks: 1\" did not match the regex")
+
+// Bad paths and wrong widget types are reported.
+CheckFails(
+  CheckLabel("mainWindow.central.noSuchLabel" "x")
+  "could not find child \"noSuchLabel\"")
+CheckFails(
+  CheckLabel("mainWindow.central.clickButton" "x")
+  "has class QPushButton, not QLabel")
+
+// CheckFails itself fails when the check succeeds, when the message
+// does not match, or when given a non-check command.
+CheckFails(
+  CheckFails(
+    CheckLabel("mainWindow.central.clickCountLabel" "clicks: 1")
+    "x")
+  "succeeded, but was expected to fail")
+CheckFails(
+  CheckFails(
+    CheckLabel("mainWindow.central.clickCountLabel" "clicks: 0")
+    "no such message")
+  "which does not match the regex \"no such message\"")
+CheckFails(
+  CheckFails(
+    ClickButton("mainWindow.central.clickButton")
+    "x")
+  "not a check command: \"ClickButton\"")
+
+// The non-check command was not executed.
+CheckLabel("mainWindow.central.clickCountLabel" "clicks: 1")
+
+  ]
+}
+
+// EOF

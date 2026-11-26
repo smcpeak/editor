@@ -1,0 +1,20 @@
+// click-button.uis
+// Test ClickButton.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+CheckLabel("mainWindow.central.clickCountLabel" "clicks: 0")
+
+ClickButton("mainWindow.central.clickButton")
+CheckLabel("mainWindow.central.clickCountLabel" "clicks: 1")
+
+ClickButton("mainWindow.central.clickButton")
+ClickButton("mainWindow.central.clickButton")
+CheckLabel("mainWindow.central.clickCountLabel" "clicks: 3")
+
+  ]
+}
+
+// EOF

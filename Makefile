@@ -472,6 +472,7 @@ EDITOR_OBJS += connections-dialog.o
 EDITOR_OBJS += diagnostic-details-dialog.moc.o
 EDITOR_OBJS += diagnostic-details-dialog.o
 EDITOR_OBJS += editor-proxy-style.o
+EDITOR_OBJS += event-recorder.o
 EDITOR_OBJS += list-choice-dialog.moc.o
 EDITOR_OBJS += list-choice-dialog.o
 EDITOR_OBJS += modal-dialog.moc.o
@@ -495,6 +496,36 @@ gui-tests.exe: $(GUI_TESTS_OBJS) $(GUI_LIBRARIES)
 
 # This has to be run manually.
 all: gui-tests.exe
+
+
+# ------------------------- ui-shell-gui-test --------------------------
+# Test program for the GUI UI shell commands.  This uses an explicit
+# list of objects rather than `$(EDITOR_OBJS)` so that it will fail to
+# link if the UI shell starts depending on the editor.
+UISGT_OBJS :=
+UISGT_OBJS += event-recorder.o
+UISGT_OBJS += file-mod-time.o
+UISGT_OBJS += ui-shell-app.o
+UISGT_OBJS += ui-shell-command-handler.o
+UISGT_OBJS += ui-shell-command-util.o
+UISGT_OBJS += ui-shell-executor.moc.o
+UISGT_OBJS += ui-shell-executor.o
+UISGT_OBJS += ui-shell-gui-command-handler.moc.o
+UISGT_OBJS += ui-shell-gui-command-handler.o
+UISGT_OBJS += ui-shell-gui-queryable.o
+UISGT_OBJS += ui-shell-queryable.o
+UISGT_OBJS += ui-shell-result.o
+UISGT_OBJS += ui-shell-script-file.o
+UISGT_OBJS += ui-shell-script-runner.moc.o
+UISGT_OBJS += ui-shell-script-runner.o
+UISGT_OBJS += waiting-counter.o
+UISGT_OBJS += ui-shell-gui-test.moc.o
+UISGT_OBJS += ui-shell-gui-test.o
+
+ui-shell-gui-test.exe: $(UISGT_OBJS) $(GUI_LIBRARIES)
+	$(CXX) -o $@ $(CCFLAGS) $(UISGT_OBJS) $(GUI_LDFLAGS)
+
+all: ui-shell-gui-test.exe
 
 
 # ----------------- git version ---------------------
@@ -591,7 +622,6 @@ EDITOR_OBJS += editor-widget.moc.o
 EDITOR_OBJS += editor-widget.o
 EDITOR_OBJS += editor-window.moc.o
 EDITOR_OBJS += editor-window.o
-EDITOR_OBJS += event-recorder.o
 EDITOR_OBJS += filename-input.o
 EDITOR_OBJS += filename-input.moc.o
 EDITOR_OBJS += fonts-dialog.o
@@ -728,6 +758,11 @@ clean:
 check:
 	@# The first test runs without any retry.
 	./editor.exe -uisCmds=test/empty.uis
+	@#
+	@# Test the GUI UI shell commands themselves, since the editor
+	@# tests depend on them.
+	./ui-shell-gui-test.exe \
+	  -testCommands=test/uisgt/all-uisgt-tests.gdvn
 	@#
 	@# Run the big batch of tests that all run in one process, with
 	@# internal retry capabilities.
