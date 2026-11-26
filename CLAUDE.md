@@ -183,3 +183,5 @@ Subsystems:
   the in-app help, so update it when you change key bindings.
 - Design specs for dialogs and features are in `doc/` (`*-spec.html`,
   `*.txt`, `.ded` diagrams with `.png` renderings).
+- If a class calls `QObject::connect` in its ctor, it should call
+  `disconnectSignals` from `smqtutil/qtutil.h` in its dtor.
