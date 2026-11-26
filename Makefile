@@ -478,10 +478,6 @@ EDITOR_OBJS += list-choice-dialog.o
 EDITOR_OBJS += modal-dialog.moc.o
 EDITOR_OBJS += modal-dialog.o
 EDITOR_OBJS += pixmaps.o
-EDITOR_OBJS += ui-shell-app.o
-EDITOR_OBJS += ui-shell-gui-command-handler.moc.o
-EDITOR_OBJS += ui-shell-gui-command-handler.o
-EDITOR_OBJS += ui-shell-gui-queryable.o
 
 GUI_TESTS_OBJS := $(EDITOR_OBJS)
 GUI_TESTS_OBJS += completions-dialog-test.o
@@ -648,6 +644,10 @@ EDITOR_OBJS += status-bar.o
 EDITOR_OBJS += styledb.o
 EDITOR_OBJS += textinput.o
 EDITOR_OBJS += textinput.moc.o
+EDITOR_OBJS += ui-shell-app.o
+EDITOR_OBJS += ui-shell-gui-command-handler.moc.o
+EDITOR_OBJS += ui-shell-gui-command-handler.o
+EDITOR_OBJS += ui-shell-gui-queryable.o
 
 editor.exe: $(EDITOR_OBJS) $(GUI_LIBRARIES)
 	$(CXX) -o $@ $(CCFLAGS) $(EDITOR_OBJS) $(GUI_LDFLAGS)
