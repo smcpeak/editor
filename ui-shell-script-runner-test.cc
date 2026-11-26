@@ -24,6 +24,8 @@
 #include <QTimer>
 
 // libc++
+#include <cstdlib>                               // std::abort
+#include <iostream>                              // std::{cerr, endl}
 #include <optional>                              // std::optional
 #include <string>                                // std::string
 #include <vector>                                // std::vector
@@ -62,10 +64,17 @@ void NestedLoopHelper::slot_runNestedLoop() NOEXCEPT
 
 void NestedLoopHelper::slot_timeout() NOEXCEPT
 {
-  xfatal("runTest timed out");
+  GENERIC_CATCH_BEGIN
+
+  // Don't throw here since we're inside `NOEXCEPT`.
+  std::cerr << "error: runTest timed out, aborting" << std::endl;
+  std::abort();
+
+  GENERIC_CATCH_END
 }
 
 
+// ------------------------- RunnerTestHandler -------------------------
 OPEN_ANONYMOUS_NAMESPACE
 
 
@@ -118,6 +127,7 @@ public:      // funcs
 };
 
 
+// ------------------------------ Fixture ------------------------------
 // The objects needed to run a script.
 class Fixture {
   NO_OBJECT_COPIES(Fixture);
@@ -199,6 +209,7 @@ public:      // funcs
 };
 
 
+// ------------------------------ helpers ------------------------------
 // Check that `res` indicates success.
 void expectSuccess(std::optional<std::string> const &res)
 {
@@ -218,6 +229,7 @@ void expectFailure(
 }
 
 
+// ------------------------------- tests -------------------------------
 void test_success()
 {
   Fixture f;
