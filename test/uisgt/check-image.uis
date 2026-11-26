@@ -1,0 +1,28 @@
+// check-image.uis
+// Test CheckImage, using the main window's "swatch" image.
+
+{
+  cmds: [
+
+CheckFocusWidget("mainWindow.central.clickButton")
+
+CheckImage("mainWindow" "swatch" "test/uisgt/swatch-red.png")
+
+// Changing the color changes the image.
+KeyPress("mainWindow.central.colorCombo" "Key_Down" "")
+CheckComboBoxText("mainWindow.central.colorCombo" "Green")
+CheckImage("mainWindow" "swatch" "test/uisgt/swatch-green.png")
+
+// A mismatch is not tested here because it would leave
+// failing-actual-image.png behind.
+CheckFails(
+  CheckImage("mainWindow" "nope" "test/uisgt/swatch-green.png")
+  "unknown image: \"nope\"")
+CheckFails(
+  CheckImage("mainWindow" "swatch" "test/uisgt/no-such-file.png")
+  "Failed to load screenshot image: test/uisgt/no-such-file.png")
+
+  ]
+}
+
+// EOF

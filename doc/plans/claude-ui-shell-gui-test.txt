@@ -576,10 +576,16 @@ one wrong expected value.
                                nameResultLabel; then open again, type,
                                Cancel, and check it did not change.
 
-The reference images for check-image.uis are made by running the
+The reference images for check-image.uis can be made by running the
 script once without them: CheckImage fails and saves
 failing-actual-image.png, which is inspected and copied to
-test/uisgt/swatch-*.png.
+test/uisgt/swatch-*.png.  (The initial ones were instead made by a
+small program that builds the images with the same code as
+`uiShellImage`, saves them, and checks that they compare equal after
+being loaded again.)
+
+check-image.uis does not use CheckFails on a mismatch, since that
+would leave failing-actual-image.png behind.
 
 test/uisgt/all-uisgt-tests.gdvn lists all of the scripts, in the order
 above, in the same format as test/all-tests.gdvn:

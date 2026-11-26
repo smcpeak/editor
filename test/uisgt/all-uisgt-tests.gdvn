@@ -26,6 +26,7 @@
   [ "./ui-shell-gui-test.exe" "-uisCmds=test/uisgt/check-clipboard.uis" ]
   [ "./ui-shell-gui-test.exe" "-uisCmds=test/uisgt/check-window-title.uis" ]
   [ "./ui-shell-gui-test.exe" "-uisCmds=test/uisgt/check-focus.uis" ]
+  [ "./ui-shell-gui-test.exe" "-uisCmds=test/uisgt/check-image.uis" ]
   [ "./ui-shell-gui-test.exe" "-uisCmds=test/uisgt/check-query.uis" ]
   [ "./ui-shell-gui-test.exe" "-uisCmds=test/uisgt/modal-dialog.uis" ]
 ]
