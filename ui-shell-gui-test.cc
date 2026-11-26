@@ -356,6 +356,21 @@ UISGTListWindow::UISGTListWindow(QWidget *parent)
   vbox->addWidget(m_listView);
 
   m_list->setFocus();
+
+  /*
+    Cause the window to remember its size across hide/show.  This works
+    by internally setting the `WA_Resized` attribute, which conveys that
+    the app code (rather than the user) has chosen a size (which the
+    user can then change, and that will be remembered).  The Qt
+    documentation for `QWidget::setVisible` explains this:
+
+      If the widget has not been resized yet, Qt will adjust the
+      widget's size to a useful default using adjustSize().
+
+    This isn't important for this test program, it's just behavior I
+    expect from a modeless window.
+  */
+  resize(sizeHint());
 }
 
 
@@ -860,6 +875,14 @@ void UISGTMainWindow::on_listWindowActionTriggered() NOEXCEPT
 
   // This also works if it is already shown.
   showRaiseAndActivateWindow(m_listWindow);
+
+  /*
+    Similar to the `resize` in the ctor, this causes the window to
+    remember its position across hide/show.  The reason it works is not
+    clear from the Qt source code, and the behavior does not appear to
+    be documented.
+  */
+  m_listWindow->move(m_listWindow->pos());
 
   GENERIC_CATCH_END
 }
