@@ -432,4 +432,134 @@ with the possible exception of getting failures in "C:\" and
 scope of the "Open for All" rule.
 
 
+Minimizing bash-experiment.cc, Nov 27
+=====================================
+
+[Responding to a request to minimize bash-experiment.cc while keeping
+the failure, since bash-long-cmd.sh (bash started by Cygwin bash with a
+long heredoc) doesn't fail.]
+
+Summary: a single CreateProcessW call that runs
+
+  C:\cygwin\bin\bash.exe -c "true #xxx...x"
+
+with the command line padded to 2500-3500 characters crashes bash, when
+run from experiments/.  What matters is that the argument is in double
+quotes.  bash-experiment.cc is now just that.
+
+Method
+------
+
+Claude wrote a probe program in its scratchpad (probe.cc), with a flag
+for each feature of the old bash-experiment.cc.  Each flags set was run
+from experiments/ at command line lengths 1000-5500 in steps of 500.
+Then came a smaller program, mini.cc, which runs `<prog> <text>`, where
+<text> is padded with 'x' (and a closing `"` if needed) to the given
+length, from one CreateProcessW call with no other options.
+
+Results ("X" = IPHLPAPI, "." = ok, "?" = bash or the program ran and
+printed its own error, e.g., "No such file"; columns are 1000, 1500,
+..., 5500):
+
+  Old features, all with Claude's wrapper text unless noted:
+
+    ...XXX....  everything (pipes, CRT table in lpReserved2, show
+                window, job object, unicode environment, inherited
+                handles, -l, wrapper, eval quoting)
+    ..........  everything but the wrapper (the -c text is then just
+                `true` plus padding)
+    ...XXX....  wrapper alone, with none of the other features
+    ...XXX....  wrapper plus any one other feature
+
+  (One exception, "sW", passed the std handles without letting the
+  child inherit them, and showed no crashes; probably the error
+  message just couldn't reach the output.)
+
+  Pieces of the wrapper, as the whole -c text:
+
+    ...XXX....  each piece alone (export TEMP=..., the TMPDIR test,
+                shopt, the unalias lines, pwd -P >| ...)
+    ..........  true
+
+  Small -c texts:
+
+    ...XXX....  true x
+    ...XXX....  true<TAB>
+    ...XXX....  true "x"
+    ..........  true;true
+    ..........  echo
+    ..........  :
+
+  The common factor: the padded argument contains a space or tab, so
+  it is wrapped in double quotes on the command line.  The "ok"
+  texts produce an argument with neither, which isn't quoted.
+
+  With mini.cc, `bash.exe <text>`:
+
+    ...XXX....  -c "true #xxx...x"
+    ???XXX????  "xxx...x"            (no -c: bash looks for a script)
+    ???XXX????  x"xxx...x"
+    ??????????  -c true#xxx...x       (unquoted)
+    ??????????  x xxx...x             (spaces, no quotes)
+    ??????????  x y xxx...x
+
+  Other programs given the same three texts (x..., x y ..., "...):
+
+    ..........  true.exe (all three)
+    ??????????  ls.exe, cat.exe (all three)
+    ..........  hostname.exe (x... and "...; finer steps of 250)
+
+  bash at finer steps of 250, 1000-5500, with "xxx...x":
+
+    .....XXXXXXX.......   (crashes at 2250-3750)
+
+The new bash-experiment.cc
+--------------------------
+
+It runs `<bash> -c "true #xxx...x"` with the command line padded to
+<size> characters, from a single CreateProcessW call.  It inherits
+handles only so that bash's error message gets through when stdout is
+a pipe.  Built with MinGW g++ and run from experiments/:
+
+  size   outcome
+  ----   -------
+    10   "invalid size; the minimum is 34", exit 2
+  1000   ok
+  2000   ok
+  2500   IPHLPAPI (bash exit code 256, so exit 1)
+  3000   IPHLPAPI
+  3500   IPHLPAPI
+  4000   ok
+
+Size 3000 run from C:\cygwin\home\scott, outside the open rule, was ok.
+
+The bash path isn't quoted, so that the command line stays exactly as
+tested.  A Git for Windows path with a space in it would need a short
+path, or a copy of bash.exe in a directory without spaces.
+
+Observations
+------------
+
+  - This probably explains why bash-long-cmd.sh doesn't fail.  When
+    Cygwin bash starts bash, it passes the arguments its own way, not
+    as a quoted Windows command line.
+
+  - Not needed: pipes, the CRT table, the job object,
+    STARTF_USESHOWWINDOW, CREATE_UNICODE_ENVIRONMENT, -l,
+    CHERE_INVOKING, the heredoc, Python, and Claude's wrapper text.
+
+  - Needed: a native parent, the open-rule directory, a length in the
+    band, double quotes on the command line, and bash as the child.
+
+  - Hypothesis, not tested:
+      - Cygwin's command-line parser may handle a quoted argument
+        differently, for example by copying it onto the stack.  That
+        would shift memory layout by an amount that depends on the
+        argument's length.
+      - Bash then loads iphlpapi.dll, perhaps for gethostname.
+      - If so, a reproducer without Cygwin for the Sandboxie report
+        might be a tiny program that uses N bytes of stack before
+        calling LoadLibrary("iphlpapi.dll").
+
+
 EOF
