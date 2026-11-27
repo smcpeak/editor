@@ -301,7 +301,7 @@ int main(int argc, char **argv)
     return EXIT_ERROR;
   }
 
-  std::string command = "python3 - <<'EOF'\n" + body + "EOF";
+  std::string command = "true python3 - <<'EOF'\n" + body + "EOF";
   std::wstring cmdLine =
     quoteArg(toWide(bash)) + L" " +
     quoteArg(L"-c") + L" " +
