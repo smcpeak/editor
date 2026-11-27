@@ -16,7 +16,7 @@ long), but subsequent DLL loading still succeeds.
 Versions
 --------
 
-Sandboxie-Plus v1.18.8
+Sandboxie-Plus v1.19.1
 Windows 11 OS build 26200.9974 on x64
 
 
