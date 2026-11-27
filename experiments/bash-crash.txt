@@ -47,21 +47,11 @@ On the flip side, a cygwin-only chain also works:
 Current simplest reproducer
 ---------------------------
 
-Uses Git4Win bash:
+Uses PowerShell and Git4Win bash:
 
-  ~/wrk/editor/experiments$ /c/opt/Git4Win-2.56.1/bin/bash
-
-  ~/wrk/editor/experiments$ cygpath -m $(which bash)
-  C:/opt/Git4Win-2.56.1/usr/bin/bash.exe
-
-  ~/wrk/editor/experiments$ bash --version
-  GNU bash, version 5.3.15(2)-release (x86_64-pc-cygwin)
-  [...]
-
-  ~/wrk/editor/experiments$ ./bash-experiment bash 2500
-        0 [main] bash 933 C:\opt\Git4Win-2.56.1\usr\bin\bash.exe: *** fatal error - unable to load iphlpapi.dll, Win32 error 998
-  bash-experiment: size 2500, bash exit code 256
-  Exit 1
+  C:\cygwin\home\scott\wrk\editor\experiments>powershell -ExecutionPolicy Bypass -File ps-call-bash.ps1 C:\opt\Git4Win-2.56.1\bin\bash.exe 2500
+        0 [main] bash 421 C:\opt\Git4Win-2.56.1\usr\bin\bash.exe: *** fatal error - unable to load iphlpapi.dll, Win32 error 998
+  ps-call-bash: size 2500, bash exit code 256
 
 
 First set of observations by Claude
