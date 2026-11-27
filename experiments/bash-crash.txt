@@ -1,0 +1,237 @@
+bash-crash.txt
+Bash tool failures seen by Claude Code, Nov 12-26, 2026
+
+[Responding to a question about recent bash crashes and hangs.]
+
+Yes, both are right.  Across the two transcripts in this project there
+were 474 Bash calls, and the main session (Nov 21-26) had five
+iphlpapi crashes and one hang.  The earlier session (Nov 12-14, 29
+calls) had neither.  Times below are local time (UTC-8).
+
+iphlpapi.dll crashes (5)
+------------------------
+
+Each one printed `bash.exe: *** fatal error - unable to load
+iphlpapi.dll, Win32 error 998` and ran nothing:
+
+  - Nov 21, 20:43
+  - Nov 23, 13:18
+  - Nov 25, 04:55
+  - Nov 25, 18:29
+  - Nov 26, 05:06
+
+Every one was a command containing a heredoc, and four of them were
+`python3 - <<'EOF'`.  None of the roughly 410 commands without a
+heredoc crashed.  Heredocs usually do work, though: 30 of the 35
+heredoc commands succeeded, including a couple on Nov 26.  So heredocs
+make the crash much more likely, but it isn't certain either way.
+
+Hang (1), on Nov 25 at 14:33
+----------------------------
+
+The command started with `cat > .../step2_runner.py <<'EOF'`, then ran
+the script and a build.  A user message moved it to the background,
+and at 14:38 it was stopped by hand; its output file contains only
+`[killed]`.  `step2_runner.py` doesn't exist in the scratchpad, which
+keeps all the other files from those days.  So it stalled at or before
+the heredoc, not in the build.  That points to bash, or to the
+heredoc, as the cause.
+
+One knock-on effect
+-------------------
+
+After the first crash, the next two `git mv` commands failed with
+`fatal: not a git repository`, because the shell was no longer in the
+repo.  A diagnostic run shortly after showed `PWD=/home/scott`.  This
+happened only after that first crash.
+
+Other failures weren't bash's fault
+-----------------------------------
+
+  - `powershell.exe: command not found` (twice): it isn't on bash's
+    PATH.
+  - One command was blocked by the auto-mode permission check, not by
+    bash.
+  - The rest were Claude's mistakes, such as wrong paths, or a
+    `grep -c` that found no matches.
+  - The `mkswatch.exe` save failure on Nov 26 was also a mistake: a
+    native Windows Qt program was given a Cygwin path.
+
+
+Heredoc size vs. outcome
+========================
+
+[Responding to a question about whether heredoc size correlates with
+the crashes and the hang.]
+
+Yes.  There's some sign that the iphlpapi crashes depend on size, but
+the evidence is weak: every crash was a heredoc of 1.4-2 kB, and none
+of the 20 smaller ones crashed.  The script is a file in Claude's
+scratchpad, not a heredoc:
+
+  C:\cygwin\tmp\claude\7528c24624a6dd7e\a7d87e32-133f-446a-9c44-a90d46184456\scratchpad\heredoc_stats.py
+
+It found 38 separate heredoc commands across both transcripts.  The
+hang appears twice in the log, once with a `cd` prefix added; it is
+counted once.
+
+  Heredoc body size   Calls   iphlpapi crash   Hang
+  -----------------   -----   --------------   ----
+  under 500 B            14                0      0
+  500-1000 B              6                0      0
+  1000-2000 B            12                5      0
+  2000-4000 B             0                -      -
+  4000 B and up           6                0      1
+
+What it suggests
+----------------
+
+  - The crashes are bunched in a narrow size range.  The five crashes
+    had bodies of 1455, 1707, 1787, 1802 and 1994 bytes.  Of the 12
+    calls between 1000 and 2000 bytes, 5 crashed, about 40%.  None of
+    the 20 calls under 1000 bytes crashed.
+
+      - If each heredoc had the same crash chance (5 of 38, about
+        13%), getting no crashes in 20 small calls would happen by
+        chance only about 6% of the time.
+      - So size likely matters, but the evidence isn't strong.
+
+  - Size alone doesn't decide it.  Calls of 1374, 1465 and 1700 bytes
+    succeeded, right next to ones that crashed.  The 1707-byte crash
+    and the 1700-byte success were in the same minute, and so were the
+    1455-byte crash and the 336-byte success that followed it.  That
+    looks like a size-dependent chance rather than a cutoff.
+
+  - The largest heredocs never crashed.  Bodies of 4028, 4111, 4802
+    and 7184 bytes all ran fine, so this isn't simply "bigger is
+    worse".  Six large calls is too few to say whether the 1-2 kB
+    range is truly special or just chance.
+
+  - The hang has only one data point.  It was the 4034-byte body, but
+    the same 4034 bytes ran fine at 15:25 local time.  That was
+    probably the user's reproduction attempt; `hd1.py` and `hd2.py` in
+    Claude's scratchpad are both 4034 bytes.  Other calls over 4 kB
+    also succeeded.  So it was either a rare event or depended on
+    something other than size.
+
+Caveats
+-------
+
+  - The heredoc size and the whole command's size move together: the
+    crashing commands were 1631-2796 bytes in total.  This data can't
+    tell which one matters.
+  - The heredoc sizes come from parsing the command text as Claude
+    sent it, not from what bash actually received.
+  - There are only 6 failures in total, all from one session.
+
+To test the idea directly, run the same command many times with
+heredoc bodies of, say, 500, 1500 and 5000 bytes, and compare how
+often each crashes.
+
+
+Experiment, Nov 27
+==================
+
+[Responding to a request to invoke bash 10 times through the Bash
+tool, as in the observed failures, with heredocs of 1000-2000 B.]
+
+Method
+------
+
+Each trial was a separate Bash tool call, run one after another
+(not in parallel), shaped like the commands that crashed before:
+
+  [cd /c/cygwin/home/scott/wrk/editor; ]python3 - <<'EOF'
+  # Trial N.
+  p='.../scratchpad/hdexpNN.cc'
+  lines=[ ...C++ source lines as Python string literals... ]
+  open(p,'w',newline='').write('\n'.join(lines)+'\n')
+  s=open(p,newline='').read()
+  reps=[ ...(old, new) pairs... ]
+  for old,new in reps:
+      assert s.count(old)==1, (p, old)
+      s=s.replace(old,new)
+  open(p,'w',newline='').write(s)
+  print('trial N ok', len(s))
+  EOF
+
+The size was varied by the number of lines and replacements.
+Alternate trials had the `cd ...;` prefix, as two of the five earlier
+crashes did.  Sizes were measured afterward from the transcript by
+`trial_sizes.py` in Claude's scratchpad.
+
+Claude underestimated the sizes for trials 1-10, which came out at
+952-2987 B instead of 1000-2000 B.  Trials 11-15 were then added to
+cover 1000-2000 B.  They are the trial 1 or trial 2 scripts plus
+50-byte comment lines ("# pad NN: filler text ...").
+
+Results
+-------
+
+  trial  time(UTC)  outcome   heredoc B  command B  cd?
+  -----  ---------  --------  ---------  ---------  ---
+     1   11:35:41   ok              952        973  no
+     2   11:35:49   ok             1253       1310  yes
+     3   11:35:58   IPHLPAPI       1552       1573  no
+     4   11:36:07   IPHLPAPI       1798       1855  yes
+     5   11:36:17   IPHLPAPI       2050       2071  no
+     6   11:36:28   IPHLPAPI       2218       2275  yes
+     7   11:36:39   IPHLPAPI       2395       2416  no
+     8   11:36:50   IPHLPAPI       2572       2629  yes
+     9   11:37:02   IPHLPAPI       2755       2776  no
+    10   11:37:14   ok             2987       3044  yes
+    11   11:37:50   ok             1104       1125  no
+    12   11:37:58   ok             1355       1412  yes
+    13   11:38:06   ok             1455       1476  no
+    14   11:38:14   IPHLPAPI       1655       1712  yes
+    15   11:38:23   IPHLPAPI       1905       1926  no
+
+Sorted by heredoc size, the outcome is a clean band:
+
+  ok:        952, 1104, 1253, 1355, 1455
+  IPHLPAPI:  1552, 1655, 1798, 1905, 2050, 2218, 2395, 2572, 2755
+  ok:        2987
+
+Each crash printed only the usual message, with nothing else, e.g.:
+
+  0 [main] bash 14888 C:\cygwin\bin\bash.exe: *** fatal error -
+  unable to load iphlpapi.dll, Win32 error 998
+
+and the script did not run: the scratch files exist only for the
+trials that succeeded (01, 02, 10, 11, 12, 13).  There were no hangs.
+The `cd` prefix made no visible difference.
+
+Observations
+------------
+
+  - Today the crash was fully repeatable by size: every trial between
+    1552 and 2755 B crashed, and every trial outside it succeeded.
+    That is much stronger than the earlier, mixed history suggested.
+
+  - The band has edges.  The lower one is between 1455 and 1552 B,
+    and the upper one between 2755 and 2987 B (heredoc body; the
+    command sizes are 21-57 B larger).  Heredocs of 4028-7184 B
+    succeeded in earlier sessions, consistent with an upper edge.
+
+  - The edges are not fixed across sessions.  Earlier, a 1455 B
+    heredoc crashed, while 1465 B and 1700 B ones succeeded, and a
+    1700 B success and a 1707 B crash happened in the same minute.
+    Today 1455 B succeeded and 1552-1905 B always crashed.  So the
+    band seems to move, maybe with something else that varies by
+    session, such as environment size or the exact wrapper text
+    claude.exe adds around the command.
+
+  - Hypothesis, not tested: claude.exe passes the command to bash on
+    the command line (an earlier `ps` showed `/usr/bin/bash -c -l
+    export TEMP=... && { ...`).  Win32 error 998 is ERROR_NOACCESS
+    (invalid access to a memory location).  So the size of the
+    command line might shift memory layout during Cygwin's startup
+    in a way that breaks loading iphlpapi.dll for some sizes.  A
+    direct test would be to run `bash -c` with command lines of
+    these sizes from outside Claude Code (e.g., from PowerShell or a
+    small program), with and without the same environment.
+
+  - The Nov 25 hang (4034 B) was not reproduced; no trial here was
+    that large.
+
+EOF

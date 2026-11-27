@@ -1,0 +1,59 @@
+bash-experiment.txt
+Specification of a program to repro a bash crash
+
+
+Background
+==========
+
+I am trying to track down the cause of Cygwin `bash` sometimes failing
+with:
+
+  bash.exe: *** fatal error - unable to load iphlpapi.dll, Win32 error 998
+
+when invoked by `claude.exe`.  See `bash-crash.txt`.
+
+The `bash-experiment.exe` program is meant to mimick how `claude.exe`
+invokes `bash` in order to reproduce the failure outside Claude.
+
+
+Specification
+=============
+
+`bash-experiment.exe` is a C++ Windows console program with the
+following command line interface:
+
+  $ bash-experiment.exe <bash> <size>
+
+It invokes <bash> with a heredoc of <size>, mimicking how `claude.exe`
+invoked it during the trials that failed.
+
+If <size> is too small given the following constraints, it prints an
+error to that effect and exits with code 2.
+
+It exits with code 0 if <bash> does, code 1 if <bash> exits non-zero or
+fails in some other way (I intend the `iphlpapi.dll` error to yield code
+1), and code 2 if `bash-experiment.exe` encounters an error such as a
+failed API call or the wrong number of command line arguments.
+
+To best approximate the observed failures, it uses heredoc contents
+similar to those that caused the crash, including running python and
+containing C++ code encoded as Python string literals (which is where
+the padding goes to achieve the desired size).  This in turn has to be
+escaped using the peculiar quoting rules that `CommandLineToArgvW`
+requires during decoding.  (I think it is possible that the failure
+somehow depends on that decoding.)
+
+The python code in the heredoc write to `bash-experiment.out` in the
+current directory (rather than the Claude scratchpad directory).
+
+Most likely, `claude.exe` invokes `CreateProcess` with a null
+`lpApplicationName`, so <bash> should be the first element of
+`lpCommandLine`.  This will also ensure it is looked up in the `PATH` if
+it does not have a directory separator.
+
+I don't know whether `claude.exe` uses `CreateProcessA` or
+`CreateProcessW`.  Absent knowledge to the contrary,
+`bash-experiment.exe` shall invoke `CreateProcessW`.
+
+
+EOF
