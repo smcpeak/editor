@@ -43,8 +43,25 @@ On the flip side, a cygwin-only chain also works:
   cygwin-compiled bash-experiment.exe bash 1500 ->
   cygwin bash: fails with iphlpapi.dll error
 
-I also ruled out Python, and have changed bash-experiment.cc to invoke
-"true" instead of it; the failure still happens.
+
+Current simplest reproducer
+---------------------------
+
+Uses Git4Win bash:
+
+  ~/wrk/editor/experiments$ /c/opt/Git4Win-2.56.1/bin/bash
+
+  ~/wrk/editor/experiments$ cygpath -m $(which bash)
+  C:/opt/Git4Win-2.56.1/usr/bin/bash.exe
+
+  ~/wrk/editor/experiments$ bash --version
+  GNU bash, version 5.3.15(2)-release (x86_64-pc-cygwin)
+  [...]
+
+  ~/wrk/editor/experiments$ ./bash-experiment bash 2500
+        0 [main] bash 933 C:\opt\Git4Win-2.56.1\usr\bin\bash.exe: *** fatal error - unable to load iphlpapi.dll, Win32 error 998
+  bash-experiment: size 2500, bash exit code 256
+  Exit 1
 
 
 First set of observations by Claude
@@ -550,6 +567,9 @@ Observations
 
   - Needed: a native parent, the open-rule directory, a length in the
     band, double quotes on the command line, and bash as the child.
+
+      smcpeak: The parent can be a cygwin-compiled bash-experiment.exe
+      since it calls CreateProcessW like a native parent would.
 
   - Hypothesis, not tested:
       - Cygwin's command-line parser may handle a quoted argument
