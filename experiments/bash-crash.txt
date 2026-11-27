@@ -234,4 +234,38 @@ Observations
   - The Nov 25 hang (4034 B) was not reproduced; no trial here was
     that large.
 
+
+smcpeak Observations 2026-11-27 07:14
+=====================================
+
+I can reliably and determinstically (for some sizes) reproduce the error
+using bash-experiment.exe.  So far, the evident requirements are:
+
+  * Running under Sandboxie.
+    - I run claude.exe under it.
+    - I think Sandboxie is the the primary culprit; assuming so, I would
+      like to create a reproducer to submit a bug report to Sandboxie.
+  * One program invokes another.
+    - We have bash-experiment.exe invoking /usr/bin/bash.
+  * The command line is long, ~1500 B or more, although there are some
+    windows of lengths that work beyond that.
+    - The relationship is complicated.  Some lengths are not
+      deterministic (e.g., 5000 for me), but most are.
+    - At around 5900 some limit is hit and the argument starts being
+      cut off, causing bash to complain about syntax.
+  * The invokee loads iphlpapi.dll; but how?
+    - Both Cygwin and Git4Win bash.exe do so, and fail.
+    - But /usr/bin/true.exe does not fail (does not load it).
+    - A tiny program that loads it also does not fail, both with
+      implicit load (`ldd` sees it) and an explicit LoadLibraryA call.
+
+I have ruled out cygwin as a factor.  I can reproduce the crash when
+cmd.exe is run directly inside Sandboxie, which then invokes
+bash-experiment.exe invoking Git4Win bash (size 1500), so cygwin isn't
+anywhere in the parent process chain.
+
+I also ruled out Python, and have changed bash-experiment.cc to invoke
+"true" instead of it; the failure still happens.
+
+
 EOF
