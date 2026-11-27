@@ -582,4 +582,54 @@ Observations
         calling LoadLibrary("iphlpapi.dll").
 
 
+PowerShell reproducer, Nov 27
+=============================
+
+[Responding to a request for a PowerShell script that does what
+bash-experiment.cc does, in experiments/ps-call-bash.ps1.]
+
+Summary: ps-call-bash.ps1 reproduces the crash, with the same size
+band and the same dependence on the directory as bash-experiment.exe.
+
+The script
+----------
+
+It takes the same arguments (<bash> <size>) and has the same exit
+codes as bash-experiment.exe.  It runs `"<bash>" -c "true #xxx...x"`,
+padded to <size> characters, through .NET's
+System.Diagnostics.Process with UseShellExecute=false, which calls
+CreateProcessW with that command line.
+
+Differences from bash-experiment.exe:
+
+  - .NET puts the program path in double quotes, so the minimum size is
+    36 instead of 34.  It also means a bash path with spaces, such as
+    Git for Windows', works.
+
+  - It sets the child's working directory to PowerShell's current
+    location.  Set-Location doesn't change the process's Win32 current
+    directory, which bash would otherwise inherit.  Before this fix, a
+    run after `Set-Location C:\cygwin\home\scott` still crashed,
+    because bash really started in the editor directory, where
+    PowerShell was launched.
+
+Results
+-------
+
+Run as `& .\ps-call-bash.ps1 'C:\cygwin\bin\bash.exe' <size>` from a
+PowerShell session ("X" = IPHLPAPI, bash exit code 256, script exit 1;
+"." = ok), with sizes 1000-5000 in steps of 500:
+
+  ...XXX...  C:\cygwin\home\scott\wrk\editor\experiments
+  .........  C:\cygwin\home\scott
+
+So 2500, 3000 and 3500 crash, matching bash-experiment.exe.  A size of
+10 printed "the minimum is 36" and exited 2.
+
+powershell.exe isn't on the PATH of Claude's shell, so Claude ran the
+script with `&` from an existing PowerShell session.  The header comment
+gives the `powershell -ExecutionPolicy Bypass -File ...` form, which
+hasn't been tried.
+
+
 EOF
