@@ -375,4 +375,12 @@ Observations
         matching and a non-matching directory side by side.
 
 
+smcpeak: There is a single Sandboxie file access rule that sets
+"C:\cygwin\home\scott\wrk\editor\*" to "Open for All" for all programs.
+So this is mostly consistent with the directory dependence observations,
+with the possible exception of getting failures in "C:\" and
+"C:\cygwin\home\scott\wrk", since those are supposed to be outside the
+scope of the "Open for All" rule.
+
+
 EOF
