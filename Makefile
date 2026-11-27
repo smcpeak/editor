@@ -730,10 +730,14 @@ out/lsp-test-server.ok: lsp-test-server.py out/lsp-test-server.py.mypy.ok
 check: out/lsp-test-server.ok
 
 
-# ------------------------ clipboard-experiment ------------------------
-# This is not automatically built; it is for ad-hoc experimentation.
+# ---------------------------- experiments -----------------------------
+# These are not automatically built; they are for ad-hoc experimentation.
+
 experiments/clipboard-experiment.exe: experiments/clipboard-experiment.o
 	$(CXX) -o $@ $(CCFLAGS) $^ $(CONSOLE_LDFLAGS) -lgdi32
+
+experiments/bash-experiment.exe: experiments/bash-experiment.o
+	$(CXX) -o $@ $(CCFLAGS) $^ $(CONSOLE_LDFLAGS)
 
 .PHONY: experiments-clean
 experiments-clean:

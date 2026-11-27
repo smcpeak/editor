@@ -366,6 +366,14 @@ int main(int argc, char **argv)
   // shell.  The Bash tool's shells keep their directory, so claude.exe
   // presumably sets it too (the profile unsets it, so it can't be
   // seen from inside).
+  //
+  // smcpeak: When I run `claude.exe`, I do so using a script that sets
+  // CHERE_INVOKING=1.  That's because, as noted, without it, each time
+  // Claude would run a program, the initial working directory would be
+  // outside my project directory, which caused various problems.
+  // (Claude always worked around them automatically, but this reduced
+  // the friction a little.)
+  //
   if (!SetEnvironmentVariableW(L"CHERE_INVOKING", L"1")) {
     failWin32("SetEnvironmentVariableW");
   }
