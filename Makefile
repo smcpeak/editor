@@ -733,11 +733,24 @@ check: out/lsp-test-server.ok
 # ---------------------------- experiments -----------------------------
 # These are not automatically built; they are for ad-hoc experimentation.
 
+experiments-all: experiments/clipboard-experiment.exe
 experiments/clipboard-experiment.exe: experiments/clipboard-experiment.o
 	$(CXX) -o $@ $(CCFLAGS) $^ $(CONSOLE_LDFLAGS) -lgdi32
 
+experiments-all: experiments/bash-experiment.exe
 experiments/bash-experiment.exe: experiments/bash-experiment.o
 	$(CXX) -o $@ $(CCFLAGS) $^ $(CONSOLE_LDFLAGS)
+
+experiments-all: experiments/load-iphlp.exe
+experiments/load-iphlp.exe: experiments/load-iphlp.o
+	$(CXX) -o $@ $(CCFLAGS) $^ $(CONSOLE_LDFLAGS)
+
+experiments-all: experiments/best-interface.exe
+experiments/best-interface.exe: experiments/best-interface.o
+	$(CXX) -o $@ $(CCFLAGS) $^ $(CONSOLE_LDFLAGS) -liphlpapi
+
+.PHONY: experiments-all
+experiments-all:
 
 .PHONY: experiments-clean
 experiments-clean:
