@@ -51,8 +51,12 @@ int main(int argc, char **argv)
     fprintf(stderr, "usage: %s <len> <method>\n", argv[0]);
     return 2;
   }
+  // Unbuffered, so the output so far is visible if the program hangs.
+  setvbuf(stdout, NULL, _IONBF, 0);
+
   int len = atoi(argv[1]);
   char const *method = argv[2];
+  printf("long-name-load: len %d, method %s\n", len, method);
 
   // Build "\??\<cwd>\true #xxx...x".
   static WCHAR path[40000];
@@ -61,6 +65,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "GetCurrentDirectoryW failed\n");
     return 2;
   }
+  printf("cwd: %ls\n", cwd);
   int n = swprintf(path, 40000, L"\\??\\%ls\\true #", cwd);
   int nameStart = 4 + (int)wcslen(cwd) + 1;
   if (len < n - nameStart || nameStart + len > 32000) {
@@ -81,8 +86,6 @@ int main(int argc, char **argv)
                              NULL);
 
   HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
-  long status = 0;
-  DWORD err = 0;
 
   if (!strcmp(method, "none")) {
     // Nothing.
@@ -91,22 +94,31 @@ int main(int argc, char **argv)
     NtOpenFile_t f = (NtOpenFile_t)GetProcAddress(ntdll, "NtOpenFile");
     HANDLE h;
     IO_STATUS_BLOCK io;
-    status = f(&h, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &oa, &io,
-               FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-               FILE_OPEN_FOR_BACKUP_INTENT | FILE_OPEN_REPARSE_POINT);
+    NTSTATUS status = f(&h, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &oa,
+      &io, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+      FILE_OPEN_FOR_BACKUP_INTENT | FILE_OPEN_REPARSE_POINT);
+    printf("NtOpenFile: status 0x%lx\n", (unsigned long)status);
   }
   else if (!strcmp(method, "ntqa")) {
     NtQueryAttributesFile_t f = (NtQueryAttributesFile_t)
       GetProcAddress(ntdll, "NtQueryAttributesFile");
     BYTE info[64];
-    status = f(&oa, info);
+    NTSTATUS status = f(&oa, info);
+    printf("NtQueryAttributesFile: status 0x%lx\n",
+      (unsigned long)status);
   }
   else if (!strcmp(method, "createfile")) {
     path[1] = L'\\';                   // "\??\" -> "\\?\"
     HANDLE h = CreateFileW(path, FILE_READ_ATTRIBUTES,
       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
       OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
-    err = (h == INVALID_HANDLE_VALUE)? GetLastError() : 0;
+    if (h == INVALID_HANDLE_VALUE) {
+      printf("CreateFileW: failed, error %lu\n",
+        (unsigned long)GetLastError());
+    }
+    else {
+      printf("CreateFileW: ok\n");
+    }
   }
   else {
     fprintf(stderr, "unknown method: %s\n", method);
@@ -118,16 +130,12 @@ int main(int argc, char **argv)
     dll = L"C:\\WINDOWS\\system32\\iphlpapi.dll";
   }
   HMODULE h = LoadLibraryW(dll);
-  DWORD loadErr = GetLastError();
-
-  printf("long-name-load: len %d, %s: status 0x%lx, error %lu\n"
-    "LoadLibraryW %s",
-    len, method, (unsigned long)status, (unsigned long)err,
-    h? "succeeded\n" : "failed, ");
   if (!h) {
-    printf("error %lu\n", (unsigned long)loadErr);
+    printf("LoadLibraryW(\"%ls\"): failed, error %lu\n", dll,
+      (unsigned long)GetLastError());
     return 1;
   }
+  printf("LoadLibraryW(\"%ls\"): ok\n", dll);
   return 0;
 }
 
