@@ -622,4 +622,153 @@ gives the `powershell -ExecutionPolicy Bypass -File ...` form, which
 hasn't been tried.
 
 
+PowerShell substitute for bash, Nov 27
+======================================
+
+[Responding to a request for a PowerShell substitute for bash that
+loads iphlpapi.dll, perhaps after heap allocation.]
+
+Summary: experiments/ps-fake-bash.ps1 does not reproduce the failure.
+In 380 runs from experiments/, iphlpapi.dll always loaded, while real
+bash still crashed there just before.
+
+The script first checks that iphlpapi.dll isn't already loaded
+(powershell.exe normally loads only WS2_32.dll).  Then:
+
+  - -HeapBytes, -ChunkBytes: allocate native heap memory with
+    Marshal.AllocHGlobal, touch it, and never free it.
+  - -Chdir: optionally call SetCurrentDirectoryW again on the current
+    directory.
+  - -Method: load the DLL with LoadLibraryW by name ("LoadLibrary"),
+    by its System32 path ("FullPath"), or through .NET's
+    NetworkInterface.GetAllNetworkInterfaces() ("Network").
+  - -Pad: ignored; it only makes the command line long.
+
+A sweep script in Claude's scratchpad (fake-sweep.ps1) started it with
+Process.Start from experiments/, with the padding in a double-quoted
+argument.  The command line length was 1000-7000, the heap 0-10 MB (in
+1000- or 17-byte chunks), with all three methods and with and without
+-Chdir.
+
+In hindsight (see the next section), this couldn't work.  The trigger
+is a file operation on the long argument, which bash does and
+PowerShell doesn't, not heap or stack layout.
+
+
+C reproducer without Cygwin, Nov 27
+===================================
+
+[Responding to a request to write a C child program that reproduces
+the crash.]
+
+Summary: experiments/long-name-load.c reproduces it with no Cygwin or
+bash involved.  One file operation on a name about 2200-3900
+characters long makes the next LoadLibraryW fail with error 998.  The
+Cygwin startup code shows that bash does such an operation on its
+quoted argument.
+
+What bash does
+--------------
+
+From Cygwin's source (GitHub mirror, winsup/cygwin):
+
+  - dcrt0.cc: when the parent isn't a Cygwin process, Cygwin builds
+    argv from GetCommandLineW.  build_argv keeps the quotes on each
+    double-quoted word and passes it to globify.
+
+  - globify returns at once if the word has none of `?*["'(){}` (or a
+    leading `~`).  Otherwise it calls glob(), and for a pattern with no
+    wildcards, glob just looks the word up as a file name, relative to
+    the current directory.
+
+  - So `bash -c "true #xxx...x"` makes bash's startup look up a file
+    named `true #xxx...x`, thousands of characters long, in the current
+    directory.
+
+  - autoload.cc: Cygwin loads iphlpapi.dll on first use of one of its
+    functions.  dll_load calls LoadLibraryW on the System32 path, then
+    on the bare name.  std_dll_init retries ERROR_NOACCESS (998) up to
+    10 times, yielding between tries, and then calls
+    api_fatal ("unable to load %W, %E").
+
+This explains the earlier conditions: only quoted words reach globify
+(`true#xxx` has none of its characters), the current directory
+matters, and bash-long-cmd.sh doesn't fail because a Cygwin parent
+passes argv in a way that skips this.
+
+The program
+-----------
+
+  long-name-load.exe <len> <method>
+
+It does one file operation on the NT path "\??\<cwd>\true #xxx...x",
+whose last component is <len> characters; the file need not exist.
+Then it calls LoadLibraryW on iphlpapi.dll, or on the DLL named by
+LNL_DLL.  Exit codes: 0 if the DLL loaded, 1 if not, 2 for usage
+errors.  Built with MinGW and run from experiments/:
+
+  method       operation                        1000    3000
+  ----------   ------------------------------   ------  ---------
+  none         (none)                           loaded  loaded
+  ntopen       NtOpenFile                       loaded  error 998
+  ntqa         NtQueryAttributesFile            loaded  error 998
+  createfile   CreateFileW with a \\?\ path     loaded  error 998
+
+The file operation itself fails normally, with
+STATUS_OBJECT_NAME_INVALID (0xC0000033), or error 123 for CreateFileW.
+It is the next DLL load that breaks.  GetFileAttributesW on the long
+relative name never reaches the kernel, because the Win32 layer rejects
+it first, so the load after it succeeded.
+
+More results
+------------
+
+These are from Claude's scratch copy of the program (child.c, the same
+operations), with NtOpenFile:
+
+  - Lengths, from experiments/, 1000-4500 in steps of 100 ("X" = 998,
+    "." = loaded):
+
+      ............XXXXXXXXXXXXXXXXXX......
+
+    That is, it fails at 2200-3900.
+
+  - Persistence: 10 retries 100 ms apart all failed at 3000, and
+    passed at 2000 and 4000.
+
+  - Other DLLs: dnsapi.dll, version.dll and winhttp.dll failed the
+    same way at 3000 and loaded at 2000 and 4000.  So it's whatever
+    DLL is loaded next, not iphlpapi in particular.
+
+  - From C:\cygwin\home\scott, outside the Open for All rule, it also
+    failed at 2500, 3000 and 3500, but differently: NtOpenFile itself
+    returned STATUS_ACCESS_VIOLATION (0xC0000005).  Something faulted
+    while handling the name, which points at Sandboxie's hook.  1000,
+    2000 and 4000 were ok.  The program always passes a full path,
+    while bash looks the name up relative to the current directory,
+    which may be why the directory mattered for bash but not here.
+
+A hang
+------
+
+The first sweep from C:\cygwin\home\scott (1000-4500 in steps of 100)
+stalled.  One child.exe process (PID 20676) was stuck without using
+CPU, at a length that wasn't captured.  At the same moment the Sandboxie
+UI showed a burst of "Name buffer is approaching overflow" messages.
+Claude stopped the sweep and killed the process.  A rerun from home at
+six lengths, each with a 10-second timeout, didn't hang.  The Nov 25
+hang might be related, but that hasn't been shown.
+
+Observations
+------------
+
+  - The Sandboxie message fits: its buffer for file names is being
+    nearly overrun by these long names, and afterwards the process
+    can't load DLLs.
+
+  - Reproducer for a Sandboxie report: in the sandbox, run
+    `long-name-load.exe 3000 ntopen`.  LoadLibraryW then fails with
+    error 998, while `long-name-load.exe 3000 none` succeeds.
+
+
 EOF
