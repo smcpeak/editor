@@ -732,12 +732,16 @@ check: out/lsp-test-server.ok
 
 # ------------------------ clipboard-experiment ------------------------
 # This is not automatically built; it is for ad-hoc experimentation.
-clipboard-experiment.exe: clipboard-experiment.o
+experiments/clipboard-experiment.exe: experiments/clipboard-experiment.o
 	$(CXX) -o $@ $(CCFLAGS) $^ $(CONSOLE_LDFLAGS) -lgdi32
+
+.PHONY: experiments-clean
+experiments-clean:
+	cd experiments &&  $(RM) *.d *.o* *.exe
 
 
 # -------------------------------- misc --------------------------------
-clean:
+clean: experiments-clean
 	$(RM) $(TOCLEAN)
 	$(RM) -r out
 	$(RM) *.gcov *.gcda *.gcno
