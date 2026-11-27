@@ -1,6 +1,55 @@
 bash-crash.txt
 Bash tool failures seen by Claude Code, Nov 12-26, 2026
 
+
+Current known factors
+=====================
+
+All of the following are necessary for the problem to happen:
+
+  * Running under Sandboxie.
+    - I run claude.exe under it.
+    - I think Sandboxie is the the primary culprit; assuming so, I would
+      like to create a reproducer to submit a bug report to Sandboxie.
+  * One program invokes another.
+    - For example, bash-experiment.exe invoking /usr/bin/bash.
+  * The first program is invoked in a directory that is "Open for All"
+    in the Sandboxie configuration.
+  * The command line is long, ~1500 B or more, although there are some
+    windows of lengths that work beyond that.
+    - The relationship is complicated.  Some lengths are not
+      deterministic (e.g., 5000 for me), but most are.
+    - At around 5900 some limit is hit and the argument starts being
+      cut off, causing bash to complain about syntax.
+  * The invokee loads iphlpapi.dll; but how?
+    - Both Cygwin and Git4Win bash.exe do so, and fail.
+    - But /usr/bin/true.exe does not fail (does not load it).
+    - A tiny program that loads it also does not fail, both with
+      implicit load (`ldd` sees it) and an explicit LoadLibraryA call.
+
+I have ruled out cygwin as a factor, as the problem can happen without
+any cygwin in the process parent chain:
+
+  Sanboxie ->
+  cmd.exe ->
+  mingw-compiled bash-experiment.exe bash 1500 ->
+  Git4Win bash: fails with iphlpapi.dll error
+
+On the flip side, a cygwin-only chain also works:
+
+  Sandboxie ->
+  cygwin mintty ->
+  cygwin bash ->
+  cygwin-compiled bash-experiment.exe bash 1500 ->
+  cygwin bash: fails with iphlpapi.dll error
+
+I also ruled out Python, and have changed bash-experiment.cc to invoke
+"true" instead of it; the failure still happens.
+
+
+First set of observations by Claude
+===================================
+
 [Responding to a question about recent bash crashes and hangs.]
 
 Yes, both are right.  Across the two transcripts in this project there
