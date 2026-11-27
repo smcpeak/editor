@@ -268,4 +268,111 @@ I also ruled out Python, and have changed bash-experiment.cc to invoke
 "true" instead of it; the failure still happens.
 
 
+bash-experiment.exe under claude.exe, Nov 27
+=============================================
+
+[Responding to a request to reproduce the crash with
+bash-experiment.exe, run through the Bash tool, first with sizes 1000
+to 5000 in steps of 500.]
+
+Summary: it reproduces deterministically from within claude.exe.  The
+size isn't what decides it; the current directory is.
+
+Size sweep
+----------
+
+Run from experiments/, with the user's build (which runs `true`), as
+`./bash-experiment.exe 'C:\cygwin\bin\bash.exe' <size>`:
+
+  size   outcome
+  ----   -------
+  1000   ok
+  1500   IPHLPAPI
+  2000   IPHLPAPI
+  2500   IPHLPAPI
+  3000   IPHLPAPI
+  3500   IPHLPAPI
+  4000   IPHLPAPI
+  4500   ok
+  5000   IPHLPAPI
+
+Each crash printed the usual message, and bash exited with code 256, so
+bash-experiment.exe exited 1.  A second run gave the same results, as
+did Claude's earlier build (which runs Python), so that change doesn't
+matter.
+
+The current directory decides it
+--------------------------------
+
+Earlier in the day, Claude ran its build from its scratchpad,
+C:\cygwin\tmp\claude\...\scratchpad, and nothing crashed.  Run from
+there now, both builds succeed at every size above.  Size 2000 from
+various directories:
+
+  outcome   directory
+  --------  ---------
+  IPHLPAPI  C:\
+  IPHLPAPI  C:\cygwin\home\scott\wrk
+  IPHLPAPI  C:\cygwin\home\scott\wrk\editor
+  IPHLPAPI  C:\cygwin\home\scott\wrk\editor\experiments
+  IPHLPAPI  ...\experiments\bxtmp (new, empty)
+  ok        C:\cygwin
+  ok        C:\cygwin\home
+  ok        C:\cygwin\home\scott
+  ok        C:\cygwin\home\scott\bxtmp (new, empty)
+  ok        C:\cygwin\home\scott\bxtmp\abcdefghij (new, empty)
+  ok        C:\cygwin\tmp
+  ok        C:\cygwin\tmp\claude
+  ok        the scratchpad, and a new subdirectory under it
+  ok        C:\Users\scott
+
+The two new directories under bxtmp were tested at sizes 1500-4000 in
+steps of 500.  So were the new one under experiments, wrk, and home.
+Each one gave the same outcome at every size.
+
+A finer sweep, sizes 1000-5750 in steps of 250 ("X" = IPHLPAPI, "." =
+ok):
+
+  C:\cygwin\home\scott\wrk\editor:
+
+    1000. 1250. 1500X 1750X 2000X 2250X 2500X 2750. 3000X 3250X
+    3500X 3750X 4000X 4250X 4500X 4750X 5000X 5250. 5500X 5750.
+
+  C:\cygwin\home\scott:
+
+    all ok
+
+No run hit the bash syntax errors that come from the argument being
+cut off.
+
+Observations
+------------
+
+  - It isn't the path length.  A 37-character path under home was ok,
+    while paths of 3, 31 and 43 characters crashed.
+
+  - It isn't the DLL search order picking something up.  None of the
+    directories above contains a DLL.
+
+  - It goes by location: everything at or under
+    C:\cygwin\home\scott\wrk crashes, and so does C:\, while the rest
+    of home doesn't.  That looks like a per-path Sandboxie rule, such
+    as an open, closed or read-only path setting that covers wrk (and
+    C:\) but not the rest of home.
+
+  - It fits the crash history.  Bash-tool commands normally run in the
+    editor directory, where the Nov 27 heredoc trials crashed.  Most
+    commands are short, which is below the size that crashes, while
+    heredoc commands are long.  Claude's first runs of
+    bash-experiment.exe this morning were from the scratchpad, which
+    is why they didn't crash.
+
+  - Next steps toward a Sandboxie report:
+      - Look in the sandbox's path settings for anything that matches
+        wrk or C:\.
+      - A minimal reproduction would then be "start bash.exe with a
+        command line of N characters from directory D", showing a
+        matching and a non-matching directory side by side.
+
+
 EOF
