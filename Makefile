@@ -749,6 +749,10 @@ experiments-all: experiments/best-interface.exe
 experiments/best-interface.exe: experiments/best-interface.o
 	$(CXX) -o $@ $(CCFLAGS) $^ $(CONSOLE_LDFLAGS) -liphlpapi
 
+experiments-all: experiments/long-name-load.exe
+experiments/long-name-load.exe: experiments/long-name-load.c
+	$(CXX) -o $@ $(CCFLAGS) $^
+
 .PHONY: experiments-all
 experiments-all:
 

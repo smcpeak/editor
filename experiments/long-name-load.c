@@ -120,7 +120,7 @@ int main(int argc, char **argv)
   HMODULE h = LoadLibraryW(dll);
   DWORD loadErr = GetLastError();
 
-  printf("long-name-load: len %d, %s: status 0x%lx, error %lu; "
+  printf("long-name-load: len %d, %s: status 0x%lx, error %lu\n"
     "LoadLibraryW %s",
     len, method, (unsigned long)status, (unsigned long)err,
     h? "succeeded\n" : "failed, ");
